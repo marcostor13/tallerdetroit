@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 import { ConnectionChipComponent } from '../../shared/ui/connection-chip/connection-chip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 
@@ -100,7 +101,7 @@ export class HomePage {
   private readonly auth = inject(AuthService);
 
   protected readonly user = this.auth.user;
-  protected readonly entorno = 'develop';
+  protected readonly entorno = environment.name;
 
   protected readonly saludo = computed(() => {
     const h = new Date().getHours();
