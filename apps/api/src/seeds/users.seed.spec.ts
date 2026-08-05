@@ -41,6 +41,31 @@ describe('seedUsers', () => {
     expect(await db.collection('users').countDocuments()).toBe(7);
   }, 60_000);
 
+  it('crea la organización emisora y enlaza usuarios y unidades a ella (D5)', async () => {
+    const db = await connect();
+
+    const orgs = await db.collection('organizations').find().toArray();
+    expect(orgs).toHaveLength(1);
+    expect(orgs[0]).toMatchObject({ ruc: '20100000001', esPredeterminada: true });
+
+    const orgId = String(orgs[0]!['_id']);
+
+    // El modelo es multi-empresa desde el principio: todo cuelga de una
+    // organización, aunque hoy solo exista una.
+    const usuarios = await db.collection('users').find().toArray();
+    for (const u of usuarios) expect(String(u['organizacionId'])).toBe(orgId);
+
+    const unidades = await db.collection('businessUnits').find().toArray();
+    for (const b of unidades) expect(String(b['organizacionId'])).toBe(orgId);
+  });
+
+  it('el RUC de la organización es único', async () => {
+    const db = await connect();
+    await expect(
+      db.collection('organizations').insertOne({ ruc: '20100000001', razonSocial: 'Otra' }),
+    ).rejects.toThrow(/duplicate key/i);
+  });
+
   it('cubre los cuatro roles obligatorios del negocio más Calidad', async () => {
     const db = await connect();
     const roles = await db.collection('users').distinct('rol');

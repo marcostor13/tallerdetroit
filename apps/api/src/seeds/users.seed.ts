@@ -17,6 +17,7 @@ import mongoose from 'mongoose';
 import { ROLE_PERMISSIONS, type Role } from '@dps/shared';
 import { UserSchema } from '../users/schemas/user.schema';
 import { BusinessUnitSchema } from '../masters/schemas/business-unit.schema';
+import { OrganizationSchema } from '../masters/schemas/organization.schema';
 
 /** Parámetros Argon2id recomendados por OWASP para contraseñas interactivas. */
 const ARGON2_OPTIONS: argon2.Options = {
@@ -108,6 +109,21 @@ const SEED_USERS: readonly SeedUser[] = [
   },
 ];
 
+/**
+ * Decisión D5: la plataforma emite informes de más de una razón social. Se
+ * siembra la propia para que exista una predeterminada; las demás se dan de
+ * alta manualmente desde administración.
+ */
+const ORGANIZATIONS = [
+  {
+    razonSocial: 'DETROIT POWER SYSTEM PERÚ S.A.C.',
+    nombreCorto: 'Detroit Power System',
+    ruc: '20100000001',
+    prefijoInforme: 'ITS',
+    esPredeterminada: true,
+  },
+];
+
 const BUSINESS_UNITS = [
   { codigo: 'TAL', nombre: 'Taller Lima', prefijoOt: 'TAL', ciudad: 'LIM' },
   { codigo: 'SCA', nombre: 'Servicio de Campo', prefijoOt: 'SCA', ciudad: 'LIM' },
@@ -128,6 +144,7 @@ export async function seedUsers(uri: string, purge = false): Promise<void> {
 
   const UserModel = connection.model('User', UserSchema);
   const BusinessUnitModel = connection.model('BusinessUnit', BusinessUnitSchema);
+  const OrganizationModel = connection.model('Organization', OrganizationSchema);
 
   if (purge) {
     const { deletedCount } = await UserModel.deleteMany({ esDePrueba: true });
@@ -136,12 +153,24 @@ export async function seedUsers(uri: string, purge = false): Promise<void> {
     return;
   }
 
+  // --- Organizaciones (D5: multi-empresa) ----------------------------------
+  let organizacionId: mongoose.Types.ObjectId | null = null;
+  for (const org of ORGANIZATIONS) {
+    const doc = await OrganizationModel.findOneAndUpdate(
+      { ruc: org.ruc },
+      { $set: org },
+      { new: true, upsert: true, setDefaultsOnInsert: true },
+    );
+    if (org.esPredeterminada) organizacionId = doc._id as mongoose.Types.ObjectId;
+    console.log(`empresa ${org.nombreCorto} (RUC ${org.ruc})`);
+  }
+
   // --- Unidades de negocio -------------------------------------------------
   const unitIds = new Map<string, mongoose.Types.ObjectId>();
   for (const unit of BUSINESS_UNITS) {
     const doc = await BusinessUnitModel.findOneAndUpdate(
       { codigo: unit.codigo },
-      { $set: unit },
+      { $set: { ...unit, organizacionId } },
       { new: true, upsert: true, setDefaultsOnInsert: true },
     );
     unitIds.set(unit.codigo, doc._id as mongoose.Types.ObjectId);
@@ -162,6 +191,7 @@ export async function seedUsers(uri: string, purge = false): Promise<void> {
       cargo: user.cargo,
       unidadNegocioId: user.unidad ? (unitIds.get(user.unidad) ?? null) : null,
       mfaHabilitado: user.mfaHabilitado,
+      organizacionId,
       activo: true,
       esDePrueba: true,
     };

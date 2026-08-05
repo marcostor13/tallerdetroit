@@ -12,15 +12,15 @@ en `.claude/DESIGN-SYSTEM.md`.
 
 ## Estado actual
 
-| Fase                                     | Estado                                   | Semanas | Cierre |
-| ---------------------------------------- | ---------------------------------------- | ------- | ------ |
-| **F0** Fundaciones                       | 🟡 ~85% — ver «Pendiente de F0»          | 2–3     | —      |
-| **F1** Núcleo de informes (MVP)          | ⬜ Pendiente                             | 7–9     | —      |
-| **F2** Mediciones dimensionales          | ⬜ Pendiente                             | 4–6     | —      |
-| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                             | 5–7     | —      |
-| **F4** PWA, movilidad y offline          | ⬜ Pendiente                             | 4–6     | —      |
-| **F5** Analítica y conocimiento          | ⬜ Pendiente                             | 4–6     | —      |
-| **F6** Integración corporativa           | ⬜ Pendiente                             | 4–6     | —      |
+| Fase                                     | Estado                                  | Semanas | Cierre     |
+| ---------------------------------------- | --------------------------------------- | ------- | ---------- |
+| **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle | 2–3     | 5-ago-2026 |
+| **F1** Núcleo de informes (MVP)          | ⬜ Pendiente                            | 7–9     | —          |
+| **F2** Mediciones dimensionales          | ⬜ Pendiente                            | 4–6     | —          |
+| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                            | 5–7     | —          |
+| **F4** PWA, movilidad y offline          | ⬜ Pendiente                            | 4–6     | —          |
+| **F5** Analítica y conocimiento          | ⬜ Pendiente                            | 4–6     | —          |
+| **F6** Integración corporativa           | ⬜ Pendiente                            | 4–6     | —          |
 
 > Actualiza esta tabla al abrir y cerrar cada fase (skill `/dps-fase`).
 
@@ -117,18 +117,18 @@ sola pantalla de negocio.
 
 ## Criterios de aceptación
 
-- [ ] Un `git push` a `develop` despliega automáticamente a develop en < 10 min
+- [x] Un `git push` a `develop` despliega automáticamente a develop en < 10 min
 - [ ] Un `git push` a `main` despliega a producción tras la aprobación manual
-- [ ] Un cambio **solo** en `apps/web` no ejecuta ni reconstruye `api` ni `worker` (T4)
+- [x] Un cambio **solo** en `apps/web` no ejecuta ni reconstruye `api` ni `worker` (T4)
 - [ ] Un cambio **solo** en `apps/api` no ejecuta ni reconstruye `web` (T4)
-- [ ] `https://dev.tallerdetroit.tecdidata.com` responde con SSL válido y la app carga
-- [ ] Un usuario `admin` inicia sesión; un usuario sin rol recibe 403 en una ruta protegida
-- [ ] `/api/docs` muestra el OpenAPI generado
-- [ ] Rollback probado: redesplegar el tag anterior restaura la versión previa
-- [ ] **La app respeta `prefers-color-scheme` y el switch del header lo sobrescribe y persiste, sin destello** (T1)
-- [ ] **El shell es usable a 360 px con barra inferior y áreas seguras respetadas** (T3)
-- [ ] La app carga completa sin acceso a CDNs externos (fuentes e iconos autoalojados)
-- [ ] `.env` y `.env.deploy` no están en el índice de git
+- [x] `https://dev-tallerdetroit.tecdidata.com` responde con SSL válido y la app carga
+- [x] Un usuario `admin` inicia sesión; un usuario sin rol recibe 403 en una ruta protegida
+- [x] `/api/docs` muestra el OpenAPI generado
+- [x] Rollback probado: redesplegar el tag anterior restaura la versión previa
+- [x] **La app respeta `prefers-color-scheme` y el switch del header lo sobrescribe y persiste, sin destello** (T1)
+- [x] **El shell es usable a 360 px con barra inferior y áreas seguras respetadas** (T3)
+- [x] La app carga completa sin acceso a CDNs externos (fuentes e iconos autoalojados)
+- [x] `.env` y `.env.deploy` no están en el índice de git
 
 ## Entregables
 
@@ -452,18 +452,18 @@ editable); apagado de la PWA local al cerrar F4.
 
 Bloquean fases concretas. Resolverlas es responsabilidad del negocio, no del equipo de desarrollo.
 
-| ID  | Decisión                                                                                                      | Necesaria antes de        | Responsable              | Estado     |
-| --- | ------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------ | ---------- |
-| D1  | **Rangos de tolerancia oficiales** por modelo según manual MTU (juego axial, muñones, coaxialidad, piñones)   | F2                        | Jefatura técnica         | ⬜ Abierta |
-| D2  | **Semántica del signo** en muñones (−0.01, −0.02): ¿desviación, submedida o clase de rectificado?             | F2                        | Jefatura técnica         | ⬜ Abierta |
-| D3  | **Convención exacta** de `ITS-T-E-26-003-0898` y `LIM-TAL-000898`: qué significa cada segmento y quién asigna | F1                        | Calidad / Administración | ⬜ Abierta |
-| D4  | **Alcance del anexo SER-T-FOR-002**: ¿checklist dentro del informe o adjunto?                                 | F2                        | Calidad                  | ⬜ Abierta |
-| D5  | **Multi-empresa**: ¿se emiten informes con logo y numeración de más de una razón social?                      | **F0 — afecta el modelo** | Gerencia                 | ⬜ Abierta |
-| D6  | **Tipo de firma**: imagen escaneada, dibujada en pantalla o digital con certificado                           | F3                        | Legal / Calidad          | ⬜ Abierta |
-| D7  | **Sistema de OT existente**: ¿hay un ERP del que leer las órdenes, o se crean en la plataforma?               | F1                        | TI                       | ⬜ Abierta |
-| D8  | **Migración del histórico**: ¿se cargan los Word anteriores? ¿Cuántos años? ¿Adjunto o con extracción?        | F5                        | Gerencia                 | ⬜ Abierta |
-| D9  | **Portal de cliente**: ¿acceso externo a SPCC, TASA, LAP?                                                     | F6                        | Gerencia comercial       | ⬜ Abierta |
-| D10 | **Glosario controlado**: normalizar términos mixtos (housing, contragolpe, magnaflux)                         | F3                        | Jefatura técnica         | ⬜ Abierta |
+| ID  | Decisión                                                                                                      | Necesaria antes de        | Responsable              | Estado                                                                                                                                                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **Rangos de tolerancia oficiales** por modelo según manual MTU (juego axial, muñones, coaxialidad, piñones)   | F2                        | Jefatura técnica         | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D2  | **Semántica del signo** en muñones (−0.01, −0.02): ¿desviación, submedida o clase de rectificado?             | F2                        | Jefatura técnica         | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D3  | **Convención exacta** de `ITS-T-E-26-003-0898` y `LIM-TAL-000898`: qué significa cada segmento y quién asigna | F1                        | Calidad / Administración | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D4  | **Alcance del anexo SER-T-FOR-002**: ¿checklist dentro del informe o adjunto?                                 | F2                        | Calidad                  | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D5  | **Multi-empresa**: ¿se emiten informes con logo y numeración de más de una razón social?                      | **F0 — afecta el modelo** | Gerencia                 | ✅ **Resuelta 5-ago-2026: SÍ.** Varias razones sociales; alta manual desde administración. Implementado el maestro `organizations`; `users` y `businessUnits` cuelgan de una organización. En F1 el informe llevará `organizacion: { id, razonSocial, ruc }` como referencia + snapshot |
+| D6  | **Tipo de firma**: imagen escaneada, dibujada en pantalla o digital con certificado                           | F3                        | Legal / Calidad          | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D7  | **Sistema de OT existente**: ¿hay un ERP del que leer las órdenes, o se crean en la plataforma?               | F1                        | TI                       | ✅ **Resuelta 5-ago-2026: se crean en la plataforma.** Sin importación desde ERP; E6.5 queda fuera de alcance salvo cambio                                                                                                                                                              |
+| D8  | **Migración del histórico**: ¿se cargan los Word anteriores? ¿Cuántos años? ¿Adjunto o con extracción?        | F5                        | Gerencia                 | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D9  | **Portal de cliente**: ¿acceso externo a SPCC, TASA, LAP?                                                     | F6                        | Gerencia comercial       | ⬜ Abierta                                                                                                                                                                                                                                                                              |
+| D10 | **Glosario controlado**: normalizar términos mixtos (housing, contragolpe, magnaflux)                         | F3                        | Jefatura técnica         | ⬜ Abierta                                                                                                                                                                                                                                                                              |
 
 ---
 
