@@ -27,7 +27,7 @@ La especificación funcional y el modelo de datos están en `docs/especificacion
 
 ## Reglas de negocio a hacer cumplir (§14.3)
 
-RN-01 correlativo nunca reutilizado · RN-02 informe emitido inmutable · RN-03 no emitir fuera de
+RN-01 **adaptada por D3**: el número de informe se escribe a mano, así que el sistema no puede garantizar que sea correlativo; solo impide duplicados (índice único) · RN-02 informe emitido inmutable · RN-03 no emitir fuera de
 tolerancia sin justificación · RN-04 no emitir con instrumento descalibrado · RN-05 horas no
 decrecientes · RN-06 caption obligatorio y `Fig.NN` calculada · RN-07 scoping por rol y unidad de
 negocio · RN-08 render desde snapshot.

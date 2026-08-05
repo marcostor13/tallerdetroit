@@ -91,6 +91,14 @@ export class CreateReportDto {
 
 ## 6. Correlativos
 
+**Decisión D3: no hay generador.** El número de informe y el de OT los escribe el
+usuario. El backend valida el formato y **la unicidad** con un índice único sobre
+`numeroInforme`, devolviendo un 409 con un mensaje claro si ya existe.
+
+Si el negocio fija más adelante la convención de `ITS-T-E-26-003-0898`, el
+generador se implementa con asignación atómica — nunca leer, incrementar y
+escribir en pasos separados:
+
 ```ts
 const seq = await this.model.findOneAndUpdate(
   { tipo, anio },
@@ -98,8 +106,6 @@ const seq = await this.model.findOneAndUpdate(
   { new: true, upsert: true, setDefaultsOnInsert: true },
 );
 ```
-
-**Nunca** leer, incrementar y escribir en pasos separados.
 
 ## 7. Auditoría
 
