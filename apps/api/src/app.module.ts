@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { EnvironmentVariables, validateEnv } from './config/configuration';
 import { HealthModule } from './health/health.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 
 @Module({
   imports: [
@@ -57,14 +60,16 @@ import { HealthModule } from './health/health.module';
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
 
     HealthModule,
+    UsersModule,
+    AuthModule,
 
-    // Módulos de dominio de §15.3 — se incorporan por fase según PLAN.md:
-    // AuthModule, UsersModule (F0) · MastersModule, WorkOrdersModule,
+    // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
+    // MastersModule, WorkOrdersModule,
     // TemplatesModule, ReportsModule, SequencesModule, MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
 export class AppModule {}

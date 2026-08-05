@@ -117,6 +117,15 @@ export class EnvironmentVariables {
   @IsString()
   MAIL_FROM = 'Informes Técnicos DPS <no-reply@detroitpower.pe>';
 
+  /**
+   * Expone `/api/docs`. Se separa de NODE_ENV a propósito: los contenedores
+   * corren con `production` también en develop, donde sí queremos la
+   * documentación. Sin definir, se expone solo fuera de producción.
+   */
+  @IsOptional()
+  @IsBoolean()
+  ENABLE_API_DOCS?: boolean;
+
   @IsOptional()
   @IsString()
   SENTRY_DSN?: string;
@@ -151,7 +160,7 @@ const NUMERIC_KEYS = new Set([
   'LOGIN_LOCKOUT_MINUTES',
   'S3_SIGNED_URL_TTL',
 ]);
-const BOOLEAN_KEYS = new Set(['S3_FORCE_PATH_STYLE']);
+const BOOLEAN_KEYS = new Set(['S3_FORCE_PATH_STYLE', 'ENABLE_API_DOCS']);
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {
   const coerced: Record<string, unknown> = {};

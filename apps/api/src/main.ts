@@ -52,8 +52,12 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new ProblemDetailsFilter());
 
-  // La documentación no se publica en producción.
-  if (nodeEnv !== 'production') {
+  // Los contenedores corren con NODE_ENV=production también en develop, así que
+  // ese valor no sirve para decidir esto: se controla con una variable propia.
+  // Por defecto la documentación queda expuesta solo fuera de producción.
+  const docsEnabled = config.get('ENABLE_API_DOCS', { infer: true }) ?? nodeEnv !== 'production';
+
+  if (docsEnabled) {
     const swagger = new DocumentBuilder()
       .setTitle('Informes Técnicos — Detroit Power System Perú')
       .setDescription(

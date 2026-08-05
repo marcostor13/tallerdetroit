@@ -119,9 +119,11 @@ function generatePassword(): string {
 }
 
 export async function seedUsers(uri: string, purge = false): Promise<void> {
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 20000 });
-
-  const connection = mongoose.connection;
+  // Conexión propia, no la global de mongoose: si usara `mongoose.connect` y
+  // luego `disconnect`, se llevaría por delante la conexión de cualquier
+  // aplicación que estuviera corriendo en el mismo proceso.
+  const connection = mongoose.createConnection(uri, { serverSelectionTimeoutMS: 20000 });
+  await connection.asPromise();
   console.log(`Base de datos: ${connection.name}\n`);
 
   const UserModel = connection.model('User', UserSchema);
@@ -130,7 +132,7 @@ export async function seedUsers(uri: string, purge = false): Promise<void> {
   if (purge) {
     const { deletedCount } = await UserModel.deleteMany({ esDePrueba: true });
     console.log(`Cuentas de prueba eliminadas: ${deletedCount}`);
-    await mongoose.disconnect();
+    await connection.close();
     return;
   }
 
@@ -208,7 +210,7 @@ export async function seedUsers(uri: string, purge = false): Promise<void> {
   console.log('='.repeat(78));
   console.log('Cambia estas contraseñas antes de exponer la plataforma a usuarios reales.');
 
-  await mongoose.disconnect();
+  await connection.close();
 }
 
 // Ejecución directa desde la línea de comandos.

@@ -27,6 +27,26 @@ export class UserSecurity {
   debeCambiarPassword!: boolean;
 }
 
+/**
+ * Sesión abierta. Se guarda el **hash** del refresh token, nunca el token: una
+ * filtración de la base no permite suplantar sesiones, y el Administrador puede
+ * revocarlas de forma individual (§20, «sesiones controladas»).
+ */
+@Schema({ _id: false })
+export class UserSession {
+  @Prop({ type: String, required: true })
+  tokenHash!: string;
+
+  @Prop({ type: Date, required: true })
+  creadaEn!: Date;
+
+  @Prop({ type: String, default: null })
+  ip!: string | null;
+
+  @Prop({ type: String, default: null })
+  userAgent!: string | null;
+}
+
 @Schema({ _id: false })
 export class UserPreferences {
   /** Tema de la interfaz. `system` sigue la preferencia del navegador. */
@@ -89,6 +109,10 @@ export class User {
 
   @Prop({ type: UserPreferences, default: () => ({}) })
   preferencias!: UserPreferences;
+
+  /** Sesiones abiertas; el refresh rotativo las va reemplazando. */
+  @Prop({ type: [UserSession], default: [] })
+  sesiones!: UserSession[];
 
   /** Marca las cuentas sembradas para pruebas, de modo que se puedan purgar. */
   @Prop({ type: Boolean, default: false })
