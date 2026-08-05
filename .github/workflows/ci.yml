@@ -139,13 +139,24 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: docker compose -f infra/docker-compose.ci.yml up -d
+
+      # Playwright sirve el build de produccion (dist/web/browser), que es el
+      # artefacto que realmente se despliega. Sin este paso no existe y el
+      # servidor no tiene nada que servir.
+      - run: npm run build -w @dps/shared
+      - run: npm run build -w @dps/web
+
+      # Los flujos que se prueban hoy (login, tema, movil, PWA) son de
+      # frontend y no llaman a la API, asi que no hace falta levantar
+      # mongo/redis/minio. Cuando haya e2e contra el backend, se anade:
+      #   docker compose -f infra/docker-compose.ci.yml up -d
       - run: npm run test:e2e
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
-          path: playwright-report
+          path: apps/web/playwright-report
           retention-days: 7
 
   audit:

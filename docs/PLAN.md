@@ -120,7 +120,7 @@ sola pantalla de negocio.
 - [x] Un `git push` a `develop` despliega automáticamente a develop en < 10 min
 - [ ] Un `git push` a `main` despliega a producción tras la aprobación manual
 - [x] Un cambio **solo** en `apps/web` no ejecuta ni reconstruye `api` ni `worker` (T4)
-- [ ] Un cambio **solo** en `apps/api` no ejecuta ni reconstruye `web` (T4)
+- [x] Un cambio **solo** en `apps/api` no ejecuta ni reconstruye `web` (T4)
 - [x] `https://dev-tallerdetroit.tecdidata.com` responde con SSL válido y la app carga
 - [x] Un usuario `admin` inicia sesión; un usuario sin rol recibe 403 en una ruta protegida
 - [x] `/api/docs` muestra el OpenAPI generado
