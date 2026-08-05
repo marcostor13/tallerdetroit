@@ -1,0 +1,19 @@
+# El repositorio guarda LF siempre. Sin esto, trabajar en Windows produce
+# diferencias de solo salto de linea y `prettier --check` (endOfLine: lf) puede
+# discrepar entre la maquina local y el runner de CI.
+* text=auto eol=lf
+
+# Binarios: nunca convertir.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.ico   binary
+*.woff2 binary
+*.docx  binary
+*.pptx  binary
+*.pdf   binary
+
+# Los archivos generados no cuentan para las estadisticas del repositorio.
+package-lock.json  linguist-generated=true
+stitch_minimalist_white_ui_kit/**  linguist-vendored=true
