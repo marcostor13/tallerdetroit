@@ -28,6 +28,26 @@ export class UsersService {
     return this.model.findOne({ _id: id, deletedAt: null }).exec();
   }
 
+  /** Usuarios activos, sin datos sensibles: para la pantalla de administración. */
+  async listActive(): Promise<
+    { id: string; email: string; nombre: string; rol: string; cargo: string | null }[]
+  > {
+    const docs = await this.model
+      .find({ deletedAt: null, activo: true })
+      .select('email nombre rol cargo')
+      .sort({ nombre: 1 })
+      .lean()
+      .exec();
+
+    return docs.map((d) => ({
+      id: String(d._id),
+      email: d.email,
+      nombre: d.nombre,
+      rol: d.rol,
+      cargo: d.cargo ?? null,
+    }));
+  }
+
   /** Suma un intento fallido y bloquea la cuenta al alcanzar el límite (§20). */
   async registerFailedAttempt(
     id: Types.ObjectId,

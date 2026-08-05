@@ -102,13 +102,7 @@ export const routes: Routes = [
       {
         path: 'perfil',
         title: 'Mi perfil — DPS',
-        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
-        data: {
-          code: 'F0',
-          title: 'Mi perfil',
-          message: 'Preferencias de la cuenta y sesiones activas.',
-          icon: 'construction',
-        },
+        loadComponent: () => import('./features/perfil/perfil.page').then((m) => m.PerfilPage),
       },
       {
         path: 'sin-permiso',

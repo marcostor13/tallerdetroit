@@ -1,0 +1,148 @@
+<div class="flex max-w-measure flex-col gap-8">
+  <!-- Identidad -->
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center">
+    <div
+      class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-surface-container-high font-mono text-headline-md text-on-surface"
+      aria-hidden="true"
+    >
+      {{ iniciales() }}
+    </div>
+    <div class="min-w-0">
+      <h1 class="font-headline text-headline-lg-mobile text-on-surface">
+        {{ user()?.nombre ?? '—' }}
+      </h1>
+      <p class="truncate font-mono text-label-md text-secondary">{{ user()?.email }}</p>
+    </div>
+  </header>
+
+  <!-- Rol y alcance -->
+  <section aria-labelledby="rol-titulo" class="flex flex-col gap-4">
+    <h2 id="rol-titulo" class="font-mono text-label-md uppercase tracking-widest text-secondary">Rol y alcance</h2>
+
+    <div class="dps-card p-6">
+      <div class="mb-4 flex items-center gap-3">
+        <dps-icon name="badge" [size]="24" class="text-primary" />
+        <span class="font-headline text-title-sm text-on-surface">{{ rolEtiqueta() }}</span>
+      </div>
+      <p class="text-body-md text-secondary">{{ rolDescripcion() }}</p>
+
+      <div class="mt-4 border-t border-subtle pt-4">
+        <div class="dps-spec-row">
+          <span class="text-body-md text-secondary">Unidad de negocio</span>
+          <span class="text-on-surface">{{ user()?.unidadNegocioId ? 'Asignada' : 'Sin asignar' }}</span>
+        </div>
+        <div class="dps-spec-row">
+          <span class="text-body-md text-secondary">Técnico asociado</span>
+          <span class="text-on-surface">{{ user()?.tecnicoId ? 'Sí' : 'No' }}</span>
+        </div>
+        <div class="dps-spec-row">
+          <span class="text-body-md text-secondary">Verificación en dos pasos</span>
+          <span class="text-on-surface">{{ user()?.mfaHabilitado ? 'Activada' : 'Desactivada' }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Permisos -->
+  <section aria-labelledby="permisos-titulo" class="flex flex-col gap-4">
+    <div class="flex items-end justify-between border-b border-subtle pb-3">
+      <h2 id="permisos-titulo" class="font-mono text-label-md uppercase tracking-widest text-secondary">Permisos</h2>
+      <span class="font-mono text-label-sm text-gray-medium">
+        {{ user()?.permisos?.length ?? 0 }}
+      </span>
+    </div>
+
+    <button
+      type="button"
+      class="dps-btn dps-btn--secondary self-start"
+      [attr.aria-expanded]="permisosVisibles()"
+      aria-controls="lista-permisos"
+      (click)="togglePermisos()"
+    >
+      <dps-icon [name]="permisosVisibles() ? 'expand_less' : 'expand_more'" [size]="20" />
+      {{ permisosVisibles() ? 'Ocultar' : 'Ver' }} permisos
+    </button>
+
+    @if (permisosVisibles()) {
+      <ul id="lista-permisos" class="flex flex-col gap-4">
+        @for (grupo of permisosPorGrupo(); track grupo.recurso) {
+          <li class="dps-card p-4">
+            <h3 class="mb-2 font-mono text-label-md uppercase text-on-surface">
+              {{ grupo.recurso }}
+            </h3>
+            <ul class="flex flex-wrap gap-2">
+              @for (accion of grupo.acciones; track accion) {
+                <li
+                  class="rounded-sm border border-subtle bg-surface-container-low px-2 py-1 font-mono text-label-sm text-secondary"
+                >
+                  {{ accion }}
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- Preferencias -->
+  <section aria-labelledby="tema-titulo" class="flex flex-col gap-4">
+    <h2 id="tema-titulo" class="font-mono text-label-md uppercase tracking-widest text-secondary">Apariencia</h2>
+
+    <div class="dps-card p-6">
+      <div role="radiogroup" aria-labelledby="tema-titulo" class="flex flex-col gap-2">
+        @for (opcion of opcionesTema; track opcion.valor) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="theme.mode() === opcion.valor"
+            class="flex min-h-touch items-center gap-3 rounded border px-4 py-3 text-left transition-colors"
+            [class.border-primary-container]="theme.mode() === opcion.valor"
+            [class.bg-surface-container-low]="theme.mode() === opcion.valor"
+            [class.border-subtle]="theme.mode() !== opcion.valor"
+            (click)="theme.set(opcion.valor)"
+          >
+            <dps-icon
+              [name]="opcion.icono"
+              [size]="24"
+              [filled]="theme.mode() === opcion.valor"
+              [class.text-primary]="theme.mode() === opcion.valor"
+              [class.text-secondary]="theme.mode() !== opcion.valor"
+            />
+            <span class="flex-1 text-body-md text-on-surface">{{ opcion.texto }}</span>
+            @if (theme.mode() === opcion.valor) {
+              <dps-icon name="check" [size]="20" class="text-primary" label="Seleccionado" />
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Conexión y sesión -->
+  <section aria-labelledby="sesion-titulo" class="flex flex-col gap-4">
+    <h2 id="sesion-titulo" class="font-mono text-label-md uppercase tracking-widest text-secondary">Sesión</h2>
+
+    <div class="dps-card flex flex-col gap-4 p-6">
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-body-md text-secondary">Estado de la conexión</span>
+        <dps-connection-chip />
+      </div>
+
+      <button
+        type="button"
+        class="dps-btn dps-btn--danger w-full sm:w-auto sm:self-start"
+        [disabled]="saliendo()"
+        (click)="cerrarSesion()"
+      >
+        @if (saliendo()) {
+          <dps-icon name="progress_activity" [size]="20" class="animate-spin" />
+          Cerrando…
+        } @else {
+          <dps-icon name="logout" [size]="20" />
+          Cerrar sesión
+        }
+      </button>
+    </div>
+  </section>
+</div>

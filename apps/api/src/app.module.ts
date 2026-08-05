@@ -9,6 +9,8 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { PermissionsGuard } from './common/guards/permissions.guard';
 
 @Module({
   imports: [
@@ -70,6 +72,13 @@ import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).
   ],
-  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
+  providers: [
+    // El orden importa: primero se limita, luego se autentica y por ultimo se
+    // autoriza. Toda ruta queda protegida por defecto; las publicas lo declaran
+    // con @Public(), que es mas seguro que tener que acordarse de proteger.
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
+  ],
 })
 export class AppModule {}

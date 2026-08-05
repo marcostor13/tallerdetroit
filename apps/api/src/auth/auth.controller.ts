@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -17,7 +7,6 @@ import type { EnvironmentVariables } from '../config/configuration';
 import { CurrentUser, type AuthUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/permissions.decorator';
 import { AuthService, type TokenPair } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 
 /** Nombre de la cookie httpOnly que transporta el refresh token. */
@@ -73,7 +62,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Devuelve el usuario de la sesión actual' })
   me(@CurrentUser() user: AuthUser): AuthUser {

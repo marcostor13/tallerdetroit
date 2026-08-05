@@ -1,4 +1,9 @@
 import 'reflect-metadata';
+import { initSentry } from './observability/sentry';
+
+// Antes de cualquier otro import con efectos: la instrumentacion automatica
+// necesita envolver los modulos desde el principio.
+const sentryActivo = initSentry();
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -78,7 +83,12 @@ async function bootstrap(): Promise<void> {
   await app.listen(port, '0.0.0.0');
   app
     .get(Logger)
-    .log(`API escuchando en :${port} · entorno ${nodeEnv} · docs en /api/docs`, 'Bootstrap');
+    .log(
+      `API escuchando en :${port} · entorno ${nodeEnv}` +
+        `${docsEnabled ? ' · docs en /api/docs' : ''}` +
+        `${sentryActivo ? ' · Sentry activo' : ''}`,
+      'Bootstrap',
+    );
 }
 
 bootstrap().catch((error: unknown) => {

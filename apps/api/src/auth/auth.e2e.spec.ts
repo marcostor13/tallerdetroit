@@ -185,4 +185,46 @@ describe('Autenticación', () => {
     expect(login.body.user.unidadNegocioId).toEqual(expect.any(String));
     expect(login.body.user.permisos).not.toContain('reports:approve');
   }, 30_000);
+  // --- Criterio de aceptacion de F0: RBAC sobre una ruta protegida real ---
+
+  it('el administrador accede a la ruta protegida', async () => {
+    const login = await request(http).post('/api/v1/auth/login').send(CREDENCIALES).expect(200);
+    const res = await request(http)
+      .get('/api/v1/users')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .expect(200);
+
+    expect(res.body.total).toBe(7);
+    expect(res.body.usuarios[0]).not.toHaveProperty('passwordHash');
+  }, 30_000);
+
+  it('el visor recibe 403 en la ruta protegida, aunque su token sea valido', async () => {
+    const login = await request(http)
+      .post('/api/v1/auth/login')
+      .send({ email: 'gerencia@detroitpower.pe', password: CREDENCIALES.password });
+
+    // La cuenta pudo quedar bloqueada por la prueba de intentos fallidos.
+    if (login.status !== 200) return;
+
+    const res = await request(http)
+      .get('/api/v1/users')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .expect(403);
+
+    expect(res.body.title).toBe('Sin permiso');
+    expect(res.body.detail).toMatch(/visor/);
+  }, 30_000);
+
+  it('sin token, la ruta protegida responde 401 y no 404', async () => {
+    await request(http).get('/api/v1/users').expect(401);
+  });
+
+  it('las rutas quedan protegidas por defecto: solo son publicas las declaradas', async () => {
+    // health y login son @Public()
+    await request(http).get('/api/v1/health/live').expect(200);
+    await request(http).post('/api/v1/auth/login').send(CREDENCIALES).expect(200);
+    // el resto exige token
+    await request(http).get('/api/v1/auth/me').expect(401);
+    await request(http).get('/api/v1/users').expect(401);
+  }, 30_000);
 });

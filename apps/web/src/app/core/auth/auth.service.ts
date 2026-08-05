@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type { Permission } from '@dps/shared';
 import { environment } from '../../../environments/environment';
+import { setSentryUser } from '../observability/sentry';
 import type { AuthUser, LoginRequest, LoginResponse } from './auth.models';
 
 /**
@@ -46,6 +47,7 @@ export class AuthService {
     );
     this.accessToken.set(res.accessToken);
     this.user.set(res.user);
+    setSentryUser({ id: res.user.id, rol: res.user.rol });
   }
 
   /**
@@ -104,5 +106,6 @@ export class AuthService {
   clear(): void {
     this.accessToken.set(null);
     this.user.set(null);
+    setSentryUser(null);
   }
 }
