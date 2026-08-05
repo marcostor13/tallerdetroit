@@ -46,6 +46,10 @@ jobs:
       web: ${{ steps.decide.outputs.web }}
       api: ${{ steps.decide.outputs.api }}
       worker: ${{ steps.decide.outputs.worker }}
+      # Lista JSON para la matriz. El contexto `matrix` NO existe en el `if` a
+      # nivel de job, asi que no se puede filtrar alli: hay que construir la
+      # matriz ya filtrada.
+      apps: ${{ steps.decide.outputs.apps }}
     steps:
       - uses: actions/checkout@v4
 
@@ -86,36 +90,48 @@ jobs:
       - name: Decidir apps a desplegar
         id: decide
         run: |
+          declare -A DESPLEGAR
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="${{ inputs.apps }}"
-            for APP in web api worker; do
+            for APP in api worker web; do
               if [ "$SEL" = "all" ] || [[ ",$SEL," == *",$APP,"* ]]; then
-                echo "$APP=true" >> "$GITHUB_OUTPUT"
+                DESPLEGAR[$APP]=true
               else
-                echo "$APP=false" >> "$GITHUB_OUTPUT"
+                DESPLEGAR[$APP]=false
               fi
             done
           else
-            echo "web=${{ steps.filter.outputs.web }}"       >> "$GITHUB_OUTPUT"
-            echo "api=${{ steps.filter.outputs.api }}"       >> "$GITHUB_OUTPUT"
-            echo "worker=${{ steps.filter.outputs.worker }}" >> "$GITHUB_OUTPUT"
+            DESPLEGAR[api]="${{ steps.filter.outputs.api }}"
+            DESPLEGAR[worker]="${{ steps.filter.outputs.worker }}"
+            DESPLEGAR[web]="${{ steps.filter.outputs.web }}"
           fi
+
+          # El backend antes que el frontend: si cambia el contrato, la API ya
+          # esta arriba cuando el nuevo frontend empieza a llamarla.
+          LISTA=""
+          for APP in api worker web; do
+            VAL="${DESPLEGAR[$APP]:-false}"
+            echo "$APP=$VAL" >> "$GITHUB_OUTPUT"
+            [ "$VAL" = "true" ] && LISTA="$LISTA\"$APP\","
+          done
+
+          echo "apps=[${LISTA%,}]" >> "$GITHUB_OUTPUT"
+          echo "Apps a desplegar: [${LISTA%,}]"
 
   deploy:
     name: ${{ matrix.app }} → ${{ needs.plan.outputs.environment }}
     runs-on: ubuntu-latest
     needs: plan
-    if: needs.plan.outputs[matrix.app] == 'true'
+    if: needs.plan.outputs.apps != '[]'
     # El entorno `production` lleva revisión manual obligatoria en GitHub.
     environment:
       name: ${{ needs.plan.outputs.environment }}
     strategy:
       fail-fast: false
-      # El backend antes que el frontend: si hay cambio de contrato, la API ya
-      # está arriba cuando el nuevo frontend empieza a llamarla.
+      # De una en una y en el orden de la lista: api, worker, web.
       max-parallel: 1
       matrix:
-        app: [api, worker, web]
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
     steps:
       - name: Disparar despliegue en Coolify
         env:
