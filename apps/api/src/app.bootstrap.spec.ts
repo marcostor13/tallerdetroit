@@ -84,6 +84,11 @@ describe('Arranque de la API', () => {
     const res = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
     expect(res.body.status).toBe('ok');
     expect(res.body.info.mongodb.status).toBe('up');
+
+    // El healthcheck solo vigila dependencias: nada de metricas del proceso.
+    // Un limite de heap aqui marcaria la API como no sana durante un render de
+    // PDF y Coolify revertiria un despliegue sano.
+    expect(Object.keys(res.body.info)).toEqual(['mongodb']);
   }, 30_000);
 
   it('/api/v1/health/live responde sin sesión', async () => {
