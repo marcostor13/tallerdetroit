@@ -118,7 +118,7 @@ sola pantalla de negocio.
 ## Criterios de aceptación
 
 - [x] Un `git push` a `develop` despliega automáticamente a develop en < 10 min
-- [ ] Un `git push` a `main` despliega a producción tras la aprobación manual
+- [x] Un `git push` a `main` despliega a producción tras la aprobación manual
 - [x] Un cambio **solo** en `apps/web` no ejecuta ni reconstruye `api` ni `worker` (T4)
 - [x] Un cambio **solo** en `apps/api` no ejecuta ni reconstruye `web` (T4)
 - [x] `https://dev-tallerdetroit.tecdidata.com` responde con SSL válido y la app carga
