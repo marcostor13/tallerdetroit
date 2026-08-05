@@ -12,7 +12,13 @@ import { type EnvironmentVariables, corsOrigins } from './config/configuration';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  // `abortOnError: false` hace que un fallo de inicialización se propague como
+  // excepción en lugar de matar el proceso en silencio: con `bufferLogs` los
+  // logs aún no se han volcado y el contenedor moriría sin dejar rastro.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    abortOnError: false,
+  });
 
   app.useLogger(app.get(Logger));
 
@@ -71,4 +77,11 @@ async function bootstrap(): Promise<void> {
     .log(`API escuchando en :${port} · entorno ${nodeEnv} · docs en /api/docs`, 'Bootstrap');
 }
 
-void bootstrap();
+bootstrap().catch((error: unknown) => {
+  // Único punto donde se escribe a la consola directamente: si el arranque
+  // falla, el logger estructurado todavía no existe y este mensaje es lo único
+  // que verá quien mire los logs del contenedor.
+  console.error('[bootstrap] La API no pudo arrancar.');
+  console.error(error instanceof Error ? (error.stack ?? error.message) : error);
+  process.exit(1);
+});

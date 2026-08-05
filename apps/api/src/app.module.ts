@@ -43,8 +43,13 @@ import { HealthModule } from './health/health.module';
       useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
         uri: config.get('MONGODB_URI', { infer: true }),
         autoIndex: config.get('NODE_ENV', { infer: true }) !== 'production',
-        retryAttempts: 5,
-        retryDelay: 3000,
+        // Fallar rápido y ruidoso. Con los tiempos por defecto, una base
+        // inalcanzable deja el arranque colgado: el contenedor queda vivo pero
+        // sin escuchar, el healthcheck falla y en los logs no aparece la causa.
+        retryAttempts: 3,
+        retryDelay: 2000,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
       }),
     }),
 
