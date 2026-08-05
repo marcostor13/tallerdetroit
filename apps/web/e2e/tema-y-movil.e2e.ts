@@ -1,10 +1,26 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Requisitos transversales obligatorios de `especificaciones.md`:
  *  · tema claro/oscuro según el navegador y switch en la cabecera
  *  · mobile first, y en móvil la app debe comportarse como app
  */
+
+/**
+ * Espera a que el color de fondo converja.
+ *
+ * El `body` tiene una transición de 200 ms, y `getComputedStyle` durante una
+ * transición devuelve el valor INTERPOLADO, no el final: leerlo justo después
+ * de pulsar el switch da un color intermedio. `expect.poll` reintenta hasta que
+ * el navegador termina de pintar.
+ */
+async function esperarFondo(page: Page, color: string): Promise<void> {
+  await expect
+    .poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor), {
+      timeout: 5000,
+    })
+    .toBe(color);
+}
 
 test.describe('Tema claro / oscuro', () => {
   test('sigue la preferencia oscura del navegador sin destello', async ({ browser }) => {
@@ -14,8 +30,7 @@ test.describe('Tema claro / oscuro', () => {
 
     // El script inline de index.html resuelve el tema antes del primer pintado.
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'system');
-    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(bg).toBe('rgb(19, 19, 19)');
+    await esperarFondo(page, 'rgb(19, 19, 19)');
 
     await context.close();
   });
@@ -24,8 +39,7 @@ test.describe('Tema claro / oscuro', () => {
     const context = await browser.newContext({ colorScheme: 'light' });
     const page = await context.newPage();
     await page.goto('/login');
-    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(bg).toBe('rgb(249, 249, 249)');
+    await esperarFondo(page, 'rgb(249, 249, 249)');
     await context.close();
   });
 
@@ -36,15 +50,11 @@ test.describe('Tema claro / oscuro', () => {
 
     await page.getByRole('radio', { name: 'Tema claro' }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-      'rgb(249, 249, 249)',
-    );
+    await esperarFondo(page, 'rgb(249, 249, 249)');
 
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-      'rgb(249, 249, 249)',
-    );
+    await esperarFondo(page, 'rgb(249, 249, 249)');
 
     await context.close();
   });
