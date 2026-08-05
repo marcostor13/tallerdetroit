@@ -9,6 +9,9 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
+# Coolify inyecta NODE_ENV=production; con ese valor npm salta las
+# devDependencies y el build se queda sin tsc ni nest.
+ENV NODE_ENV=development
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 COPY package.json package-lock.json ./

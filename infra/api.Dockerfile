@@ -5,6 +5,10 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
+# Coolify inyecta NODE_ENV=production; con ese valor npm salta las
+# devDependencies y el build se queda sin tsc ni nest.
+ENV NODE_ENV=development
+
 COPY package.json package-lock.json ./
 COPY libs/shared/package.json libs/shared/
 COPY apps/api/package.json apps/api/
