@@ -63,6 +63,15 @@ export default tseslint.config(
     },
   },
 
+  // Los scripts de siembra y migración son herramientas de línea de comandos:
+  // informar por consola es precisamente lo que deben hacer.
+  {
+    files: ['**/seeds/**/*.ts', '**/migrations/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // Tests: se permite el ruido propio de las utilidades de prueba.
   {
     files: ['**/*.spec.ts', '**/*.e2e.ts', 'apps/web/e2e/**/*.ts'],
