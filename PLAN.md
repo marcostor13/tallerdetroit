@@ -12,15 +12,15 @@ en `.claude/DESIGN-SYSTEM.md`.
 
 ## Estado actual
 
-| Fase                                     | Estado                                        | Semanas | Cierre |
-| ---------------------------------------- | --------------------------------------------- | ------- | ------ |
-| **F0** Fundaciones                       | 🟡 En curso — base entregada, falta bootstrap | 2–3     | —      |
-| **F1** Núcleo de informes (MVP)          | ⬜ Pendiente                                  | 7–9     | —      |
-| **F2** Mediciones dimensionales          | ⬜ Pendiente                                  | 4–6     | —      |
-| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                                  | 5–7     | —      |
-| **F4** PWA, movilidad y offline          | ⬜ Pendiente                                  | 4–6     | —      |
-| **F5** Analítica y conocimiento          | ⬜ Pendiente                                  | 4–6     | —      |
-| **F6** Integración corporativa           | ⬜ Pendiente                                  | 4–6     | —      |
+| Fase                                     | Estado                                   | Semanas | Cierre |
+| ---------------------------------------- | ---------------------------------------- | ------- | ------ |
+| **F0** Fundaciones                       | 🟡 En curso — solo falta la API en línea | 2–3     | —      |
+| **F1** Núcleo de informes (MVP)          | ⬜ Pendiente                             | 7–9     | —      |
+| **F2** Mediciones dimensionales          | ⬜ Pendiente                             | 4–6     | —      |
+| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                             | 5–7     | —      |
+| **F4** PWA, movilidad y offline          | ⬜ Pendiente                             | 4–6     | —      |
+| **F5** Analítica y conocimiento          | ⬜ Pendiente                             | 4–6     | —      |
+| **F6** Integración corporativa           | ⬜ Pendiente                             | 4–6     | —      |
 
 > Actualiza esta tabla al abrir y cerrar cada fase (skill `/dps-fase`).
 

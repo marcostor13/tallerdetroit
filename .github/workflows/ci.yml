@@ -160,5 +160,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      # El build falla ante vulnerabilidad crítica (§20).
-      - run: npm audit --audit-level=critical
+
+      # Bloqueante: lo que llega al contenedor de producción (§20).
+      - name: Vulnerabilidades en dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
+
+      # Informativo: las de desarrollo no se despliegan, así que no rompen el
+      # build, pero quedan visibles en el resumen del run.
+      - name: Vulnerabilidades en dependencias de desarrollo
+        if: always()
+        continue-on-error: true
+        run: |
+          echo '### Auditoría de dependencias de desarrollo' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          npm audit --audit-level=high 2>&1 | tail -25 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
