@@ -64,7 +64,10 @@ export type MeasurementShape = 'escalar' | 'vector' | 'matriz';
 
 export type ColumnSource =
   | { readonly tipo: 'fija'; readonly columnas: readonly string[] }
-  | { readonly tipo: 'modelo'; readonly campo: 'apoyosBancada' | 'cilindros' | 'cilindrosPorBanco' };
+  | {
+      readonly tipo: 'modelo';
+      readonly campo: 'apoyosBancada' | 'cilindros' | 'cilindrosPorBanco';
+    };
 
 export interface MeasurementTemplate {
   readonly codigo: string;

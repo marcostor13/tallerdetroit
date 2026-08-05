@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  type ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +21,13 @@ import { ThemeToggleComponent } from '../../shared/ui/theme-toggle/theme-toggle.
   selector: 'dps-login-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, FieldComponent, IconComponent, LogoComponent, ThemeToggleComponent],
+  imports: [
+    ReactiveFormsModule,
+    FieldComponent,
+    IconComponent,
+    LogoComponent,
+    ThemeToggleComponent,
+  ],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
@@ -26,6 +40,9 @@ export class LoginPage {
   protected readonly submitted = signal(false);
   protected readonly serverError = signal('');
   protected readonly showPassword = signal(false);
+
+  private readonly emailInput = viewChild<ElementRef<HTMLInputElement>>('emailInput');
+  private readonly passwordInput = viewChild<ElementRef<HTMLInputElement>>('passwordInput');
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -69,9 +86,7 @@ export class LoginPage {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      // Lleva el foco al primer campo con error (UX-07).
-      const first = document.querySelector<HTMLElement>('[aria-invalid="true"]');
-      first?.focus();
+      this.focusFirstInvalid();
       return;
     }
 
@@ -85,6 +100,21 @@ export class LoginPage {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  /**
+   * Lleva el foco al primer campo con error (UX-07).
+   *
+   * Se resuelve contra los controles del formulario y no consultando el DOM por
+   * `aria-invalid`: en modo zoneless ese atributo aún no está pintado en el
+   * momento del envío, así que la búsqueda no encontraría nada.
+   */
+  private focusFirstInvalid(): void {
+    const candidates: readonly [boolean, HTMLInputElement | undefined][] = [
+      [this.form.controls.email.invalid, this.emailInput()?.nativeElement],
+      [this.form.controls.password.invalid, this.passwordInput()?.nativeElement],
+    ];
+    candidates.find(([invalid]) => invalid)?.[1]?.focus();
   }
 
   private describe(error: unknown): string {

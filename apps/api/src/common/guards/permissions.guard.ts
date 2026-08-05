@@ -1,4 +1,9 @@
-import { type CanActivate, type ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  type CanActivate,
+  type ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Permission } from '@dps/shared';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';

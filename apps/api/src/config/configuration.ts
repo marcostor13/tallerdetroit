@@ -96,9 +96,52 @@ export class EnvironmentVariables {
   @Min(60)
   S3_SIGNED_URL_TTL = 900;
 
+  // --- Correo saliente ---
+  // `gmail` usa una contraseña de aplicación; `smtp` usa SMTP_URL.
+  @IsOptional()
+  @IsIn(['gmail', 'smtp', 'none'])
+  EMAIL_PROVIDER?: 'gmail' | 'smtp' | 'none';
+
+  @IsOptional()
+  @IsString()
+  USER_EMAIL?: string;
+
+  @IsOptional()
+  @IsString()
+  PASSWORD_EMAIL?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_URL?: string;
+
+  @IsString()
+  MAIL_FROM = 'Informes Técnicos DPS <no-reply@detroitpower.pe>';
+
   @IsOptional()
   @IsString()
   SENTRY_DSN?: string;
+}
+
+/**
+ * Configuración del transporte de correo a partir del proveedor elegido.
+ * Las notificaciones (envío a revisión, observado, aprobado, emitido) llegan en
+ * F3; esto deja resuelta la configuración desde ahora.
+ */
+export function mailTransport(config: EnvironmentVariables) {
+  if (config.EMAIL_PROVIDER === 'gmail') {
+    if (!config.USER_EMAIL || !config.PASSWORD_EMAIL) {
+      throw new Error('EMAIL_PROVIDER=gmail requiere USER_EMAIL y PASSWORD_EMAIL.');
+    }
+    return {
+      service: 'gmail',
+      auth: { user: config.USER_EMAIL, pass: config.PASSWORD_EMAIL },
+    } as const;
+  }
+  if (config.EMAIL_PROVIDER === 'smtp') {
+    if (!config.SMTP_URL) throw new Error('EMAIL_PROVIDER=smtp requiere SMTP_URL.');
+    return { url: config.SMTP_URL } as const;
+  }
+  return null;
 }
 
 const NUMERIC_KEYS = new Set([

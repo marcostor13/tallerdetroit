@@ -29,17 +29,17 @@ La especificación funcional está en `especificacionplataformainformestecnicos.
 Estos vienen de `especificaciones.md` y §14.4 de la especificación. **No son adornos**: de ellos
 depende que los técnicos migren desde la PWA que ya usan.
 
-| | Requisito |
-|---|---|
-| UX-01 | Autoguardado cada 20–30 s con indicador "Guardado hace X" |
-| UX-02 | Offline first — la PWA actual ya lo tiene y no puede perderse |
-| UX-04 | Compresión de imágenes en cliente (máx. 1600 px, JPEG q80) antes de subir |
-| UX-05 | Duplicar el informe anterior del mismo motor como punto de partida |
-| UX-06 | Vista previa WYSIWYG idéntica al PDF, en panel lateral |
-| UX-07 | Validación con lista de campos faltantes **navegables**, no un alert genérico |
-| UX-09 | Biblioteca de frases buscable por bloque |
-| — | Tema claro/oscuro automático + switch tri-estado en el header |
-| — | Mobile first; en móvil se comporta como app (nav inferior, gestos, safe areas) |
+|       | Requisito                                                                      |
+| ----- | ------------------------------------------------------------------------------ |
+| UX-01 | Autoguardado cada 20–30 s con indicador "Guardado hace X"                      |
+| UX-02 | Offline first — la PWA actual ya lo tiene y no puede perderse                  |
+| UX-04 | Compresión de imágenes en cliente (máx. 1600 px, JPEG q80) antes de subir      |
+| UX-05 | Duplicar el informe anterior del mismo motor como punto de partida             |
+| UX-06 | Vista previa WYSIWYG idéntica al PDF, en panel lateral                         |
+| UX-07 | Validación con lista de campos faltantes **navegables**, no un alert genérico  |
+| UX-09 | Biblioteca de frases buscable por bloque                                       |
+| —     | Tema claro/oscuro automático + switch tri-estado en el header                  |
+| —     | Mobile first; en móvil se comporta como app (nav inferior, gestos, safe areas) |
 
 ## Cómo trabajar
 

@@ -39,11 +39,7 @@ let nextId = 0;
       <ng-content />
 
       @if (error()) {
-        <p
-          [id]="errorId"
-          class="flex items-start gap-1.5 text-body-sm text-error"
-          role="alert"
-        >
+        <p [id]="errorId" class="flex items-start gap-1.5 text-body-sm text-error" role="alert">
           <dps-icon name="error" [size]="16" class="mt-0.5 shrink-0" />
           <span>{{ error() }}</span>
         </p>

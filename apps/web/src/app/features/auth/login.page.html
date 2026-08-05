@@ -3,18 +3,13 @@
     <dps-theme-toggle />
   </div>
 
-  <main
-    id="contenido"
-    class="flex flex-1 items-center justify-center px-margin-mobile pb-16 md:px-gutter"
-  >
+  <main id="contenido" class="flex flex-1 items-center justify-center px-margin-mobile pb-16 md:px-gutter">
     <div class="w-full max-w-[420px]">
       <div class="mb-8 flex flex-col items-center gap-6 text-center">
         <dps-logo variant="lockup" [height]="48" />
         <div>
           <h1 class="font-headline text-headline-lg-mobile text-on-surface">Informes técnicos</h1>
-          <p class="mt-2 text-body-md text-secondary">
-            Accede con tu cuenta corporativa para continuar.
-          </p>
+          <p class="mt-2 text-body-md text-secondary">Accede con tu cuenta corporativa para continuar.</p>
         </div>
       </div>
 
@@ -32,6 +27,7 @@
 
           <dps-field label="Correo corporativo" [error]="emailError()" #emailField>
             <input
+              #emailInput
               type="email"
               class="dps-input"
               [id]="emailField.fieldId"
@@ -49,6 +45,7 @@
           <dps-field label="Contraseña" [error]="passwordError()" #passField>
             <div class="relative">
               <input
+                #passwordInput
                 [type]="showPassword() ? 'text' : 'password'"
                 class="dps-input pr-12"
                 [id]="passField.fieldId"
@@ -90,9 +87,7 @@
         </form>
       </div>
 
-      <p class="mt-6 text-center font-mono text-label-sm uppercase text-gray-medium">
-        Detroit Power System Perú
-      </p>
+      <p class="mt-6 text-center font-mono text-label-sm uppercase text-gray-medium">Detroit Power System Perú</p>
     </div>
   </main>
 </div>

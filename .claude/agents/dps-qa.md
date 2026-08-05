@@ -37,19 +37,19 @@ Cierra con un veredicto: **la fase se cierra** o **no se cierra**, y la lista de
 
 ## Requisitos no funcionales a comprobar siempre (§22)
 
-| ID | Meta |
-|---|---|
-| NFR-01 | Carga inicial de la PWA < 3 s en 4G |
-| NFR-02 | Autoguardado percibido < 500 ms |
-| NFR-03 | Generación de PDF con 60 fotos < 45 s |
-| NFR-06 | 30 usuarios simultáneos sin degradación |
-| NFR-09 | WCAG 2.1 AA en formularios y navegación |
+| ID     | Meta                                                                    |
+| ------ | ----------------------------------------------------------------------- |
+| NFR-01 | Carga inicial de la PWA < 3 s en 4G                                     |
+| NFR-02 | Autoguardado percibido < 500 ms                                         |
+| NFR-03 | Generación de PDF con 60 fotos < 45 s                                   |
+| NFR-06 | 30 usuarios simultáneos sin degradación                                 |
+| NFR-09 | WCAG 2.1 AA en formularios y navegación                                 |
 | NFR-11 | Cobertura ≥ 70% backend · ≥ 50% frontend · e2e en los 5 flujos críticos |
 
 ## Comprobaciones transversales de `especificaciones.md`
 
 - [ ] El tema sigue a `prefers-color-scheme` **y** el switch del header lo sobrescribe y persiste
-- [ ] No hay *flash* de tema claro al cargar en modo oscuro
+- [ ] No hay _flash_ de tema claro al cargar en modo oscuro
 - [ ] La app es usable a 360 px con nav inferior y áreas seguras respetadas
 - [ ] El CI ejecuta **solo** frontend cuando el cambio es de frontend, y **solo** backend cuando es de backend
 - [ ] Push a `develop` despliega a develop; push a `main` despliega a producción

@@ -1,0 +1,115 @@
+import { expect, test } from '@playwright/test';
+
+/**
+ * Requisitos transversales obligatorios de `especificaciones.md`:
+ *  · tema claro/oscuro según el navegador y switch en la cabecera
+ *  · mobile first, y en móvil la app debe comportarse como app
+ */
+
+test.describe('Tema claro / oscuro', () => {
+  test('sigue la preferencia oscura del navegador sin destello', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'dark' });
+    const page = await context.newPage();
+    await page.goto('/login');
+
+    // El script inline de index.html resuelve el tema antes del primer pintado.
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'system');
+    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(bg).toBe('rgb(19, 19, 19)');
+
+    await context.close();
+  });
+
+  test('sigue la preferencia clara del navegador', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const page = await context.newPage();
+    await page.goto('/login');
+    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(bg).toBe('rgb(249, 249, 249)');
+    await context.close();
+  });
+
+  test('el switch sobrescribe la preferencia y persiste al recargar', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'dark' });
+    const page = await context.newPage();
+    await page.goto('/login');
+
+    await page.getByRole('radio', { name: 'Tema claro' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
+      'rgb(249, 249, 249)',
+    );
+
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
+      'rgb(249, 249, 249)',
+    );
+
+    await context.close();
+  });
+
+  test('el logotipo cambia según el tema', async ({ browser }) => {
+    const dark = await browser.newContext({ colorScheme: 'dark' });
+    const pageDark = await dark.newPage();
+    await pageDark.goto('/login');
+    await expect(pageDark.locator('dps-logo img')).toHaveAttribute('src', /logo-detroit-dark/);
+    await dark.close();
+
+    const light = await browser.newContext({ colorScheme: 'light' });
+    const pageLight = await light.newPage();
+    await pageLight.goto('/login');
+    await expect(pageLight.locator('dps-logo img')).toHaveAttribute('src', /logo-detroit\.png/);
+    await light.close();
+  });
+
+  test('el theme-color de la barra del navegador acompaña al tema', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'dark' });
+    const page = await context.newPage();
+    await page.goto('/login');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#131313');
+    await context.close();
+  });
+});
+
+test.describe('Mobile first', () => {
+  test('no hay scroll horizontal a 360 px', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto('/login');
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('los objetivos táctiles miden al menos 44 px', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto('/login');
+
+    const submit = page.getByRole('button', { name: /iniciar sesión/i });
+    const box = await submit.boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    const email = page.getByLabel(/correo corporativo/i);
+    const emailBox = await email.boundingBox();
+    expect(emailBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
+  test('la PWA declara manifest, iconos maskable y service worker', async ({ page, request }) => {
+    await page.goto('/login');
+    await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+
+    const manifest = await (await request.get('/manifest.webmanifest')).json();
+    expect(manifest.display).toBe('standalone');
+    expect(manifest.theme_color).toBe('#983128');
+    expect(manifest.icons.some((i: { purpose?: string }) => i.purpose === 'maskable')).toBe(true);
+
+    expect((await request.get('/ngsw.json')).ok()).toBe(true);
+  });
+
+  test('existe un enlace para saltar al contenido', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.locator('.skip-link')).toHaveAttribute('href', '#contenido');
+  });
+});

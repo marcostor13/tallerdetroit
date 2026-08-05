@@ -18,7 +18,7 @@ con casilla, criterios de aceptación y entregables.
    - F1 requiere la convención de correlativos confirmada (D3).
    - F0 requiere resolver si la plataforma es multi-empresa (D5) — afecta el modelo de datos.
 3. Crea las tareas con `TaskCreate`, una por historia, con las dependencias entre ellas.
-4. Marca la fase como *en curso* en la tabla de estado de `PLAN.md`.
+4. Marca la fase como _en curso_ en la tabla de estado de `PLAN.md`.
 
 ## Durante la fase
 

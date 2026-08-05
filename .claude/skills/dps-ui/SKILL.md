@@ -33,6 +33,7 @@ export class ReportHeaderComponent {
 ```
 
 Reglas:
+
 - Standalone siempre. `OnPush` siempre. `input()` / `output()` / `model()`, no decoradores viejos.
 - Control flow `@if` / `@for` / `@switch`. Nada de `*ngIf` / `*ngFor`.
 - Estado local con `signal`, derivado con `computed`, efectos solo cuando hay side-effect real.
@@ -46,9 +47,9 @@ Reglas:
 ```html
 <!-- MAL -->
 <div class="bg-[#ffffff] border border-[#e5e5e5] text-[#7A7A7A] rounded-[4px]">
-
-<!-- BIEN -->
-<div class="bg-surface-container-lowest border border-subtle text-secondary rounded">
+  <!-- BIEN -->
+  <div class="bg-surface-container-lowest border border-subtle text-secondary rounded"></div>
+</div>
 ```
 
 - Los tokens funcionan en ambos temas por variables CSS: **no** añadas variantes `dark:` para color.
@@ -71,17 +72,19 @@ Plantilla mínima de un campo:
     [attr.aria-invalid]="hasError() || null"
     [attr.aria-describedby]="hasError() ? id + '-err' : null"
     [attr.aria-required]="required() || null"
-    [attr.inputmode]="numeric() ? 'decimal' : null" />
+    [attr.inputmode]="numeric() ? 'decimal' : null"
+  />
   @if (hasError()) {
-    <p [id]="id + '-err'" class="text-body-sm text-error flex items-center gap-1">
-      <span class="material-symbols-outlined text-[16px]" aria-hidden="true">error</span>
-      {{ errorMessage() }}
-    </p>
+  <p [id]="id + '-err'" class="text-body-sm text-error flex items-center gap-1">
+    <span class="material-symbols-outlined text-[16px]" aria-hidden="true">error</span>
+    {{ errorMessage() }}
+  </p>
   }
 </div>
 ```
 
 Checklist obligatorio por campo:
+
 - [ ] `<label>` real asociado por `for`/`id`. El placeholder **no** es etiqueta.
 - [ ] Placeholder = formato de ejemplo (`0.00 mm`), no instrucción.
 - [ ] Mensaje de error dice **cómo corregir**, no solo qué falló.
@@ -94,13 +97,14 @@ Checklist obligatorio por campo:
 
 - Cabecera fija 64 px + barra inferior fija 64 px con ≤ 5 destinos.
 - `padding-bottom` del contenido ≥ 80 px + `env(safe-area-inset-bottom)`.
-- Sub-navegación en *bottom sheet*, no en dropdown.
+- Sub-navegación en _bottom sheet_, no en dropdown.
 - Tabla de > 3 columnas → lista de cards. Excepción: grillas de medición (scroll con encabezado fijo).
 - Objetivos táctiles ≥ 44 × 44 px con ≥ 8 px de separación.
 
 ## 6. Grilla de mediciones
 
 Si tocas la grilla, además:
+
 - Semáforo con **icono + color + `aria-label` textual**. El color nunca solo.
 - Celdas calculadas (`Ovalidad`) no focusables, con candado y fondo `surface-container-low`.
 - Teclado completo: `Tab`, flechas, `Enter` baja fila, `Ctrl+V` pega rango de Excel, `Esc` revierte.

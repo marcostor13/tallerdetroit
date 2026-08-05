@@ -17,13 +17,13 @@ Los tres archivos describen el mismo problema desde tres ángulos: el DOCX es el
 
 Cinco conclusiones que condicionan todo el diseño:
 
-| # | Hallazgo | Consecuencia de diseño |
-|---|---|---|
-| 1 | Los dos informes comparten cabecera y cierre idénticos, pero el cuerpo difiere en ~40% de sus secciones (uno tiene turbos, el otro tiene seguidores, varillas, balancines y CAC) | El cuerpo debe ser una **secuencia ordenable de bloques**, no un formulario fijo |
-| 2 | Las tablas de medición cambian de dimensión según el motor: 16V → 9 apoyos de bancada / 8 cilindros por banco; 20V → 11 apoyos / 10 cilindros por banco | El **número de cilindros y apoyos debe derivarse del modelo de motor** (maestro), y generar la grilla de captura automáticamente |
-| 3 | Los valores nominales y tolerancias también dependen del modelo: encaje inferior 189.000 mm (16V4000C21) vs 193.000 mm (20V4000C23); máximos +0.15 / +0.08 mm | Se necesita un maestro de **especificaciones técnicas por modelo de motor**, no valores escritos a mano en el informe |
-| 4 | Datos maestros escritos libremente producen inconsistencias reales: `KOMATZU` vs `KOMATSU`, `TOQUEPALA` vs `SPCC. TOQUEPALA` | Todo dato repetible debe venir de un **CRUD maestro con autocompletado**, no de un `<input type=text>` |
-| 5 | El prototipo HTML tiene secciones "Parámetros ECU" (rpm, kW, aislamiento de generador, frecuencia) que **no aplican** a una evaluación de motor de camión minero | Las secciones deben ser **condicionales por tipo de servicio / tipo de equipo** |
+| #   | Hallazgo                                                                                                                                                                         | Consecuencia de diseño                                                                                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Los dos informes comparten cabecera y cierre idénticos, pero el cuerpo difiere en ~40% de sus secciones (uno tiene turbos, el otro tiene seguidores, varillas, balancines y CAC) | El cuerpo debe ser una **secuencia ordenable de bloques**, no un formulario fijo                                                 |
+| 2   | Las tablas de medición cambian de dimensión según el motor: 16V → 9 apoyos de bancada / 8 cilindros por banco; 20V → 11 apoyos / 10 cilindros por banco                          | El **número de cilindros y apoyos debe derivarse del modelo de motor** (maestro), y generar la grilla de captura automáticamente |
+| 3   | Los valores nominales y tolerancias también dependen del modelo: encaje inferior 189.000 mm (16V4000C21) vs 193.000 mm (20V4000C23); máximos +0.15 / +0.08 mm                    | Se necesita un maestro de **especificaciones técnicas por modelo de motor**, no valores escritos a mano en el informe            |
+| 4   | Datos maestros escritos libremente producen inconsistencias reales: `KOMATZU` vs `KOMATSU`, `TOQUEPALA` vs `SPCC. TOQUEPALA`                                                     | Todo dato repetible debe venir de un **CRUD maestro con autocompletado**, no de un `<input type=text>`                           |
+| 5   | El prototipo HTML tiene secciones "Parámetros ECU" (rpm, kW, aislamiento de generador, frecuencia) que **no aplican** a una evaluación de motor de camión minero                 | Las secciones deben ser **condicionales por tipo de servicio / tipo de equipo**                                                  |
 
 **Recomendación central:** construir un **motor de plantillas de informe** (template engine) donde SER-FOR-002 es la primera plantilla publicada. El técnico no "llena un formulario"; instancia una plantilla y arma un informe con bloques tipados. Esto resuelve simultáneamente el crecimiento del sistema de calidad (SER-FOR-003, 004…) y la variabilidad entre tipos de servicio.
 
@@ -50,75 +50,75 @@ VII.  RECOMENDACIÓN                → lista de bullets
 
 ### 2.2 Campos de cabecera (I y II) — comparativa literal
 
-| Campo | OT746 (doc 1) | OT898 (doc 2) | Observación para el diseño |
-|---|---|---|---|
-| N° de Informe | `ITS-T-E-25-003-746` | `ITS-T-E-26-003-0898` | Código compuesto → **generar automáticamente** |
-| Ubicación / Locación | TALLER - LIMA | TALLER - LIMA | Maestro de sedes/locaciones |
-| Motivo | EVALUACIÓN DE MOTOR W6 | QL4 / W6-1 | Maestro de motivos + tipo de intervención |
-| Cliente | SPCC. TOQUEPALA | TOQUEPALA | **Mismo cliente, dos escrituras** → maestro obligatorio |
-| N° O/T | LIM-TAL-000746 | LIM-TAL-000898 | Prefijo `LIM-TAL` = sede + área. El HTML usa `LIM-SCA` (servicio campo) → **maestro de series de correlativo** |
-| Fecha | 18/07/2025 | 22/06/2026 | Fecha de emisión, distinta de las fechas de trabajo |
-| Elaborado por / Cargo | REYNALDO CACERES / TÉCNICO SENIOR | JOSÉ LUIS ESTRELLA / SUPERVISOR C | Maestro de personal (cargo se autocompleta) |
-| Para / Cargo | KEITH BECERRA S. / JEFE TALLER | KEITH BECERRA / JEFE DE TALLER | Mismo destinatario, dos escrituras y dos cargos |
-| Equipo | VQT-33 | VQT-130 | Maestro de equipos (flota del cliente) |
-| Marca / Modelo equipo | KOMATSU / *(vacío)* | KOMATZU / 930E4-SE | **Typo real** + campo vacío |
-| Marca / Modelo motor | MTU / 16V4000C21 | MTU / 20V4000C23 | Maestro de modelos de motor |
-| N° de Serie | 5272012973 | 5282011236 | **Clave natural del motor** → historial por serie |
-| Potencia | *(vacío)* | 3400 HP / 2500 KW @ 1800 rpm | Debe venir del modelo, no tipearse |
-| Horas totales / parciales | 18, 760 / 18, 760 | 17694 / 17694 | Formato inconsistente → campo numérico |
-| Último mantenimiento | W6 | `---` | Debería ser referencia a un informe anterior |
-| Tipo de reparación | W6-1 | QL4 | Maestro de tipos de intervención MTU |
-| Garantía | No ☒ | No ☒ | Booleano + fechas inicio/fin |
+| Campo                     | OT746 (doc 1)                     | OT898 (doc 2)                     | Observación para el diseño                                                                                     |
+| ------------------------- | --------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| N° de Informe             | `ITS-T-E-25-003-746`              | `ITS-T-E-26-003-0898`             | Código compuesto → **generar automáticamente**                                                                 |
+| Ubicación / Locación      | TALLER - LIMA                     | TALLER - LIMA                     | Maestro de sedes/locaciones                                                                                    |
+| Motivo                    | EVALUACIÓN DE MOTOR W6            | QL4 / W6-1                        | Maestro de motivos + tipo de intervención                                                                      |
+| Cliente                   | SPCC. TOQUEPALA                   | TOQUEPALA                         | **Mismo cliente, dos escrituras** → maestro obligatorio                                                        |
+| N° O/T                    | LIM-TAL-000746                    | LIM-TAL-000898                    | Prefijo `LIM-TAL` = sede + área. El HTML usa `LIM-SCA` (servicio campo) → **maestro de series de correlativo** |
+| Fecha                     | 18/07/2025                        | 22/06/2026                        | Fecha de emisión, distinta de las fechas de trabajo                                                            |
+| Elaborado por / Cargo     | REYNALDO CACERES / TÉCNICO SENIOR | JOSÉ LUIS ESTRELLA / SUPERVISOR C | Maestro de personal (cargo se autocompleta)                                                                    |
+| Para / Cargo              | KEITH BECERRA S. / JEFE TALLER    | KEITH BECERRA / JEFE DE TALLER    | Mismo destinatario, dos escrituras y dos cargos                                                                |
+| Equipo                    | VQT-33                            | VQT-130                           | Maestro de equipos (flota del cliente)                                                                         |
+| Marca / Modelo equipo     | KOMATSU / _(vacío)_               | KOMATZU / 930E4-SE                | **Typo real** + campo vacío                                                                                    |
+| Marca / Modelo motor      | MTU / 16V4000C21                  | MTU / 20V4000C23                  | Maestro de modelos de motor                                                                                    |
+| N° de Serie               | 5272012973                        | 5282011236                        | **Clave natural del motor** → historial por serie                                                              |
+| Potencia                  | _(vacío)_                         | 3400 HP / 2500 KW @ 1800 rpm      | Debe venir del modelo, no tipearse                                                                             |
+| Horas totales / parciales | 18, 760 / 18, 760                 | 17694 / 17694                     | Formato inconsistente → campo numérico                                                                         |
+| Último mantenimiento      | W6                                | `---`                             | Debería ser referencia a un informe anterior                                                                   |
+| Tipo de reparación        | W6-1                              | QL4                               | Maestro de tipos de intervención MTU                                                                           |
+| Garantía                  | No ☒                              | No ☒                              | Booleano + fechas inicio/fin                                                                                   |
 
 ### 2.3 Cuerpo — bloques de trabajo observados
 
 Cada bloque tiene la misma anatomía: **título en mayúsculas → 1..n hallazgos en texto → 0..n fotos con pie de figura numerado (`Fig.01`, `Fig.02`…) → 0..n tablas de medición**.
 
-| Bloque | Doc 1 (16V, W6-1) | Doc 2 (20V, QL4) |
-|---|:---:|:---:|
-| Recepción del motor (fecha) | ✅ | ✅ |
-| Inventario y desarmado (anexo SER-T-FOR-002) | ✅ | ✅ |
-| Juego axial del cigüeñal | 0.48 mm | 0.51 mm |
-| Componentes faltantes | ✅ | ✅ |
-| Componentes averiados | — | ✅ |
-| Desmontaje de turbos | — | ✅ |
-| Desmontaje de pistones | ✅ (16) | ✅ (20) |
-| Desmontaje de bielas y metales | ✅ (16) | ✅ (20) |
-| Desmontaje de cilindros / camisas | ✅ | ✅ |
-| Housing delantero inferior (piñones A/B) | ✅ | ✅ |
-| Housing posterior | — | ✅ |
-| Cigüeñal y metales de bancada | ✅ | ✅ |
-| Eje de levas (axial / contragolpe) | ✅ | ✅ |
-| Bloque de motor (NDT, encajes, túnel) | ✅ | ✅ |
-| Desmontaje de seguidores | ✅ | — |
-| Varillas de seguidor | ✅ | — |
-| Balancines y reguladores | ✅ | — |
-| Prueba hidrostática CAC | ✅ | — |
-| Culatas | ✅ | ✅ (en conclusiones) |
-| Componentes tercerizados | — | ✅ |
+| Bloque                                       | Doc 1 (16V, W6-1) |   Doc 2 (20V, QL4)   |
+| -------------------------------------------- | :---------------: | :------------------: |
+| Recepción del motor (fecha)                  |        ✅         |          ✅          |
+| Inventario y desarmado (anexo SER-T-FOR-002) |        ✅         |          ✅          |
+| Juego axial del cigüeñal                     |      0.48 mm      |       0.51 mm        |
+| Componentes faltantes                        |        ✅         |          ✅          |
+| Componentes averiados                        |         —         |          ✅          |
+| Desmontaje de turbos                         |         —         |          ✅          |
+| Desmontaje de pistones                       |      ✅ (16)      |       ✅ (20)        |
+| Desmontaje de bielas y metales               |      ✅ (16)      |       ✅ (20)        |
+| Desmontaje de cilindros / camisas            |        ✅         |          ✅          |
+| Housing delantero inferior (piñones A/B)     |        ✅         |          ✅          |
+| Housing posterior                            |         —         |          ✅          |
+| Cigüeñal y metales de bancada                |        ✅         |          ✅          |
+| Eje de levas (axial / contragolpe)           |        ✅         |          ✅          |
+| Bloque de motor (NDT, encajes, túnel)        |        ✅         |          ✅          |
+| Desmontaje de seguidores                     |        ✅         |          —           |
+| Varillas de seguidor                         |        ✅         |          —           |
+| Balancines y reguladores                     |        ✅         |          —           |
+| Prueba hidrostática CAC                      |        ✅         |          —           |
+| Culatas                                      |        ✅         | ✅ (en conclusiones) |
+| Componentes tercerizados                     |         —         |          ✅          |
 
 > **Esto es la prueba de que el cuerpo debe ser componible.** Ninguno de los dos informes es "el formulario"; ambos son subconjuntos ordenados de un catálogo de bloques.
 
 ### 2.4 Tablas de medición identificadas
 
-| Medición | Estructura | Dimensión | Nominal / tolerancia observada |
-|---|---|---|---|
-| Juego axial del cigüeñal | escalar | 1 | mm |
-| Piñones intermedios | matriz 2×2 | Axial / Contragolpe × Piñón A / B | doc1: 0.67 / 0.55, 0.25 / 0.30 |
-| Muñón de bancada | vector | **N apoyos** (9 en 16V, 11 en 20V) | desviación en mm (−0.01, −0.02) |
-| Muñón de biela A | vector | **N cil/banco** (8 en 16V, 10 en 20V) | −0.02 |
-| Muñón de biela B | vector | ídem | −0.02 |
-| Coaxialidad / concentricidad cigüeñal | vector con extremos `APOYO` | N apoyos | 0.02–0.11 |
-| Eje de levas | 2 escalares | Axial / Contragolpe | 0.09 / 0.29 mm y 0.16 / 0.25 mm |
-| Encaje de camisa superior | matriz 2×N por banco | (L, T) × cilindros × bancos A/B | ⌀196.000 mm, máx **+0.15** |
-| Encaje de camisa inferior | matriz 2×N por banco | ídem | ⌀**189.000** (16V) vs ⌀**193.000** (20V), máx +0.08 |
-| Túnel de bancada | matriz 4×N | a, b1, b2, Ovalidad × apoyos | ⌀171.000, dif. 0 / +0.025 |
+| Medición                              | Estructura                  | Dimensión                             | Nominal / tolerancia observada                      |
+| ------------------------------------- | --------------------------- | ------------------------------------- | --------------------------------------------------- |
+| Juego axial del cigüeñal              | escalar                     | 1                                     | mm                                                  |
+| Piñones intermedios                   | matriz 2×2                  | Axial / Contragolpe × Piñón A / B     | doc1: 0.67 / 0.55, 0.25 / 0.30                      |
+| Muñón de bancada                      | vector                      | **N apoyos** (9 en 16V, 11 en 20V)    | desviación en mm (−0.01, −0.02)                     |
+| Muñón de biela A                      | vector                      | **N cil/banco** (8 en 16V, 10 en 20V) | −0.02                                               |
+| Muñón de biela B                      | vector                      | ídem                                  | −0.02                                               |
+| Coaxialidad / concentricidad cigüeñal | vector con extremos `APOYO` | N apoyos                              | 0.02–0.11                                           |
+| Eje de levas                          | 2 escalares                 | Axial / Contragolpe                   | 0.09 / 0.29 mm y 0.16 / 0.25 mm                     |
+| Encaje de camisa superior             | matriz 2×N por banco        | (L, T) × cilindros × bancos A/B       | ⌀196.000 mm, máx **+0.15**                          |
+| Encaje de camisa inferior             | matriz 2×N por banco        | ídem                                  | ⌀**189.000** (16V) vs ⌀**193.000** (20V), máx +0.08 |
+| Túnel de bancada                      | matriz 4×N                  | a, b1, b2, Ovalidad × apoyos          | ⌀171.000, dif. 0 / +0.025                           |
 
 **Ovalidad es un valor calculado** (b − a), no capturado: la plataforma debe calcularlo, no pedirlo.
 
 ### 2.5 Cierre
 
-- **Conclusiones**: lista de bullets. Patrón recurrente `<componente> <estado>. (<acción>)` — ej. *"El cigüeñal se encuentra operativo. (Pulir cigüeñal)."* Esto sugiere que las conclusiones podrían **auto-proponerse** a partir del veredicto de cada bloque.
+- **Conclusiones**: lista de bullets. Patrón recurrente `<componente> <estado>. (<acción>)` — ej. _"El cigüeñal se encuentra operativo. (Pulir cigüeñal)."_ Esto sugiere que las conclusiones podrían **auto-proponerse** a partir del veredicto de cada bloque.
 - **Recomendación**: lista de bullets, con 2–3 frases que se repiten literalmente entre informes → **biblioteca de frases reutilizables**.
 - **Firmas**: dos imágenes (Realizado por / Revisado por) → flujo de aprobación real.
 
@@ -137,19 +137,19 @@ Cada bloque tiene la misma anatomía: **título en mayúsculas → 1..n hallazgo
 
 ### 3.2 Brechas críticas
 
-| Brecha | Impacto | Prioridad |
-|---|---|---|
-| `localStorage` como persistencia + `FIXED_HIST` hardcodeado | No hay multiusuario, ni respaldo, ni historial real por equipo | 🔴 Bloqueante |
-| Módulos Equipos / Técnicos / Alertas vacíos ("pendiente de conectar") | Todo se retipea en cada informe | 🔴 Bloqueante |
-| **Ningún** campo maestro: todo es texto libre | Genera los typos ya observados (KOMATZU) e impide reportería | 🔴 Bloqueante |
-| **No existe módulo de mediciones** | La parte más valiosa y más propensa a error del informe queda fuera | 🔴 Bloqueante |
-| Secciones fijas y no condicionales (ECU siempre visible) | Formulario largo e irrelevante para el 60% de los casos | 🟠 Alta |
-| Imágenes en base64 dentro del registro | Un informe con 40 fotos = decenas de MB; insostenible | 🟠 Alta |
-| Sin numeración automática de figuras | El técnico escribe "Fig.01" a mano y se desordena al reordenar | 🟠 Alta |
-| Sin flujo de revisión/aprobación ni firmas | El DOCX real tiene "Revisado por" | 🟠 Alta |
-| Export Word es HTML renombrado a `.doc` | Se rompe al editar; no respeta plantilla corporativa | 🟡 Media |
-| Sin correlativo automático de N° informe / OT | Riesgo de duplicados | 🟡 Media |
-| Sin trazabilidad ni auditoría | Requisito típico ISO para formatos controlados | 🟡 Media |
+| Brecha                                                                | Impacto                                                             | Prioridad     |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------- |
+| `localStorage` como persistencia + `FIXED_HIST` hardcodeado           | No hay multiusuario, ni respaldo, ni historial real por equipo      | 🔴 Bloqueante |
+| Módulos Equipos / Técnicos / Alertas vacíos ("pendiente de conectar") | Todo se retipea en cada informe                                     | 🔴 Bloqueante |
+| **Ningún** campo maestro: todo es texto libre                         | Genera los typos ya observados (KOMATZU) e impide reportería        | 🔴 Bloqueante |
+| **No existe módulo de mediciones**                                    | La parte más valiosa y más propensa a error del informe queda fuera | 🔴 Bloqueante |
+| Secciones fijas y no condicionales (ECU siempre visible)              | Formulario largo e irrelevante para el 60% de los casos             | 🟠 Alta       |
+| Imágenes en base64 dentro del registro                                | Un informe con 40 fotos = decenas de MB; insostenible               | 🟠 Alta       |
+| Sin numeración automática de figuras                                  | El técnico escribe "Fig.01" a mano y se desordena al reordenar      | 🟠 Alta       |
+| Sin flujo de revisión/aprobación ni firmas                            | El DOCX real tiene "Revisado por"                                   | 🟠 Alta       |
+| Export Word es HTML renombrado a `.doc`                               | Se rompe al editar; no respeta plantilla corporativa                | 🟡 Media      |
+| Sin correlativo automático de N° informe / OT                         | Riesgo de duplicados                                                | 🟡 Media      |
+| Sin trazabilidad ni auditoría                                         | Requisito típico ISO para formatos controlados                      | 🟡 Media      |
 
 ---
 
@@ -175,21 +175,21 @@ Regla de oro: **un informe emitido guarda el snapshot de la versión de plantill
 
 Este es el corazón del sistema. Cada bloque es un componente reusable con su propio editor y su propio renderer a PDF/DOCX.
 
-| Tipo de bloque | Uso en los informes analizados | Configuración |
-|---|---|---|
-| `header_meta` | I. Datos generales | campos mapeados a maestros |
-| `equipment_meta` | II. Datos del equipo/motor | autocompleta desde maestro Equipo → Motor |
-| `rich_text` | Antecedentes | editor con viñetas, negrita |
-| `bullet_list` | Conclusiones, Recomendaciones | + biblioteca de frases sugeridas |
-| `work_task` | Cada "DESMONTAJE DE …" | fecha, título, descripción, veredicto, fotos, mediciones |
-| `photo_grid` | Registro fotográfico | n columnas, caption obligatorio, numeración auto |
-| `measurement_grid` | Todas las tablas de medición | **plantilla de medición** + tolerancias (§5) |
-| `key_value_table` | Piñones, eje de levas | filas/columnas fijas |
-| `items_table` | Repuestos, instrumentos, tercerizados | filas desde maestro con autocompletado |
-| `checklist` | Inventario de desarmado (SER-T-FOR-002) | ítems desde maestro, estado OK/Falta/Averiado |
-| `parameters_panel` | Parámetros ECU (grupos electrógenos) | set de parámetros por tipo de equipo |
-| `signature_block` | Realizado por / Revisado por | firma digital o imagen, con fecha y usuario |
-| `attachment` | Anexos (SER-T-FOR-002, hoja de mediciones) | archivo o referencia a otro informe |
+| Tipo de bloque     | Uso en los informes analizados             | Configuración                                            |
+| ------------------ | ------------------------------------------ | -------------------------------------------------------- |
+| `header_meta`      | I. Datos generales                         | campos mapeados a maestros                               |
+| `equipment_meta`   | II. Datos del equipo/motor                 | autocompleta desde maestro Equipo → Motor                |
+| `rich_text`        | Antecedentes                               | editor con viñetas, negrita                              |
+| `bullet_list`      | Conclusiones, Recomendaciones              | + biblioteca de frases sugeridas                         |
+| `work_task`        | Cada "DESMONTAJE DE …"                     | fecha, título, descripción, veredicto, fotos, mediciones |
+| `photo_grid`       | Registro fotográfico                       | n columnas, caption obligatorio, numeración auto         |
+| `measurement_grid` | Todas las tablas de medición               | **plantilla de medición** + tolerancias (§5)             |
+| `key_value_table`  | Piñones, eje de levas                      | filas/columnas fijas                                     |
+| `items_table`      | Repuestos, instrumentos, tercerizados      | filas desde maestro con autocompletado                   |
+| `checklist`        | Inventario de desarmado (SER-T-FOR-002)    | ítems desde maestro, estado OK/Falta/Averiado            |
+| `parameters_panel` | Parámetros ECU (grupos electrógenos)       | set de parámetros por tipo de equipo                     |
+| `signature_block`  | Realizado por / Revisado por               | firma digital o imagen, con fecha y usuario              |
+| `attachment`       | Anexos (SER-T-FOR-002, hoja de mediciones) | archivo o referencia a otro informe                      |
 
 ### 4.3 Secciones condicionales
 
@@ -245,30 +245,30 @@ Hoy el técnico escribe en Word una tabla de 11 columnas con valores de ±0.01 m
 
 Una `MeasurementTemplate` define **qué se mide y cómo**; el número de columnas se resuelve en tiempo de ejecución desde la configuración del motor.
 
-| Plantilla | Forma | Filas | Columnas | Fuente de la dimensión |
-|---|---|---|---|---|
-| Juego axial cigüeñal | escalar | 1 | 1 | — |
-| Muñón de bancada | vector | 1 | `motor.apoyos_bancada` | modelo de motor |
-| Muñón de biela (banco A/B) | vector | 1 | `motor.cilindros / 2` | modelo de motor |
-| Coaxialidad cigüeñal | vector | 1 | `motor.apoyos_bancada` | extremos marcados APOYO |
-| Encaje de camisa | matriz | L, T | `motor.cilindros / 2` × banco | 2 tablas (sup/inf) × 2 bancos |
-| Túnel de bancada | matriz | a, b1, b2, **Ovalidad (calc.)** | `motor.apoyos_bancada` | modelo de motor |
-| Piñones intermedios | matriz | Axial, Contragolpe | Piñón A, Piñón B | fija |
-| Eje de levas | matriz | Axial, Contragolpe | 1 | fija |
+| Plantilla                  | Forma   | Filas                           | Columnas                      | Fuente de la dimensión        |
+| -------------------------- | ------- | ------------------------------- | ----------------------------- | ----------------------------- |
+| Juego axial cigüeñal       | escalar | 1                               | 1                             | —                             |
+| Muñón de bancada           | vector  | 1                               | `motor.apoyos_bancada`        | modelo de motor               |
+| Muñón de biela (banco A/B) | vector  | 1                               | `motor.cilindros / 2`         | modelo de motor               |
+| Coaxialidad cigüeñal       | vector  | 1                               | `motor.apoyos_bancada`        | extremos marcados APOYO       |
+| Encaje de camisa           | matriz  | L, T                            | `motor.cilindros / 2` × banco | 2 tablas (sup/inf) × 2 bancos |
+| Túnel de bancada           | matriz  | a, b1, b2, **Ovalidad (calc.)** | `motor.apoyos_bancada`        | modelo de motor               |
+| Piñones intermedios        | matriz  | Axial, Contragolpe              | Piñón A, Piñón B              | fija                          |
+| Eje de levas               | matriz  | Axial, Contragolpe              | 1                             | fija                          |
 
 ### 5.3 Especificaciones y tolerancias
 
 Maestro `EngineSpec` — una fila por (modelo de motor × parámetro medible):
 
-| modelo_motor | parametro | nominal | tol_inf | tol_sup | unidad |
-|---|---|---|---|---|---|
-| 16V4000C21 | encaje_camisa_superior | 196.000 | 0 | +0.15 | mm |
-| 16V4000C21 | encaje_camisa_inferior | 189.000 | 0 | +0.08 | mm |
-| 20V4000C23 | encaje_camisa_superior | 196.000 | 0 | +0.15 | mm |
-| 20V4000C23 | encaje_camisa_inferior | 193.000 | 0 | +0.08 | mm |
-| 20V4000C23 | camisa_encaje_superior | — | — | −0.05 | mm |
-| *(común 4000)* | taladro_tunel_bancada | 171.000 | 0 | +0.025 | mm |
-| *(común)* | juego_axial_ciguenal | — | 0.20 | 0.50 | mm |
+| modelo_motor   | parametro              | nominal | tol_inf | tol_sup | unidad |
+| -------------- | ---------------------- | ------- | ------- | ------- | ------ |
+| 16V4000C21     | encaje_camisa_superior | 196.000 | 0       | +0.15   | mm     |
+| 16V4000C21     | encaje_camisa_inferior | 189.000 | 0       | +0.08   | mm     |
+| 20V4000C23     | encaje_camisa_superior | 196.000 | 0       | +0.15   | mm     |
+| 20V4000C23     | encaje_camisa_inferior | 193.000 | 0       | +0.08   | mm     |
+| 20V4000C23     | camisa_encaje_superior | —       | —       | −0.05   | mm     |
+| _(común 4000)_ | taladro_tunel_bancada  | 171.000 | 0       | +0.025  | mm     |
+| _(común)_      | juego_axial_ciguenal   | —       | 0.20    | 0.50    | mm     |
 
 > Los rangos de juego axial de cigüeñal deben confirmarse contra el manual MTU: el doc 1 reporta 0.48 mm como aceptable y el doc 2 reporta 0.51 mm sin observación explícita. **Punto a validar con el área técnica antes de codificar la regla.**
 
@@ -286,65 +286,65 @@ Maestro `EngineSpec` — una fila por (modelo de motor × parámetro medible):
 
 ### 6.1 Maestros de negocio
 
-| # | Maestro | Campos clave | Justificación en las fuentes |
-|---|---|---|---|
-| 1 | **Clientes** | razón social, nombre corto, RUC, contacto, logo | `TOQUEPALA` vs `SPCC. TOQUEPALA` |
-| 2 | **Sedes / Locaciones del cliente** | cliente, nombre, ciudad, tipo (mina/planta/puerto) | `TALLER - LIMA`, `Callao – Lima` |
-| 3 | **Equipos (flota)** | código (`VQT-130`), cliente, sede, categoría, marca, modelo, año, N° serie, motor asociado | `VQT-33`, `VQT-130`, `Facility 1220`, `EP. TASA 411` |
-| 4 | **Marcas de equipo** | nombre, país | `KOMATSU` / typo `KOMATZU` |
-| 5 | **Modelos de equipo** | marca, denominación | `930E4-SE` |
-| 6 | **Marcas de motor** | nombre | `MTU`, `CAT` |
-| 7 | **Modelos de motor** ⭐ | marca, denominación, **N° cilindros**, **config (V/L)**, **apoyos de bancada**, potencia nominal, rpm, tiene CAC, tiene turbos | 16V4000C21 / 20V4000C23 / 8V4000M60R / 10V1600G80S |
-| 8 | **Motores (unidades físicas)** ⭐ | N° serie, modelo, equipo actual, horas totales, estado, historial | `5272012973`, `5282011236` — clave para trazabilidad |
-| 9 | **Especificaciones técnicas** ⭐ | modelo de motor, parámetro, nominal, tol. inf/sup, unidad, fuente (manual, versión) | §5.3 |
-| 10 | **Tipos de intervención** | código, descripción, alcance, plantilla sugerida, periodicidad en horas | `QL4`, `W6`, `W6-1`, preventivo, correctivo |
-| 11 | **Motivos de servicio** | descripción, tipo asociado | `EVALUACIÓN DE MOTOR W6` |
-| 12 | **Personal / Técnicos** | nombre, DNI, cargo, categoría, especialidad, firma, activo | `REYNALDO CACERES / TÉCNICO SENIOR`, `JOSÉ LUIS ESTRELLA / SUPERVISOR C` |
-| 13 | **Cargos** | denominación, nivel | `TÉCNICO SENIOR`, `SUPERVISOR C`, `JEFE DE TALLER` |
-| 14 | **Áreas / Unidades de negocio** | código, nombre, prefijo de OT | `TAL` (taller), `SCA` (servicio campo) |
-| 15 | **Repuestos / Part numbers** | N/P, descripción, marca, aplicación (modelos), unidad | `X57518300024` |
-| 16 | **Componentes de motor** ⭐ | nombre, familia, aplica a modelos, bloque de informe asociado | pistones, bielas, metales de biela/bancada, camisas, turbos, housing, eje de levas, seguidores, varillas, balancines, culatas, CAC |
-| 17 | **Instrumentos de medición** ⭐ | código interno, equipo, marca, modelo, N° serie, **fecha de calibración**, vencimiento, certificado | `MEGDPS01 / FLUKE 1587 FC / 51290323` |
-| 18 | **Proveedores / Terceros** | razón social, servicios que presta | metalizado de carcazas, evaluación de cigüeñal, insertos |
-| 19 | **Servicios tercerizados** | descripción, proveedor habitual, unidad | "Metalizado de 02 carcazas de turbo" |
-| 20 | **Tipos de prueba / ensayo** | nombre, método, criterio | NDT líquidos penetrantes, Magnaflux, hidrostática, rugosidad |
-| 21 | **Unidades de medida** | símbolo, magnitud, factor SI | mm, °C, psi, bar, HP, kW, rpm, MΩ, l/h |
-| 22 | **Estados / Veredictos de componente** | nombre, color, acción sugerida | Operativo · Reutilizable · Reparar · Cambiar |
+| #   | Maestro                                | Campos clave                                                                                                                   | Justificación en las fuentes                                                                                                       |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Clientes**                           | razón social, nombre corto, RUC, contacto, logo                                                                                | `TOQUEPALA` vs `SPCC. TOQUEPALA`                                                                                                   |
+| 2   | **Sedes / Locaciones del cliente**     | cliente, nombre, ciudad, tipo (mina/planta/puerto)                                                                             | `TALLER - LIMA`, `Callao – Lima`                                                                                                   |
+| 3   | **Equipos (flota)**                    | código (`VQT-130`), cliente, sede, categoría, marca, modelo, año, N° serie, motor asociado                                     | `VQT-33`, `VQT-130`, `Facility 1220`, `EP. TASA 411`                                                                               |
+| 4   | **Marcas de equipo**                   | nombre, país                                                                                                                   | `KOMATSU` / typo `KOMATZU`                                                                                                         |
+| 5   | **Modelos de equipo**                  | marca, denominación                                                                                                            | `930E4-SE`                                                                                                                         |
+| 6   | **Marcas de motor**                    | nombre                                                                                                                         | `MTU`, `CAT`                                                                                                                       |
+| 7   | **Modelos de motor** ⭐                | marca, denominación, **N° cilindros**, **config (V/L)**, **apoyos de bancada**, potencia nominal, rpm, tiene CAC, tiene turbos | 16V4000C21 / 20V4000C23 / 8V4000M60R / 10V1600G80S                                                                                 |
+| 8   | **Motores (unidades físicas)** ⭐      | N° serie, modelo, equipo actual, horas totales, estado, historial                                                              | `5272012973`, `5282011236` — clave para trazabilidad                                                                               |
+| 9   | **Especificaciones técnicas** ⭐       | modelo de motor, parámetro, nominal, tol. inf/sup, unidad, fuente (manual, versión)                                            | §5.3                                                                                                                               |
+| 10  | **Tipos de intervención**              | código, descripción, alcance, plantilla sugerida, periodicidad en horas                                                        | `QL4`, `W6`, `W6-1`, preventivo, correctivo                                                                                        |
+| 11  | **Motivos de servicio**                | descripción, tipo asociado                                                                                                     | `EVALUACIÓN DE MOTOR W6`                                                                                                           |
+| 12  | **Personal / Técnicos**                | nombre, DNI, cargo, categoría, especialidad, firma, activo                                                                     | `REYNALDO CACERES / TÉCNICO SENIOR`, `JOSÉ LUIS ESTRELLA / SUPERVISOR C`                                                           |
+| 13  | **Cargos**                             | denominación, nivel                                                                                                            | `TÉCNICO SENIOR`, `SUPERVISOR C`, `JEFE DE TALLER`                                                                                 |
+| 14  | **Áreas / Unidades de negocio**        | código, nombre, prefijo de OT                                                                                                  | `TAL` (taller), `SCA` (servicio campo)                                                                                             |
+| 15  | **Repuestos / Part numbers**           | N/P, descripción, marca, aplicación (modelos), unidad                                                                          | `X57518300024`                                                                                                                     |
+| 16  | **Componentes de motor** ⭐            | nombre, familia, aplica a modelos, bloque de informe asociado                                                                  | pistones, bielas, metales de biela/bancada, camisas, turbos, housing, eje de levas, seguidores, varillas, balancines, culatas, CAC |
+| 17  | **Instrumentos de medición** ⭐        | código interno, equipo, marca, modelo, N° serie, **fecha de calibración**, vencimiento, certificado                            | `MEGDPS01 / FLUKE 1587 FC / 51290323`                                                                                              |
+| 18  | **Proveedores / Terceros**             | razón social, servicios que presta                                                                                             | metalizado de carcazas, evaluación de cigüeñal, insertos                                                                           |
+| 19  | **Servicios tercerizados**             | descripción, proveedor habitual, unidad                                                                                        | "Metalizado de 02 carcazas de turbo"                                                                                               |
+| 20  | **Tipos de prueba / ensayo**           | nombre, método, criterio                                                                                                       | NDT líquidos penetrantes, Magnaflux, hidrostática, rugosidad                                                                       |
+| 21  | **Unidades de medida**                 | símbolo, magnitud, factor SI                                                                                                   | mm, °C, psi, bar, HP, kW, rpm, MΩ, l/h                                                                                             |
+| 22  | **Estados / Veredictos de componente** | nombre, color, acción sugerida                                                                                                 | Operativo · Reutilizable · Reparar · Cambiar                                                                                       |
 
 ### 6.2 Maestros del sistema documental
 
-| # | Maestro | Campos clave | Justificación |
-|---|---|---|---|
-| 23 | **Plantillas de informe** ⭐ | código (`SER-FOR-002`), nombre, versión, fecha emisión, estado, secciones | Cabecera del DOCX y del PDF |
-| 24 | **Secciones de plantilla** | plantilla, orden, título, obligatoria, condición | I…IX |
-| 25 | **Catálogo de bloques** | tipo, nombre, esquema, renderer | §4.2 |
-| 26 | **Plantillas de medición** | nombre, forma, filas, fuente de columnas, unidad | §5.2 |
-| 27 | **Biblioteca de frases** | categoría, texto, veces usada, autor | Recomendaciones repetidas literalmente entre informes |
-| 28 | **Series de correlativos** ⭐ | tipo doc, patrón (`ITS-{sede}-{tipo}-{aa}-{serie}-{correl}`), contador, año | `ITS-T-E-26-003-0898`, `LIM-TAL-000898` |
-| 29 | **Checklists de desarmado** | nombre, ítems, aplica a modelos | Anexo SER-T-FOR-002 |
-| 30 | **Plantillas de layout de salida** | formato (PDF/DOCX), márgenes, cabecera, pie, tipografías | Réplica de la cabecera SER-FOR-002 v01 |
+| #   | Maestro                            | Campos clave                                                                | Justificación                                         |
+| --- | ---------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 23  | **Plantillas de informe** ⭐       | código (`SER-FOR-002`), nombre, versión, fecha emisión, estado, secciones   | Cabecera del DOCX y del PDF                           |
+| 24  | **Secciones de plantilla**         | plantilla, orden, título, obligatoria, condición                            | I…IX                                                  |
+| 25  | **Catálogo de bloques**            | tipo, nombre, esquema, renderer                                             | §4.2                                                  |
+| 26  | **Plantillas de medición**         | nombre, forma, filas, fuente de columnas, unidad                            | §5.2                                                  |
+| 27  | **Biblioteca de frases**           | categoría, texto, veces usada, autor                                        | Recomendaciones repetidas literalmente entre informes |
+| 28  | **Series de correlativos** ⭐      | tipo doc, patrón (`ITS-{sede}-{tipo}-{aa}-{serie}-{correl}`), contador, año | `ITS-T-E-26-003-0898`, `LIM-TAL-000898`               |
+| 29  | **Checklists de desarmado**        | nombre, ítems, aplica a modelos                                             | Anexo SER-T-FOR-002                                   |
+| 30  | **Plantillas de layout de salida** | formato (PDF/DOCX), márgenes, cabecera, pie, tipografías                    | Réplica de la cabecera SER-FOR-002 v01                |
 
 ### 6.3 Maestros de administración
 
-| # | Maestro | Campos clave |
-|---|---|---|
-| 31 | **Usuarios** | email, nombre, técnico asociado, rol, activo, MFA |
-| 32 | **Roles y permisos** | nombre, matriz de permisos por módulo/acción |
-| 33 | **Organización / Empresa emisora** | razón social, RUC, logo, dirección, colores corporativos |
-| 34 | **Parámetros del sistema** | claves de configuración global |
-| 35 | **Notificaciones / Plantillas de correo** | evento, asunto, cuerpo, destinatarios |
+| #   | Maestro                                   | Campos clave                                             |
+| --- | ----------------------------------------- | -------------------------------------------------------- |
+| 31  | **Usuarios**                              | email, nombre, técnico asociado, rol, activo, MFA        |
+| 32  | **Roles y permisos**                      | nombre, matriz de permisos por módulo/acción             |
+| 33  | **Organización / Empresa emisora**        | razón social, RUC, logo, dirección, colores corporativos |
+| 34  | **Parámetros del sistema**                | claves de configuración global                           |
+| 35  | **Notificaciones / Plantillas de correo** | evento, asunto, cuerpo, destinatarios                    |
 
 ### 6.4 Priorización de CRUDs
 
-| Fase | Maestros |
-|---|---|
+| Fase                                 | Maestros                                     |
+| ------------------------------------ | -------------------------------------------- |
 | **MVP** (bloquean el primer informe) | 1, 2, 3, 6, 7, 8, 10, 12, 13, 23, 28, 31, 32 |
-| **Fase 2** (calidad del dato) | 4, 5, 9, 11, 14, 16, 17, 21, 22, 24, 25, 26 |
-| **Fase 3** (productividad) | 15, 18, 19, 20, 27, 29, 30, 33, 34, 35 |
+| **Fase 2** (calidad del dato)        | 4, 5, 9, 11, 14, 16, 17, 21, 22, 24, 25, 26  |
+| **Fase 3** (productividad)           | 15, 18, 19, 20, 27, 29, 30, 33, 34, 35       |
 
 ### 6.5 UX de los CRUDs
 
-- **Creación inline desde el formulario.** Si el técnico no encuentra el equipo `VQT-131`, un botón "+ Crear" abre un modal mínimo sin perder el informe. El registro nace en estado *"pendiente de validación"* y Admin lo completa después. Sin esto, los usuarios vuelven al texto libre.
+- **Creación inline desde el formulario.** Si el técnico no encuentra el equipo `VQT-131`, un botón "+ Crear" abre un modal mínimo sin perder el informe. El registro nace en estado _"pendiente de validación"_ y Admin lo completa después. Sin esto, los usuarios vuelven al texto libre.
 - **Búsqueda difusa** que tolere `KOMATZU` → sugiera `KOMATSU`.
 - **Merge de duplicados** para Admin (fusionar `TOQUEPALA` y `SPCC. TOQUEPALA` reasignando referencias).
 - **Importación masiva por Excel** para la carga inicial de flota, repuestos e instrumentos.
@@ -391,50 +391,50 @@ Informe 1─n VersionDocumento (pdf_url, docx_url, hash, generado_en)
 
 **`informes`**
 
-| Campo | Tipo | Notas |
-|---|---|---|
-| id | uuid | |
-| numero_informe | string único | generado por serie |
-| numero_ot | string | |
-| plantilla_version_id | fk | snapshot |
-| tipo_servicio | enum/fk | preventivo, correctivo, evaluación, emergencia |
-| tipo_intervencion_id | fk | QL4, W6-1 |
-| motivo | text | |
-| cliente_id, sede_id, equipo_id, motor_id | fk | |
-| fecha_emision, fecha_inicio, fecha_fin | date | |
-| horas_totales, horas_parciales | int | |
-| en_garantia | bool | |
-| garantia_inicio, garantia_fin | date | |
-| ultimo_mantenimiento_informe_id | fk self | reemplaza el texto `W6` / `---` |
-| antecedentes | text | |
-| estado | enum | borrador · en_revision · observado · aprobado · emitido · anulado |
-| creado_por, revisado_por, aprobado_por | fk usuario | |
-| snapshot_json | jsonb | render inmutable al emitir |
+| Campo                                    | Tipo         | Notas                                                             |
+| ---------------------------------------- | ------------ | ----------------------------------------------------------------- |
+| id                                       | uuid         |                                                                   |
+| numero_informe                           | string único | generado por serie                                                |
+| numero_ot                                | string       |                                                                   |
+| plantilla_version_id                     | fk           | snapshot                                                          |
+| tipo_servicio                            | enum/fk      | preventivo, correctivo, evaluación, emergencia                    |
+| tipo_intervencion_id                     | fk           | QL4, W6-1                                                         |
+| motivo                                   | text         |                                                                   |
+| cliente_id, sede_id, equipo_id, motor_id | fk           |                                                                   |
+| fecha_emision, fecha_inicio, fecha_fin   | date         |                                                                   |
+| horas_totales, horas_parciales           | int          |                                                                   |
+| en_garantia                              | bool         |                                                                   |
+| garantia_inicio, garantia_fin            | date         |                                                                   |
+| ultimo_mantenimiento_informe_id          | fk self      | reemplaza el texto `W6` / `---`                                   |
+| antecedentes                             | text         |                                                                   |
+| estado                                   | enum         | borrador · en_revision · observado · aprobado · emitido · anulado |
+| creado_por, revisado_por, aprobado_por   | fk usuario   |                                                                   |
+| snapshot_json                            | jsonb        | render inmutable al emitir                                        |
 
 **`bloques_instancia`**
 
-| Campo | Tipo |
-|---|---|
-| id, informe_id, orden | |
-| tipo_bloque | enum (§4.2) |
-| titulo | string |
-| fecha_trabajo | date (opcional, para trabajos cronológicos) |
-| contenido | text/jsonb |
-| componente_id | fk (opcional) |
-| veredicto | enum (operativo/reparar/cambiar) |
-| accion_recomendada | text |
+| Campo                 | Tipo                                        |
+| --------------------- | ------------------------------------------- |
+| id, informe_id, orden |                                             |
+| tipo_bloque           | enum (§4.2)                                 |
+| titulo                | string                                      |
+| fecha_trabajo         | date (opcional, para trabajos cronológicos) |
+| contenido             | text/jsonb                                  |
+| componente_id         | fk (opcional)                               |
+| veredicto             | enum (operativo/reparar/cambiar)            |
+| accion_recomendada    | text                                        |
 
 **`mediciones_valor`**
 
-| Campo | Tipo |
-|---|---|
-| id, medicion_set_id | |
-| etiqueta_fila | string (`a`, `b1`, `L`, `T`, `AXIAL`) |
-| etiqueta_columna | string (`A1`…`A10`, `1`…`11`) |
-| valor | decimal(8,3) |
-| es_calculado | bool |
-| estado | enum (ok / alerta / fuera_tolerancia / no_aplica) |
-| nominal_aplicado, tol_inf, tol_sup | decimal (denormalizado al capturar) |
+| Campo                              | Tipo                                              |
+| ---------------------------------- | ------------------------------------------------- |
+| id, medicion_set_id                |                                                   |
+| etiqueta_fila                      | string (`a`, `b1`, `L`, `T`, `AXIAL`)             |
+| etiqueta_columna                   | string (`A1`…`A10`, `1`…`11`)                     |
+| valor                              | decimal(8,3)                                      |
+| es_calculado                       | bool                                              |
+| estado                             | enum (ok / alerta / fuera_tolerancia / no_aplica) |
+| nominal_aplicado, tol_inf, tol_sup | decimal (denormalizado al capturar)               |
 
 > Denormalizar la tolerancia en el valor es intencional: si mañana cambia la especificación, los informes ya emitidos deben conservar el criterio con el que se evaluaron.
 
@@ -449,29 +449,29 @@ Informe 1─n VersionDocumento (pdf_url, docx_url, hash, generado_en)
 
 ## 8. Generación de documentos
 
-| Aspecto | Recomendación |
-|---|---|
-| **Motor** | Renderizado **en servidor** (no jsPDF en navegador): HTML+CSS Paged Media → PDF (Playwright/Chromium o WeasyPrint). Garantiza tipografías, paginación y consistencia. |
-| **DOCX** | Generar `.docx` real desde plantilla `.dotx` corporativa (docxtemplater / python-docx), no HTML renombrado. Permite que Calidad edite el machote sin tocar código. |
-| **Numeración de figuras** | Calculada en el render, nunca escrita por el usuario. |
-| **Paginación inteligente** | Mantener juntos: título de bloque + primer párrafo; fila de fotos + su caption; tabla de medición completa. (El prototipo ya lo intenta con `keepTogether`.) |
-| **Cabecera controlada** | Código, versión y fecha de emisión leídos del maestro de plantillas — no hardcodeados. |
-| **Marca de agua** | "BORRADOR" en diagonal mientras el informe no esté aprobado. |
-| **Inmutabilidad** | Al emitir, se congela un PDF con hash; reimprimir devuelve exactamente el mismo archivo. |
-| **QR de verificación** | En el pie, apuntando a la vista pública del informe. Útil para el cliente. |
+| Aspecto                    | Recomendación                                                                                                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Motor**                  | Renderizado **en servidor** (no jsPDF en navegador): HTML+CSS Paged Media → PDF (Playwright/Chromium o WeasyPrint). Garantiza tipografías, paginación y consistencia. |
+| **DOCX**                   | Generar `.docx` real desde plantilla `.dotx` corporativa (docxtemplater / python-docx), no HTML renombrado. Permite que Calidad edite el machote sin tocar código.    |
+| **Numeración de figuras**  | Calculada en el render, nunca escrita por el usuario.                                                                                                                 |
+| **Paginación inteligente** | Mantener juntos: título de bloque + primer párrafo; fila de fotos + su caption; tabla de medición completa. (El prototipo ya lo intenta con `keepTogether`.)          |
+| **Cabecera controlada**    | Código, versión y fecha de emisión leídos del maestro de plantillas — no hardcodeados.                                                                                |
+| **Marca de agua**          | "BORRADOR" en diagonal mientras el informe no esté aprobado.                                                                                                          |
+| **Inmutabilidad**          | Al emitir, se congela un PDF con hash; reimprimir devuelve exactamente el mismo archivo.                                                                              |
+| **QR de verificación**     | En el pie, apuntando a la vista pública del informe. Útil para el cliente.                                                                                            |
 
 ---
 
 ## 9. Roles y permisos
 
-| Rol | Puede |
-|---|---|
-| **Técnico** | Crear y editar sus informes en borrador, subir fotos, capturar mediciones, enviar a revisión |
-| **Supervisor / Jefe de taller** | Todo lo anterior + revisar, observar, aprobar informes de su área, ver dashboard del área |
-| **Calidad** | Gestionar plantillas, secciones, bloques, plantillas de medición, layouts de salida, versionar formatos |
-| **Planificador** | Crear OT, asignar técnicos, ver programación y vencimientos |
-| **Administrador** | Maestros, usuarios, roles, merge de duplicados, auditoría |
-| **Cliente (portal, opcional)** | Ver y descargar únicamente los informes aprobados de sus equipos |
+| Rol                             | Puede                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Técnico**                     | Crear y editar sus informes en borrador, subir fotos, capturar mediciones, enviar a revisión            |
+| **Supervisor / Jefe de taller** | Todo lo anterior + revisar, observar, aprobar informes de su área, ver dashboard del área               |
+| **Calidad**                     | Gestionar plantillas, secciones, bloques, plantillas de medición, layouts de salida, versionar formatos |
+| **Planificador**                | Crear OT, asignar técnicos, ver programación y vencimientos                                             |
+| **Administrador**               | Maestros, usuarios, roles, merge de duplicados, auditoría                                               |
+| **Cliente (portal, opcional)**  | Ver y descargar únicamente los informes aprobados de sus equipos                                        |
 
 Flujo de estados: `borrador → en_revision → (observado ⟲) → aprobado → emitido` (+ `anulado` con motivo obligatorio).
 
@@ -479,31 +479,31 @@ Flujo de estados: `borrador → en_revision → (observado ⟲) → aprobado →
 
 ## 10. Módulos de la plataforma
 
-| Módulo | Contenido |
-|---|---|
-| **Dashboard** | Informes por estado, tiempo promedio de emisión, motores en taller, alertas de tolerancia, instrumentos por vencer calibración |
-| **Órdenes de trabajo** | OT como contenedor: puede tener 1..n informes (evaluación → reparación → prueba) |
-| **Informes** | Bandeja por estado, filtros por cliente/equipo/motor/técnico/fecha, búsqueda full-text |
-| **Equipos y motores** | Ficha 360°: historial de intervenciones, horas, mediciones históricas, fotos, documentos |
-| **Mediciones** | Consulta transversal: "todos los juegos axiales de cigüeñal de motores 4000 en 2026" |
-| **Repuestos** | Consumo por informe, por equipo, por periodo; base para cotización |
-| **Instrumentos** | Control de calibración con alertas de vencimiento |
-| **Maestros** | §6 |
-| **Plantillas** | Editor de plantillas para Calidad |
-| **Reportes / BI** | Componentes más cambiados por modelo, MTBF por motor, técnico vs. tiempo de informe |
-| **Auditoría** | Quién cambió qué y cuándo |
+| Módulo                 | Contenido                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Dashboard**          | Informes por estado, tiempo promedio de emisión, motores en taller, alertas de tolerancia, instrumentos por vencer calibración |
+| **Órdenes de trabajo** | OT como contenedor: puede tener 1..n informes (evaluación → reparación → prueba)                                               |
+| **Informes**           | Bandeja por estado, filtros por cliente/equipo/motor/técnico/fecha, búsqueda full-text                                         |
+| **Equipos y motores**  | Ficha 360°: historial de intervenciones, horas, mediciones históricas, fotos, documentos                                       |
+| **Mediciones**         | Consulta transversal: "todos los juegos axiales de cigüeñal de motores 4000 en 2026"                                           |
+| **Repuestos**          | Consumo por informe, por equipo, por periodo; base para cotización                                                             |
+| **Instrumentos**       | Control de calibración con alertas de vencimiento                                                                              |
+| **Maestros**           | §6                                                                                                                             |
+| **Plantillas**         | Editor de plantillas para Calidad                                                                                              |
+| **Reportes / BI**      | Componentes más cambiados por modelo, MTBF por motor, técnico vs. tiempo de informe                                            |
+| **Auditoría**          | Quién cambió qué y cuándo                                                                                                      |
 
 ---
 
 ## 11. Roadmap sugerido
 
-| Fase | Entregable | Objetivo verificable |
-|---|---|---|
-| **F1 — Núcleo** | Auth, maestros MVP (§6.4), motor de plantillas con SER-FOR-002, bloques `header_meta`/`equipment_meta`/`rich_text`/`work_task`/`photo_grid`/`bullet_list`, render PDF servidor, estados borrador→emitido | Reproducir el informe **OT746** completo desde la plataforma y que el PDF sea indistinguible del DOCX |
-| **F2 — Mediciones** | Plantillas de medición, `EngineSpec`, validación por tolerancia, veredictos, anexo hoja de mediciones | Reproducir **OT898** con sus 8 tablas dimensionales y semáforos correctos |
-| **F3 — Flujo y calidad** | Revisión/aprobación, firmas, comentarios por bloque, export DOCX real, auditoría, biblioteca de frases | Un informe completa el ciclo técnico → supervisor → emitido |
-| **F4 — Movilidad** | PWA offline, captura móvil de fotos, sincronización | Capturar un informe completo sin conexión en taller |
-| **F5 — Inteligencia** | Ficha 360° del motor, tendencias de desgaste, dashboards, alertas de mantenimiento por horas, portal de cliente | Gráfico de evolución del juego axial por N° de serie |
+| Fase                     | Entregable                                                                                                                                                                                               | Objetivo verificable                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **F1 — Núcleo**          | Auth, maestros MVP (§6.4), motor de plantillas con SER-FOR-002, bloques `header_meta`/`equipment_meta`/`rich_text`/`work_task`/`photo_grid`/`bullet_list`, render PDF servidor, estados borrador→emitido | Reproducir el informe **OT746** completo desde la plataforma y que el PDF sea indistinguible del DOCX |
+| **F2 — Mediciones**      | Plantillas de medición, `EngineSpec`, validación por tolerancia, veredictos, anexo hoja de mediciones                                                                                                    | Reproducir **OT898** con sus 8 tablas dimensionales y semáforos correctos                             |
+| **F3 — Flujo y calidad** | Revisión/aprobación, firmas, comentarios por bloque, export DOCX real, auditoría, biblioteca de frases                                                                                                   | Un informe completa el ciclo técnico → supervisor → emitido                                           |
+| **F4 — Movilidad**       | PWA offline, captura móvil de fotos, sincronización                                                                                                                                                      | Capturar un informe completo sin conexión en taller                                                   |
+| **F5 — Inteligencia**    | Ficha 360° del motor, tendencias de desgaste, dashboards, alertas de mantenimiento por horas, portal de cliente                                                                                          | Gráfico de evolución del juego axial por N° de serie                                                  |
 
 ---
 
@@ -522,34 +522,34 @@ Flujo de estados: `borrador → en_revision → (observado ⟲) → aprobado →
 
 ## Anexo A — Mapa de campos: DOCX → prototipo HTML → plataforma propuesta
 
-| Campo DOCX | ID en `Modulo IT.html` | Propuesta |
-|---|---|---|
-| N° de Informe | `f-ni` (texto libre) | Generado por serie de correlativos (maestro 28) |
-| N° O/T | `f-ot` (texto libre) | FK a Orden de Trabajo |
-| Ubicación/Locación | `f-ubic` (texto libre) | FK Sede (maestro 2) |
-| Motivo | *(no existe)* | FK Motivo (maestro 11) |
-| Cliente | `f-cliente` (texto libre) | FK Cliente (maestro 1) |
-| Fecha | `f-fecha` | date |
-| Elaborado por + Cargo | `f-tec1`, `f-tec2` (nombre y cargo en un solo campo) | n FK Técnico, cargo autocompletado |
-| Para + Cargo | `f-para`, `f-cargo` | FK Técnico/Usuario |
-| Equipo / Marca / Modelo | `f-equipo`, `f-meq`, `f-modeq` | FK Equipo → autocompleta marca y modelo |
-| Motor Marca / Modelo / Serie | `f-mmot`, `f-modmot`, `f-serie` | FK Motor (por N° serie) → autocompleta el resto |
-| Potencia | `f-pot` (texto libre) | Derivado de ModeloMotor |
-| Horas totales / parciales | `f-horas`, `f-hpar` (texto) | int, con validación contra lectura anterior |
-| Último mantenimiento | `f-ultmant` (date) | FK a informe anterior |
-| Tipo de reparación | `f-tiporep` (3 opciones) | FK TipoIntervencion (QL4, W6, W6-1…) |
-| Garantía Sí/No + fechas | `f-gar-*` | bool + dates |
-| Antecedentes | `f-ant` | bloque `rich_text` |
-| Parámetros ECU | `f-rpm`…`f-i2` | bloque `parameters_panel` **condicional** |
-| Trabajos realizados | `WORK_TASKS[]` | bloques `work_task` ordenables + `measurement_grid` |
-| *(tablas de medición)* | **ausente** | **módulo de mediciones (§5)** |
-| Componentes tercerizados | *(ausente)* | bloque `items_table` + maestro 19 |
-| Repuestos | `rep-tbody` | `items_table` + FK Repuesto (maestro 15) |
-| Registro fotográfico | `IMGS[]` base64 | `photo_grid` + object storage |
-| Instrumentos | `inst-tbody` | `items_table` + FK Instrumento con calibración (maestro 17) |
-| Observaciones / Recomendaciones / Conclusiones | `f-obs`, `f-rec`, `f-conc` | bloques `bullet_list` + biblioteca de frases |
-| Firmas Realizado/Revisado por | *(ausente)* | bloque `signature_block` + flujo de aprobación |
+| Campo DOCX                                     | ID en `Modulo IT.html`                               | Propuesta                                                   |
+| ---------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
+| N° de Informe                                  | `f-ni` (texto libre)                                 | Generado por serie de correlativos (maestro 28)             |
+| N° O/T                                         | `f-ot` (texto libre)                                 | FK a Orden de Trabajo                                       |
+| Ubicación/Locación                             | `f-ubic` (texto libre)                               | FK Sede (maestro 2)                                         |
+| Motivo                                         | _(no existe)_                                        | FK Motivo (maestro 11)                                      |
+| Cliente                                        | `f-cliente` (texto libre)                            | FK Cliente (maestro 1)                                      |
+| Fecha                                          | `f-fecha`                                            | date                                                        |
+| Elaborado por + Cargo                          | `f-tec1`, `f-tec2` (nombre y cargo en un solo campo) | n FK Técnico, cargo autocompletado                          |
+| Para + Cargo                                   | `f-para`, `f-cargo`                                  | FK Técnico/Usuario                                          |
+| Equipo / Marca / Modelo                        | `f-equipo`, `f-meq`, `f-modeq`                       | FK Equipo → autocompleta marca y modelo                     |
+| Motor Marca / Modelo / Serie                   | `f-mmot`, `f-modmot`, `f-serie`                      | FK Motor (por N° serie) → autocompleta el resto             |
+| Potencia                                       | `f-pot` (texto libre)                                | Derivado de ModeloMotor                                     |
+| Horas totales / parciales                      | `f-horas`, `f-hpar` (texto)                          | int, con validación contra lectura anterior                 |
+| Último mantenimiento                           | `f-ultmant` (date)                                   | FK a informe anterior                                       |
+| Tipo de reparación                             | `f-tiporep` (3 opciones)                             | FK TipoIntervencion (QL4, W6, W6-1…)                        |
+| Garantía Sí/No + fechas                        | `f-gar-*`                                            | bool + dates                                                |
+| Antecedentes                                   | `f-ant`                                              | bloque `rich_text`                                          |
+| Parámetros ECU                                 | `f-rpm`…`f-i2`                                       | bloque `parameters_panel` **condicional**                   |
+| Trabajos realizados                            | `WORK_TASKS[]`                                       | bloques `work_task` ordenables + `measurement_grid`         |
+| _(tablas de medición)_                         | **ausente**                                          | **módulo de mediciones (§5)**                               |
+| Componentes tercerizados                       | _(ausente)_                                          | bloque `items_table` + maestro 19                           |
+| Repuestos                                      | `rep-tbody`                                          | `items_table` + FK Repuesto (maestro 15)                    |
+| Registro fotográfico                           | `IMGS[]` base64                                      | `photo_grid` + object storage                               |
+| Instrumentos                                   | `inst-tbody`                                         | `items_table` + FK Instrumento con calibración (maestro 17) |
+| Observaciones / Recomendaciones / Conclusiones | `f-obs`, `f-rec`, `f-conc`                           | bloques `bullet_list` + biblioteca de frases                |
+| Firmas Realizado/Revisado por                  | _(ausente)_                                          | bloque `signature_block` + flujo de aprobación              |
 
 ---
 
-*Documento de análisis — generado a partir de los tres archivos fuente proporcionados.*
+_Documento de análisis — generado a partir de los tres archivos fuente proporcionados._

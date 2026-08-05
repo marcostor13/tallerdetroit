@@ -45,8 +45,9 @@ export class ReportsController {
 ```
 
 Reglas:
+
 - **RBAC solo por decorador `@Permissions()`.** Nunca `if (user.role === 'admin')` disperso en servicios.
-- El *scoping* por unidad de negocio (RN-07) se aplica en el repositorio, no en el controller.
+- El _scoping_ por unidad de negocio (RN-07) se aplica en el repositorio, no en el controller.
 - Toda ruta documentada con `@ApiOperation` y DTOs con `@ApiProperty`.
 - Errores en formato RFC 7807 (`application/problem+json`) — usa el `ProblemDetailsFilter` común.
 - Paginación por cursor, nunca `skip/limit` sobre colecciones grandes.
@@ -68,7 +69,7 @@ export class CreateReportDto {
 
 ## 4. Schemas Mongoose
 
-- **El informe es el agregado**: bloques, metadatos de fotos y mediciones van *embebidos* en `reports`.
+- **El informe es el agregado**: bloques, metadatos de fotos y mediciones van _embebidos_ en `reports`.
 - Maestros: se guarda `{ id: ObjectId, ...snapshot }`. Un informe emitido no cambia si el maestro cambia.
 - **Ningún binario en Mongo.** Solo clave S3 + metadatos.
 - Declara los índices en el schema (`@Schema({ ... })` + `schema.index(...)`), no a mano en Atlas.
@@ -77,16 +78,16 @@ export class CreateReportDto {
 
 ## 5. Reglas críticas que el código debe hacer cumplir
 
-| ID | Regla | Dónde vive |
-|---|---|---|
-| RN-01 | El número de informe nunca se reutiliza, ni si se anula | `sequences.service` |
-| RN-02 | Un informe `emitido` es inmutable; corregir = nueva versión que referencia la anterior | `reports.service` |
-| RN-03 | No emitir con mediciones fuera de tolerancia sin justificación del supervisor | `reports.service` + `measurements` |
-| RN-04 | No emitir usando un instrumento con calibración vencida (salvable por Admin con motivo) | `reports.service` |
-| RN-05 | Horas del motor no menores que el informe anterior del mismo motor (advertencia) | `reports.service` |
-| RN-06 | Toda foto con caption; `Fig.NN` calculada y recalculada al reordenar | `reports.service` |
-| RN-07 | Técnico ve solo lo suyo; supervisor, lo de su unidad de negocio | `reports.repository` |
-| RN-08 | Al emitir se persiste `templateSnapshot`; el render nunca consulta la plantilla viva | `reports.service` |
+| ID    | Regla                                                                                   | Dónde vive                         |
+| ----- | --------------------------------------------------------------------------------------- | ---------------------------------- |
+| RN-01 | El número de informe nunca se reutiliza, ni si se anula                                 | `sequences.service`                |
+| RN-02 | Un informe `emitido` es inmutable; corregir = nueva versión que referencia la anterior  | `reports.service`                  |
+| RN-03 | No emitir con mediciones fuera de tolerancia sin justificación del supervisor           | `reports.service` + `measurements` |
+| RN-04 | No emitir usando un instrumento con calibración vencida (salvable por Admin con motivo) | `reports.service`                  |
+| RN-05 | Horas del motor no menores que el informe anterior del mismo motor (advertencia)        | `reports.service`                  |
+| RN-06 | Toda foto con caption; `Fig.NN` calculada y recalculada al reordenar                    | `reports.service`                  |
+| RN-07 | Técnico ve solo lo suyo; supervisor, lo de su unidad de negocio                         | `reports.repository`               |
+| RN-08 | Al emitir se persiste `templateSnapshot`; el render nunca consulta la plantilla viva    | `reports.service`                  |
 
 ## 6. Correlativos
 
@@ -106,10 +107,14 @@ Toda mutación de negocio emite un registro append-only:
 
 ```ts
 await this.audit.record({
-  actorId: user.id, accion: 'report.transition',
-  entidad: 'reports', entidadId: id,
-  antes: { estado: prev }, despues: { estado: next },
-  ip: req.ip, userAgent: req.headers['user-agent'],
+  actorId: user.id,
+  accion: 'report.transition',
+  entidad: 'reports',
+  entidadId: id,
+  antes: { estado: prev },
+  despues: { estado: next },
+  ip: req.ip,
+  userAgent: req.headers['user-agent'],
 });
 ```
 

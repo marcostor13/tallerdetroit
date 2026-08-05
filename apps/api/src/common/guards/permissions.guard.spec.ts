@@ -60,9 +60,7 @@ describe('PermissionsGuard', () => {
   });
 
   it('basta con tener UNO de los permisos requeridos', () => {
-    expect(
-      guardWith(['users:read', 'reports:read']).canActivate(contextFor('tecnico')),
-    ).toBe(true);
+    expect(guardWith(['users:read', 'reports:read']).canActivate(contextFor('tecnico'))).toBe(true);
   });
 
   it('solo Calidad puede publicar versiones de plantilla', () => {

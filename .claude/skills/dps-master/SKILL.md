@@ -12,16 +12,16 @@ aparecen en los informes reales.
 ## 1. Backend — se apoya en el módulo genérico
 
 El proyecto tiene un `MastersModule` genérico que resuelve CRUD, paginación, búsqueda y auditoría.
-Un maestro nuevo aporta solo su *definición*:
+Un maestro nuevo aporta solo su _definición_:
 
 ```ts
 export const enginesMaster: MasterDefinition<Engine> = {
   collection: 'engines',
   schema: EngineSchema,
-  naturalKey: ['serie'],                 // clave natural → índice único
+  naturalKey: ['serie'], // clave natural → índice único
   searchFields: ['serie', 'modelo.denominacion'],
   requiredPermissions: { read: 'masters:read', write: 'masters:engines:write' },
-  inlineCreate: { allowedFields: ['serie', 'engineModelId'] },  // §13.3.1
+  inlineCreate: { allowedFields: ['serie', 'engineModelId'] }, // §13.3.1
   importable: true,
   softDelete: true,
 };
@@ -47,13 +47,13 @@ Endpoints que quedan disponibles automáticamente:
 
 ## 3. Maestros que alimentan el motor de mediciones (⭐ cuidado especial)
 
-| Maestro | Por qué es crítico |
-|---|---|
-| `engineModels` | `cilindros`, `apoyosBancada`, `bancos`, `tieneCac`, `tieneTurbos` **determinan el número de columnas de cada grilla**. Un dato mal cargado produce una grilla incorrecta |
-| `engines` | La `serie` es la clave natural y el eje de toda la analítica histórica |
-| `engineSpecs` | `nominal`, `tolInf`, `tolSup` por parámetro y modelo. Índice único `{engineModelId, parametro}` |
-| `instruments` | Fecha de calibración y vencimiento → regla RN-04 |
-| `engineComponents` | Enlaza bloques de trabajo con veredictos y con la analítica de cambios |
+| Maestro            | Por qué es crítico                                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `engineModels`     | `cilindros`, `apoyosBancada`, `bancos`, `tieneCac`, `tieneTurbos` **determinan el número de columnas de cada grilla**. Un dato mal cargado produce una grilla incorrecta |
+| `engines`          | La `serie` es la clave natural y el eje de toda la analítica histórica                                                                                                   |
+| `engineSpecs`      | `nominal`, `tolInf`, `tolSup` por parámetro y modelo. Índice único `{engineModelId, parametro}`                                                                          |
+| `instruments`      | Fecha de calibración y vencimiento → regla RN-04                                                                                                                         |
+| `engineComponents` | Enlaza bloques de trabajo con veredictos y con la analítica de cambios                                                                                                   |
 
 > Los valores de `engineSpecs` cargados desde los informes son **provisionales** hasta que se
 > validen contra el manual MTU (decisión abierta D1). Márcalos con `fuente` y `provisional: true`.

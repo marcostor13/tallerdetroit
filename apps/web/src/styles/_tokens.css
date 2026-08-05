@@ -26,14 +26,14 @@
   /* --- Texto ------------------------------------------------------------- */
   --on-surface: #1a1c1c;
   --on-surface-variant: #58413f;
-  --secondary: #5f5e5e;          /* texto secundario por defecto — 6.5:1     */
-  --gray-medium: #7a7a7a;        /* 4.3:1 — solo texto grande o decorativo   */
+  --secondary: #5f5e5e; /* texto secundario por defecto — 6.5:1     */
+  --gray-medium: #7a7a7a; /* 4.3:1 — solo texto grande o decorativo   */
   --on-background: #1a1c1c;
   --background: #f9f9f9;
 
   /* --- Bordes ------------------------------------------------------------ */
-  --border-subtle: #e5e5e5;      /* 1.26:1 — SOLO decorativo                 */
-  --outline: #8c716e;            /* 4.47:1 — bordes de controles interactivos*/
+  --border-subtle: #e5e5e5; /* 1.26:1 — SOLO decorativo                 */
+  --outline: #8c716e; /* 4.47:1 — bordes de controles interactivos*/
   --outline-variant: #e0bfbb;
 
   /* --- Marca en UI ------------------------------------------------------- */
