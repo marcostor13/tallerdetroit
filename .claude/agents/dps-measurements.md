@@ -69,10 +69,13 @@ validar contra 193.000 mm.
 
 ## Decisiones abiertas que debes respetar
 
-- **D1**: los rangos oficiales por modelo según manual MTU están pendientes. Los valores cargados
-  desde los informes son **provisionales** — márcalos con `fuente` y `provisional: true`, y no los
-  presentes como definitivos.
-- **D2**: la semántica del signo en las mediciones de muñones (−0.01, −0.02) no está resuelta:
-  ¿desviación respecto al nominal, submedida o clase de rectificado? Define si se captura valor
-  absoluto o desviación. **No asumas una interpretación en silencio**: si el código depende de ello,
-  aíslalo tras una función y señálalo.
+- **D1 — RESUELTA**: las tolerancias se cargan **a mano** en el maestro `engineSpecs` desde
+  administración; no se importan de ningún fichero. Las que provienen de los informes siguen
+  marcadas `provisional: true` hasta que Jefatura técnica las contraste con el manual MTU: no las
+  presentes como definitivas mientras lo estén.
+- **D2 — RESUELTA**: en los muñones del cigüeñal el técnico anota la **desviación respecto al
+  nominal**, no la medida absoluta. Ya está implementado en `libs/shared`: `AppliedSpec.modo` vale
+  `'absoluto'` (por omisión) o `'desviacion'`, y `validRange`, `absoluteValue` y `deviation` se
+  encargan de la conversión. A `measurementFacts` viaja **siempre el diámetro real**
+  (`absoluteValue`): las curvas de desgaste comparan intervenciones de distintos años y no pueden
+  depender de cómo se anotó cada una.

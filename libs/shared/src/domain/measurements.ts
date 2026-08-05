@@ -18,6 +18,17 @@ export type ComponentVerdict = (typeof COMPONENT_VERDICTS)[number];
  * si Calidad corrige la spec mañana, los informes ya emitidos conservan el
  * criterio con el que fueron evaluados.
  */
+/**
+ * Cómo se interpreta el número que teclea el técnico (decisión D2).
+ *
+ * `absoluto`   — es la medida directa. Encaje de camisa, túnel de bancada: el
+ *                técnico escribe 193.02 y se compara contra el nominal.
+ * `desviacion` — es cuánto se aparta del nominal, no la medida. Así se anotan
+ *                los muñones del cigüeñal en los informes reales: `−0.01`
+ *                significa una centésima por debajo del diámetro nominal.
+ */
+export type MeasurementMode = 'absoluto' | 'desviacion';
+
 export interface AppliedSpec {
   readonly nominal: number;
   readonly tolInf: number;
@@ -26,6 +37,35 @@ export interface AppliedSpec {
   readonly fuente: string;
   /** true mientras no se valide contra el manual del fabricante (decisión D1). */
   readonly provisional?: boolean;
+  /** Por omisión `absoluto`, que es como se captura la mayoría de parámetros. */
+  readonly modo?: MeasurementMode;
+}
+
+/**
+ * Rango válido del valor **tal como se teclea**, según el modo.
+ *
+ * Con `absoluto` el rango se sitúa alrededor del nominal; con `desviacion` el
+ * valor ya ES la diferencia, así que el rango es la tolerancia en crudo.
+ */
+export function validRange(spec: AppliedSpec): { readonly min: number; readonly max: number } {
+  const base = spec.modo === 'desviacion' ? 0 : spec.nominal;
+  return { min: base + spec.tolInf, max: base + spec.tolSup };
+}
+
+/**
+ * Diámetro real, se haya capturado como medida o como desviación.
+ *
+ * Es lo que debe viajar a `measurementFacts`: las curvas de desgaste comparan
+ * intervenciones a lo largo de los años y no pueden depender de cómo se anotó
+ * cada una.
+ */
+export function absoluteValue(value: number, spec: AppliedSpec): number {
+  return spec.modo === 'desviacion' ? spec.nominal + value : value;
+}
+
+/** La desviación respecto al nominal, se haya capturado de una forma u otra. */
+export function deviation(value: number, spec: AppliedSpec): number {
+  return spec.modo === 'desviacion' ? value : value - spec.nominal;
 }
 
 /** Fracción superior del rango que dispara la alerta preventiva (🟡). */
@@ -38,8 +78,7 @@ export const WARNING_BAND = 0.1;
  * Dentro de él, el 10% superior se marca como alerta preventiva.
  */
 export function evaluateMeasurement(value: number, spec: AppliedSpec): MeasurementState {
-  const min = spec.nominal + spec.tolInf;
-  const max = spec.nominal + spec.tolSup;
+  const { min, max } = validRange(spec);
 
   if (value < min || value > max) return 'fuera';
 

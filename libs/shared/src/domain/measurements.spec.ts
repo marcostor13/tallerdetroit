@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   type AppliedSpec,
+  absoluteValue,
   calcOvalidad,
+  deviation,
   evaluateMeasurement,
   proposeVerdict,
   requiresSupervisorJustification,
   resolveColumns,
+  validRange,
 } from './measurements';
 
 /** Encaje de camisa inferior del MTU 20V4000C23 (informe OT898). */
@@ -113,5 +116,72 @@ describe('requiresSupervisorJustification (RN-03)', () => {
 
   it('no la exige cuando todo está dentro de tolerancia o en alerta', () => {
     expect(requiresSupervisorJustification(['ok', 'alerta'])).toBe(false);
+  });
+});
+
+/**
+ * Decisión D2: en los muñones del cigüeñal el técnico anota la DESVIACIÓN
+ * respecto al nominal (−0.01, −0.02 en los informes reales), no la medida.
+ */
+describe('modo desviación (D2)', () => {
+  const munonBancada: AppliedSpec = {
+    nominal: 190.0,
+    tolInf: -0.05,
+    tolSup: 0,
+    unidad: 'mm',
+    fuente: 'Provisional',
+    provisional: true,
+    modo: 'desviacion',
+  };
+
+  it('el rango válido es la tolerancia en crudo, no alrededor del nominal', () => {
+    expect(validRange(munonBancada)).toEqual({ min: -0.05, max: 0 });
+  });
+
+  it('acepta las desviaciones que aparecen en los informes reales', () => {
+    expect(evaluateMeasurement(-0.01, munonBancada)).toBe('ok');
+    expect(evaluateMeasurement(-0.02, munonBancada)).toBe('ok');
+  });
+
+  it('marca fuera una desviación mayor que la tolerancia', () => {
+    expect(evaluateMeasurement(-0.06, munonBancada)).toBe('fuera');
+  });
+
+  it('marca fuera una desviación por encima del nominal', () => {
+    expect(evaluateMeasurement(0.01, munonBancada)).toBe('fuera');
+  });
+
+  it('avisa en el 10% superior del rango', () => {
+    // rango 0.05 → alerta desde -0.005
+    expect(evaluateMeasurement(-0.002, munonBancada)).toBe('alerta');
+  });
+
+  it('reconstruye el diámetro real para la analítica', () => {
+    expect(absoluteValue(-0.01, munonBancada)).toBeCloseTo(189.99, 5);
+    expect(deviation(-0.01, munonBancada)).toBeCloseTo(-0.01, 5);
+  });
+
+  it('en modo absoluto las dos conversiones son coherentes', () => {
+    const encaje: AppliedSpec = {
+      nominal: 193.0,
+      tolInf: 0,
+      tolSup: 0.08,
+      unidad: 'mm',
+      fuente: 'Informe OT898',
+    };
+    expect(absoluteValue(193.02, encaje)).toBeCloseTo(193.02, 5);
+    expect(deviation(193.02, encaje)).toBeCloseTo(0.02, 5);
+  });
+
+  it('sin modo declarado se comporta como absoluto: no rompe lo ya cargado', () => {
+    const sinModo: AppliedSpec = {
+      nominal: 193.0,
+      tolInf: 0,
+      tolSup: 0.08,
+      unidad: 'mm',
+      fuente: 'Informe OT898',
+    };
+    expect(validRange(sinModo)).toEqual({ min: 193.0, max: 193.08 });
+    expect(evaluateMeasurement(193.02, sinModo)).toBe('ok');
   });
 });
