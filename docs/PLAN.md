@@ -14,7 +14,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 
 | Fase                                     | Estado                                   | Semanas | Cierre |
 | ---------------------------------------- | ---------------------------------------- | ------- | ------ |
-| **F0** Fundaciones                       | 🟡 En curso — solo falta la API en línea | 2–3     | —      |
+| **F0** Fundaciones                       | 🟡 ~85% — ver «Pendiente de F0»          | 2–3     | —      |
 | **F1** Núcleo de informes (MVP)          | ⬜ Pendiente                             | 7–9     | —      |
 | **F2** Mediciones dimensionales          | ⬜ Pendiente                             | 4–6     | —      |
 | **F3** Aprobación y gobierno del formato | ⬜ Pendiente                             | 5–7     | —      |
