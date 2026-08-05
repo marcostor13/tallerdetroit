@@ -43,7 +43,10 @@ export class UserPreferences {
  */
 @Schema({ collection: 'users', timestamps: true })
 export class User {
-  @Prop({ type: String, required: true, unique: true, lowercase: true, trim: true })
+  // El índice único se declara una sola vez, más abajo con `schema.index()`:
+  // ponerlo también aquí con `unique: true` hace que Mongoose lo cree por
+  // duplicado y avise en cada arranque.
+  @Prop({ type: String, required: true, lowercase: true, trim: true })
   email!: string;
 
   /** Hash Argon2id. Nunca sale de la base: el servicio lo excluye siempre. */

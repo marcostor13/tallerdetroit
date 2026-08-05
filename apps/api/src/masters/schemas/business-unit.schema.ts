@@ -10,7 +10,9 @@ import { Document, Types } from 'mongoose';
  */
 @Schema({ collection: 'businessUnits', timestamps: true })
 export class BusinessUnit {
-  @Prop({ type: String, required: true, unique: true, uppercase: true, trim: true })
+  // El índice único se declara abajo con `schema.index()`, no aquí: ponerlo en
+  // ambos sitios lo crea por duplicado y Mongoose avisa en cada arranque.
+  @Prop({ type: String, required: true, uppercase: true, trim: true })
   codigo!: string;
 
   @Prop({ type: String, required: true, trim: true })

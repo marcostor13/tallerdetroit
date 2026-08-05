@@ -4,6 +4,10 @@
 !.env.example
 .env.deploy
 
+# Credenciales sembradas: contienen contraseñas en claro.
+CREDENCIALES*.md
+credenciales*.md
+
 # --- Dependencias ---
 node_modules/
 .npm/
