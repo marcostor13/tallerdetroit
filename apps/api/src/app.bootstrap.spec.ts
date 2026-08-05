@@ -2,10 +2,10 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import request from 'supertest';
 import { type EnvironmentVariables, parseCorsOrigins } from './config/configuration';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
+import { testUri } from './test-setup/test-uri';
 
 // `AppModule` NO se importa arriba a propósito: `ConfigModule.forRoot()` valida
 // el entorno en el momento en que el módulo se carga, así que hay que preparar
@@ -20,20 +20,17 @@ import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
  * Este sí: replica la secuencia de `main.ts` y comprueba que responde.
  */
 describe('Arranque de la API', () => {
-  let mongo: MongoMemoryReplSet;
   let app: NestExpressApplication;
   /** Lo que realmente se le pasó a `enableCors`, no un valor recalculado. */
   let origenesAplicados: string[];
 
   beforeAll(async () => {
-    mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
-
     Object.assign(process.env, {
       NODE_ENV: 'test',
       // `app.init()` no abre un puerto; el valor solo tiene que pasar la validación.
       PORT: '3000',
       LOG_LEVEL: 'error',
-      MONGODB_URI: mongo.getUri('dps-bootstrap-test'),
+      MONGODB_URI: testUri('dps-bootstrap-test'),
       JWT_ACCESS_SECRET: 'a'.repeat(64),
       JWT_REFRESH_SECRET: 'b'.repeat(64),
       CORS_ORIGINS: 'https://dev-tallerdetroit.tecdidata.com,https://tallerdetroit.tecdidata.com',
@@ -62,7 +59,6 @@ describe('Arranque de la API', () => {
 
   afterAll(async () => {
     await app?.close();
-    await mongo?.stop();
   });
 
   it('arranca sin lanzar excepciones', () => {

@@ -1,8 +1,8 @@
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import * as argon2 from 'argon2';
 import { ROLE_PERMISSIONS } from '@dps/shared';
 import { seedUsers } from './users.seed';
+import { testUri } from '../test-setup/test-uri';
 
 /**
  * La siembra escribe cuentas con las que se entra a la plataforma: si se
@@ -10,17 +10,14 @@ import { seedUsers } from './users.seed';
  * descubre intentando iniciar sesión. Estas pruebas lo cierran antes.
  */
 describe('seedUsers', () => {
-  let mongo: MongoMemoryReplSet;
   let uri: string;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
-    uri = mongo.getUri('dps-informes-test');
+    uri = testUri('dps-informes-test');
   }, 120_000);
 
   afterAll(async () => {
     await mongoose.disconnect().catch(() => undefined);
-    await mongo?.stop();
   });
 
   afterEach(async () => {

@@ -1,11 +1,11 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { ProblemDetailsFilter } from '../common/filters/problem-details.filter';
+import { testUri } from '../test-setup/test-uri';
 
 /**
  * Flujo completo de autenticación contra una base real.
@@ -15,20 +15,17 @@ import { ProblemDetailsFilter } from '../common/filters/problem-details.filter';
  * contraseña no se filtre en ninguna respuesta.
  */
 describe('Autenticación', () => {
-  let mongo: MongoMemoryReplSet;
   let app: NestExpressApplication;
   let http: ReturnType<NestExpressApplication['getHttpServer']>;
 
   const CREDENCIALES = { email: 'admin@detroitpower.pe', password: 'ContrasenaDePrueba2026' };
 
   beforeAll(async () => {
-    mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
-
     Object.assign(process.env, {
       NODE_ENV: 'test',
       PORT: '3000',
       LOG_LEVEL: 'error',
-      MONGODB_URI: mongo.getUri('dps-auth-test'),
+      MONGODB_URI: testUri('dps-auth-test'),
       JWT_ACCESS_SECRET: 'a'.repeat(64),
       JWT_REFRESH_SECRET: 'b'.repeat(64),
       JWT_ACCESS_TTL: '15m',
@@ -62,7 +59,6 @@ describe('Autenticación', () => {
   afterAll(async () => {
     await app?.close();
     await mongoose.disconnect().catch(() => undefined);
-    await mongo?.stop();
   });
 
   it('inicia sesión y devuelve el usuario con sus permisos', async () => {
