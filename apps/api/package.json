@@ -13,7 +13,8 @@
     "test:cov": "jest --coverage --passWithNoTests",
     "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
     "migrate:up": "migrate-mongo up",
-    "migrate:down": "migrate-mongo down"
+    "migrate:down": "migrate-mongo down",
+    "seed:users": "ts-node -r tsconfig-paths/register src/seeds/users.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

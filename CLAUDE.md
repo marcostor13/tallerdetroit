@@ -90,7 +90,14 @@ npm run dev:api             # solo NestJS
 npm run lint                # eslint en todo el workspace
 npm run test                # tests unitarios
 npm run build               # build de las tres apps
+
+npm run seed:users -w @dps/api            # cuentas iniciales + unidades de negocio
+npm run seed:users -w @dps/api -- --purge  # elimina solo las cuentas de prueba
 ```
+
+> La siembra es idempotente y **no reescribe la contrasena de una cuenta que ya
+> existe**. Las contrasenas se generan al azar y se imprimen una sola vez; con
+> `SEED_PASSWORD` se fija una concreta.
 
 ## Skills y agents disponibles
 
