@@ -8,7 +8,7 @@ import { Logger } from 'nestjs-pino';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { type EnvironmentVariables, corsOrigins } from './config/configuration';
+import { type EnvironmentVariables, parseCorsOrigins } from './config/configuration';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
 
 async function bootstrap(): Promise<void> {
@@ -34,7 +34,7 @@ async function bootstrap(): Promise<void> {
 
   // `credentials: true` es necesario para la cookie httpOnly del refresh token.
   app.enableCors({
-    origin: corsOrigins(config as never),
+    origin: parseCorsOrigins(config.get('CORS_ORIGINS', { infer: true })),
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'If-Match', 'X-Client-Op-Id'],

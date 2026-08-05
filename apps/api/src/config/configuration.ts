@@ -178,8 +178,17 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   return config;
 }
 
-export function corsOrigins(config: EnvironmentVariables): string[] {
-  return config.CORS_ORIGINS.split(',')
-    .map((o) => o.trim())
+/**
+ * Convierte la lista separada por comas de `CORS_ORIGINS` en un array.
+ *
+ * Recibe la cadena y no el objeto de configuración a propósito: antes aceptaba
+ * `EnvironmentVariables` y en `main.ts` se le pasaba el `ConfigService`, que no
+ * tiene esa propiedad. Con un tipo primitivo el error es imposible de cometer.
+ */
+export function parseCorsOrigins(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((origin) => origin.trim())
     .filter(Boolean);
 }
