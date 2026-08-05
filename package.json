@@ -35,7 +35,7 @@
     "test:e2e": "npm run test:e2e -w @dps/web",
     "docker:up": "docker compose -f infra/docker-compose.dev.yml up -d",
     "docker:down": "docker compose -f infra/docker-compose.dev.yml down",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
