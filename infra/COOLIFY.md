@@ -1,6 +1,6 @@
 # Coolify — configuración de los dos entornos
 
-Requisito de `especificaciones.md`:
+Requisito de `docs/especificaciones.md`:
 
 > en coolify se debe crear 2 recursos, producción y develop. cuando se haga push a la rama
 > develop, debe desplegarse automáticamente en develop, y cuando se haga push a main debe

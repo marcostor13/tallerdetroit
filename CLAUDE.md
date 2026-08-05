@@ -5,16 +5,16 @@ validada en campo a una plataforma corporativa centralizada.
 
 ## Documentos de referencia (leer antes de decidir)
 
-| Documento                                     | Qué contiene                                                                                                                                            | Cuándo consultarlo                           |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `especificacionplataformainformestecnicos.md` | **Especificación funcional y técnica completa.** Alcance, 35 maestros, motor de plantillas, módulo de mediciones, modelo de datos, API, seguridad, NFRs | Fuente de verdad de _qué_ se construye       |
-| `especificaciones.md`                         | **Requisitos transversales obligatorios del cliente**                                                                                                   | Ver "No negociables" abajo                   |
-| `PLAN.md`                                     | Plan de construcción F0–F6 con épicas, historias y criterios de aceptación                                                                              | Fuente de verdad de _en qué orden_           |
-| @.claude/DESIGN-SYSTEM.md                     | **Sistema de diseño normativo.** Tokens, tipografía, componentes, light/dark, accesibilidad                                                             | Antes de escribir cualquier CSS o componente |
-| `analisisplataformainformestecnicos.md`       | Análisis previo del prototipo y los informes reales                                                                                                     | Contexto y trazabilidad                      |
-| `Modulo IT.html`                              | Prototipo v6.0 en producción hoy                                                                                                                        | Referencia de comportamiento a preservar     |
+| Documento                                          | Qué contiene                                                                                                                                            | Cuándo consultarlo                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `docs/especificacionplataformainformestecnicos.md` | **Especificación funcional y técnica completa.** Alcance, 35 maestros, motor de plantillas, módulo de mediciones, modelo de datos, API, seguridad, NFRs | Fuente de verdad de _qué_ se construye       |
+| `docs/especificaciones.md`                         | **Requisitos transversales obligatorios del cliente**                                                                                                   | Ver "No negociables" abajo                   |
+| `docs/PLAN.md`                                     | Plan de construcción F0–F6 con épicas, historias y criterios de aceptación                                                                              | Fuente de verdad de _en qué orden_           |
+| @.claude/DESIGN-SYSTEM.md                          | **Sistema de diseño normativo.** Tokens, tipografía, componentes, light/dark, accesibilidad                                                             | Antes de escribir cualquier CSS o componente |
+| `docs/analisisplataformainformestecnicos.md`       | Análisis previo del prototipo y los informes reales                                                                                                     | Contexto y trazabilidad                      |
+| `docs/Modulo IT.html`                              | Prototipo v6.0 en producción hoy                                                                                                                        | Referencia de comportamiento a preservar     |
 
-## No negociables (`especificaciones.md`)
+## No negociables (`docs/especificaciones.md`)
 
 1. **Tema claro/oscuro** automático según el navegador **y** con switch en el header.
 2. **UX y accesibilidad de primer nivel en formularios**, con validación que prevenga errores. WCAG 2.1 AA.
@@ -101,14 +101,14 @@ npm run seed:users -w @dps/api -- --purge  # elimina solo las cuentas de prueba
 
 ## Skills y agents disponibles
 
-| Nombre                        | Para qué                                                            |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `/dps-ui` (skill)             | Construir o revisar UI conforme al sistema de diseño                |
-| `/dps-api` (skill)            | Crear un módulo de dominio NestJS con la estructura del proyecto    |
-| `/dps-master` (skill)         | Dar de alta un maestro completo (backend + CRUD + UI)               |
-| `/dps-fase` (skill)           | Abrir/cerrar una fase del `PLAN.md` con sus criterios de aceptación |
-| `dps-design-reviewer` (agent) | Auditar una pantalla contra el sistema de diseño y WCAG AA          |
-| `dps-angular-dev` (agent)     | Implementar features de frontend                                    |
-| `dps-nest-dev` (agent)        | Implementar features de backend                                     |
-| `dps-measurements` (agent)    | Trabajar sobre el módulo de mediciones dimensionales                |
-| `dps-qa` (agent)              | Verificar criterios de aceptación de una fase                       |
+| Nombre                        | Para qué                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| `/dps-ui` (skill)             | Construir o revisar UI conforme al sistema de diseño                     |
+| `/dps-api` (skill)            | Crear un módulo de dominio NestJS con la estructura del proyecto         |
+| `/dps-master` (skill)         | Dar de alta un maestro completo (backend + CRUD + UI)                    |
+| `/dps-fase` (skill)           | Abrir/cerrar una fase del `docs/PLAN.md` con sus criterios de aceptación |
+| `dps-design-reviewer` (agent) | Auditar una pantalla contra el sistema de diseño y WCAG AA               |
+| `dps-angular-dev` (agent)     | Implementar features de frontend                                         |
+| `dps-nest-dev` (agent)        | Implementar features de backend                                          |
+| `dps-measurements` (agent)    | Trabajar sobre el módulo de mediciones dimensionales                     |
+| `dps-qa` (agent)              | Verificar criterios de aceptación de una fase                            |

@@ -1,16 +1,16 @@
 ---
 name: dps-fase
-description: Abrir, avanzar o cerrar una fase (F0–F6) del PLAN.md de la plataforma Detroit Power System. Úsalo cuando el usuario pida "empezar la fase X", "seguir con F2", "qué falta de la fase actual" o "cerrar la fase" — verifica criterios de aceptación y deja el estado registrado.
+description: Abrir, avanzar o cerrar una fase (F0–F6) del docs/PLAN.md de la plataforma Detroit Power System. Úsalo cuando el usuario pida "empezar la fase X", "seguir con F2", "qué falta de la fase actual" o "cerrar la fase" — verifica criterios de aceptación y deja el estado registrado.
 ---
 
 # Gestionar una fase del plan
 
-`PLAN.md` es la fuente de verdad del orden de construcción. Cada fase tiene épicas, historias
+`docs/PLAN.md` es la fuente de verdad del orden de construcción. Cada fase tiene épicas, historias
 con casilla, criterios de aceptación y entregables.
 
 ## Al ABRIR una fase
 
-1. Lee la fase completa en `PLAN.md` y sus **dependencias**. Si una fase previa tiene criterios
+1. Lee la fase completa en `docs/PLAN.md` y sus **dependencias**. Si una fase previa tiene criterios
    sin cumplir, dilo antes de empezar — no la arranques en silencio.
 2. Verifica los **bloqueantes declarados**:
    - F2 requiere las tolerancias validadas contra el manual MTU (decisión abierta D1). Si no están,
@@ -18,15 +18,15 @@ con casilla, criterios de aceptación y entregables.
    - F1 requiere la convención de correlativos confirmada (D3).
    - F0 requiere resolver si la plataforma es multi-empresa (D5) — afecta el modelo de datos.
 3. Crea las tareas con `TaskCreate`, una por historia, con las dependencias entre ellas.
-4. Marca la fase como _en curso_ en la tabla de estado de `PLAN.md`.
+4. Marca la fase como _en curso_ en la tabla de estado de `docs/PLAN.md`.
 
 ## Durante la fase
 
 - Una historia por rama `feat/<fase>-<slug>`, PR contra `develop`.
 - Cada PR pasa lint, typecheck y tests de su app (los filtros de ruta del CI deciden cuáles corren).
-- Al terminar una historia, marca su casilla en `PLAN.md` en el mismo PR.
+- Al terminar una historia, marca su casilla en `docs/PLAN.md` en el mismo PR.
 - Si aparece alcance nuevo, **no lo metas dentro de la fase en curso**: anótalo en la sección
-  "Alcance emergente" de `PLAN.md` y decide con el usuario a qué fase va (riesgo R7).
+  "Alcance emergente" de `docs/PLAN.md` y decide con el usuario a qué fase va (riesgo R7).
 
 ## Al CERRAR una fase
 
@@ -39,7 +39,7 @@ No se cierra por sensación de avance. Se cierra **verificando cada criterio de 
    - carga inicial < 3 s en 4G · autoguardado < 500 ms · PDF de 60 fotos < 45 s
    - cobertura ≥ 70% backend, ≥ 50% frontend
    - WCAG 2.1 AA en formularios y navegación
-5. Actualiza la tabla de estado de `PLAN.md` y etiqueta con versión semántica.
+5. Actualiza la tabla de estado de `docs/PLAN.md` y etiqueta con versión semántica.
 
 ## Recordatorios permanentes
 

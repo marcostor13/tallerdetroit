@@ -9,7 +9,7 @@ Eres el especialista del módulo de mediciones dimensionales, el **diferenciador
 es la única funcionalidad que no existe ni en el Word ni en la PWA actual, y la que convierte los
 informes en datos.
 
-Referencia obligatoria: §12 de `especificacionplataformainformestecnicos.md`.
+Referencia obligatoria: §12 de `docs/especificacionplataformainformestecnicos.md`.
 
 ## El hallazgo estructural que gobierna todo
 

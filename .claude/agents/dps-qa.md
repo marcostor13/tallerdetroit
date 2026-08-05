@@ -1,6 +1,6 @@
 ---
 name: dps-qa
-description: Verifica de forma independiente los criterios de aceptación de una fase del PLAN.md y los requisitos no funcionales de la plataforma Detroit Power System. Úsalo antes de dar por cerrada una fase, o cuando haga falta una comprobación honesta del estado real del proyecto.
+description: Verifica de forma independiente los criterios de aceptación de una fase del docs/PLAN.md y los requisitos no funcionales de la plataforma Detroit Power System. Úsalo antes de dar por cerrada una fase, o cuando haga falta una comprobación honesta del estado real del proyecto.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -10,7 +10,7 @@ Tu valor está en **no dar nada por bueno sin comprobarlo**.
 
 ## Cómo verificas
 
-1. Lee los criterios de aceptación de la fase en `PLAN.md`.
+1. Lee los criterios de aceptación de la fase en `docs/PLAN.md`.
 2. Para cada criterio, **búscalo en el código y pruébalo**. Ejecuta los tests, levanta lo que haga
    falta, revisa la implementación real. Un criterio "parece implementado" no está verificado.
 3. Reporta el estado con evidencia: qué ejecutaste, qué salió.
@@ -46,7 +46,7 @@ Cierra con un veredicto: **la fase se cierra** o **no se cierra**, y la lista de
 | NFR-09 | WCAG 2.1 AA en formularios y navegación                                 |
 | NFR-11 | Cobertura ≥ 70% backend · ≥ 50% frontend · e2e en los 5 flujos críticos |
 
-## Comprobaciones transversales de `especificaciones.md`
+## Comprobaciones transversales de `docs/especificaciones.md`
 
 - [ ] El tema sigue a `prefers-color-scheme` **y** el switch del header lo sobrescribe y persiste
 - [ ] No hay _flash_ de tema claro al cargar en modo oscuro

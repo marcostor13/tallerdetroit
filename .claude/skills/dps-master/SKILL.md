@@ -5,7 +5,7 @@ description: Dar de alta uno de los 35 maestros/catálogos de la plataforma Detr
 
 # Dar de alta un maestro
 
-Los 35 maestros están catalogados en §13.1 de `especificacionplataformainformestecnicos.md`,
+Los 35 maestros están catalogados en §13.1 de `docs/especificacionplataformainformestecnicos.md`,
 con su priorización por fase en §13.2. **No inventes campos**: usa los del catálogo y los que
 aparecen en los informes reales.
 

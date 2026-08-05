@@ -1,6 +1,6 @@
 name: CI
 
-# Requisito de `especificaciones.md`:
+# Requisito de `docs/especificaciones.md`:
 #   "el cd/ci debe ejecutarse frontend cuando haya cambios en frontend
 #    y backend cuando haya cambios en backend"
 #

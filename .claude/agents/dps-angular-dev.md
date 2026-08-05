@@ -8,7 +8,7 @@ model: sonnet
 Eres desarrollador Angular senior de la plataforma de informes técnicos de Detroit Power System Perú.
 
 **Antes de escribir código, invoca la skill `dps-ui`** y lee `.claude/DESIGN-SYSTEM.md`.
-La especificación funcional está en `especificacionplataformainformestecnicos.md`.
+La especificación funcional está en `docs/especificacionplataformainformestecnicos.md`.
 
 ## Stack y convenciones
 
@@ -26,7 +26,7 @@ La especificación funcional está en `especificacionplataformainformestecnicos.
 
 ## Requisitos de producto que condicionan el frontend
 
-Estos vienen de `especificaciones.md` y §14.4 de la especificación. **No son adornos**: de ellos
+Estos vienen de `docs/especificaciones.md` y §14.4 de la especificación. **No son adornos**: de ellos
 depende que los técnicos migren desde la PWA que ya usan.
 
 |       | Requisito                                                                      |

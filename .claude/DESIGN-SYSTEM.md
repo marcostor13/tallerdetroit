@@ -3,7 +3,7 @@
 > **Este documento es normativo.** Toda pantalla, componente o estilo nuevo debe salir de aquí.
 > Si algo no está definido, se deriva de los tokens; **nunca se inventan colores, tamaños ni radios ad-hoc**.
 >
-> Fuente original: `stitch_minimalist_white_ui_kit/industrial_precision/DESIGN.md` + los 8 prototipos HTML del kit.
+> Fuente original: `docs/stitch_minimalist_white_ui_kit/industrial_precision/DESIGN.md` + los 8 prototipos HTML del kit.
 > Este archivo **extiende** esa fuente con: paleta oscura, colores semánticos (semáforo de mediciones),
 > correcciones de accesibilidad WCAG 2.1 AA y patrones de aplicación (no de landing page).
 
@@ -158,7 +158,7 @@ Derivada de los tonos `*-fixed` / `inverse-*` del kit siguiendo Material 3. **Nu
 
 ### Implementación del tema
 
-Requisito de `especificaciones.md`: **auto según el navegador + switch en el header.**
+Requisito de `docs/especificaciones.md`: **auto según el navegador + switch en el header.**
 
 ```
 Orden de precedencia:   localStorage('dps-theme')  →  prefers-color-scheme  →  'light'
