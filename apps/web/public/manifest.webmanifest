@@ -1,0 +1,41 @@
+{
+  "name": "Detroit Power System — Informes Técnicos",
+  "short_name": "Informes DPS",
+  "description": "Plataforma corporativa de informes técnicos de Detroit Power System Perú. Captura en campo, mediciones dimensionales validadas y emisión documental controlada.",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "orientation": "any",
+  "lang": "es-PE",
+  "dir": "ltr",
+  "background_color": "#FFFFFF",
+  "theme_color": "#983128",
+  "categories": ["business", "productivity", "utilities"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo informe",
+      "short_name": "Nuevo",
+      "description": "Crear un informe técnico en borrador",
+      "url": "/informes/nuevo?source=pwa-shortcut",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mis informes",
+      "short_name": "Bandeja",
+      "description": "Bandeja de informes asignados",
+      "url": "/informes?source=pwa-shortcut",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

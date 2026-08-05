@@ -1,0 +1,367 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Detroit Power Systems - Solutions Catalog</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Montserrat:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#e0bfbb",
+                      "on-tertiary-container": "#92d7f6",
+                      "on-background": "#1a1c1c",
+                      "surface-container-highest": "#e2e2e2",
+                      "inverse-primary": "#ffb4ac",
+                      "error-container": "#ffdad6",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-container": "#005f7a",
+                      "on-secondary-fixed": "#1b1c1c",
+                      "secondary": "#5f5e5e",
+                      "surface-tint": "#ad312c",
+                      "tertiary-fixed-dim": "#8bd0ef",
+                      "border-subtle": "#E5E5E5",
+                      "primary-fixed-dim": "#ffb4ac",
+                      "gray-medium": "#7A7A7A",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f9f9f9",
+                      "on-surface-variant": "#58413f",
+                      "on-secondary-container": "#656464",
+                      "inverse-surface": "#2f3131",
+                      "on-secondary-fixed-variant": "#474747",
+                      "tertiary": "#00465b",
+                      "primary-container": "#a32a26",
+                      "on-tertiary-fixed-variant": "#004d64",
+                      "surface-bright": "#f9f9f9",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#bde9ff",
+                      "on-tertiary-fixed": "#001f2a",
+                      "outline": "#8c716e",
+                      "surface-container": "#eeeeee",
+                      "primary-fixed": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#ffbeb7",
+                      "white": "#FFFFFF",
+                      "inverse-on-surface": "#f1f1f1",
+                      "on-primary-fixed-variant": "#8b1818",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#410002",
+                      "surface-variant": "#e2e2e2",
+                      "primary": "#821012",
+                      "secondary-fixed": "#e4e2e1",
+                      "surface-container-low": "#f3f3f3",
+                      "secondary-fixed-dim": "#c8c6c6",
+                      "on-surface": "#1a1c1c",
+                      "secondary-container": "#e4e2e1",
+                      "surface-container-high": "#e8e8e8",
+                      "surface-dim": "#dadada",
+                      "on-secondary": "#ffffff",
+                      "background": "#f9f9f9",
+                      "on-error": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "container-max": "1280px",
+                      "section-gap": "120px",
+                      "base": "8px",
+                      "margin-mobile": "20px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Montserrat"
+                      ],
+                      "headline-xl": [
+                              "Montserrat"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Montserrat"
+                      ],
+                      "headline-lg": [
+                              "Montserrat"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-xl": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #FFFFFF;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-background antialiased selection:bg-primary-container selection:text-white">
+<!-- TopNavBar (Shared Component) -->
+<nav class="bg-surface dark:bg-background w-full top-0 sticky border-b border-subtle dark:border-outline-variant flat no shadows z-50">
+<div class="flex justify-between items-center h-20 px-gutter max-w-container-max mx-auto">
+<!-- Brand -->
+<div class="text-headline-md font-headline-md font-bold tracking-tighter text-on-background dark:text-white flex-shrink-0 cursor-pointer transition-opacity active:opacity-70">
+                Detroit Power Systems
+            </div>
+<!-- Navigation Links (Desktop) -->
+<div class="hidden md:flex space-x-8 h-full items-center">
+<!-- ACTIVE NAV ITEM based on intent: SOLUTIONS -->
+<a class="text-primary dark:text-primary-fixed-dim border-b-2 border-primary pb-1 font-label-md text-label-md hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 h-full flex items-center mt-1" href="#">
+                    SOLUTIONS
+                </a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 h-full flex items-center" href="#">
+                    ENGINES
+                </a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 h-full flex items-center" href="#">
+                    TECHNOLOGY
+                </a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 h-full flex items-center" href="#">
+                    CORPORATE
+                </a>
+</div>
+<!-- Actions -->
+<div class="flex items-center space-x-4">
+<button aria-label="Search" class="hidden md:flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">search</span>
+</button>
+<div class="hidden md:block w-px h-4 bg-border-subtle mx-2"></div>
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors cursor-pointer">
+                    EN
+                </button>
+<button class="bg-primary-container text-white font-label-md text-label-md px-6 py-2 uppercase hover:opacity-90 transition-opacity ml-4 cursor-pointer">
+                    CONTACT US
+                </button>
+</div>
+</div>
+</nav>
+<!-- Main Content: Solutions Catalog -->
+<main class="max-w-container-max mx-auto px-gutter py-section-gap">
+<!-- Header Section -->
+<header class="mb-section-gap">
+<h1 class="font-headline-xl text-headline-xl text-on-background mb-4">Industrial Solutions.</h1>
+<p class="font-body-lg text-body-lg text-secondary max-w-2xl">
+                Engineered for extreme environments and uncompromising precision. Explore our catalog of sector-specific power generation and mechanical drive systems.
+            </p>
+</header>
+<!-- Catalog Grid (Bento/Card Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Mining -->
+<div class="group border border-subtle bg-white relative overflow-hidden transition-all duration-300 hover:border-primary-container flex flex-col h-[500px]">
+<div class="relative h-2/3 overflow-hidden bg-surface-container-low">
+<img alt="Mining equipment" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A massive, high-capacity yellow mining dump truck positioned against a rugged, mountainous quarry backdrop under bright, clear daylight. The truck is detailed, showing complex mechanical components, immense tires, and structural scale. The environment suggests heavy-duty industrial extraction, maintaining a highly technical, sharp, and realistic aesthetic consistent with corporate industrial branding." src="https://lh3.googleusercontent.com/aida/AP1WRLtqlL-VZFpbwtcwcH5tGuAZ6SAYsos9KxA1KxrlFKSPyUGdHV885n14Zmqv2uxqjQztyLRZggrzNeKSlX77S5R3vYoykPczmjOP4ALRveZMpUBUy8ebke-RYXAawrB8BKNG6RRAvWM0ONdVNlDJhTwkCqvzf5il56vQK2c7sIYrP9Rc2RhZhWb-iEhfSJIJcZez6Zed1yr9KafBnmHeClIXYUw7g05tH_WaZ71PIJPOwvbGGfKobtLV81A">
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="inline-block bg-surface-container-highest px-3 py-1 font-label-sm text-label-sm text-on-background tracking-widest uppercase">Sector</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">Mining Operations</h2>
+<p class="font-body-md text-body-md text-secondary line-clamp-2">High-torque mechanical drive systems designed for massive payload extraction in extreme terrains.</p>
+</div>
+<div class="mt-6 flex items-center justify-between border-t border-subtle pt-4">
+<a class="font-label-md text-label-md text-primary-container uppercase hover:text-primary transition-colors flex items-center gap-2" href="#">
+                            View Technical Specs <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Marine -->
+<div class="group border border-subtle bg-white relative overflow-hidden transition-all duration-300 hover:border-primary-container flex flex-col h-[500px]">
+<div class="relative h-2/3 overflow-hidden bg-surface-container-low">
+<img alt="Marine vessels" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Three heavy-duty industrial tugboats moving in formation across open ocean waters under a clear sky. The vessels feature robust maritime engineering, prominent wheelhouses, and heavy fendering. The water dynamics show powerful wake patterns, emphasizing the immense thrust and mechanical capability of the engines. The visual style is crisp, professional, and aligned with corporate maritime technology sectors." src="https://lh3.googleusercontent.com/aida/AP1WRLsaMHFJO7SsUs-c4o35NcaI2n2DSIPd_Ieeo6hlmZQp5LlcY88n8zjTsofo9m2ULPeST8Nq6KnKPyEgKOc4YFVvbXGS9QuzIwgC2Z0qqlP5hAwnwehkJMjnDyfF7KERxY803EsOOzF3-k020jGmkcfsa9EezemDnFcE9NWBxIToxqLGQLReK8p3tHqzjoHx9IYc_1V8KbOkxIu5g1x9n4GD4bmlJJuERFFLm28Lu1CXq6scfNWzltIcyp8">
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="inline-block bg-surface-container-highest px-3 py-1 font-label-sm text-label-sm text-on-background tracking-widest uppercase">Sector</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">Marine Propulsion</h2>
+<p class="font-body-md text-body-md text-secondary line-clamp-2">Continuous-duty diesel and hybrid power plants for commercial vessels, ensuring absolute reliability at sea.</p>
+</div>
+<div class="mt-6 flex items-center justify-between border-t border-subtle pt-4">
+<a class="font-label-md text-label-md text-primary-container uppercase hover:text-primary transition-colors flex items-center gap-2" href="#">
+                            View Technical Specs <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Energy Generation -->
+<div class="group border border-subtle bg-white relative overflow-hidden transition-all duration-300 hover:border-primary-container flex flex-col h-[500px]">
+<div class="relative h-2/3 overflow-hidden bg-surface-container-low">
+<img alt="Energy Generator" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A pristine, highly detailed industrial generator unit housed within a clean, metallic power plant facility. The massive engine block is painted in functional industrial gray with blue base mounts, showcasing complex manifolding, cooling arrays, and electrical interfaces. The lighting is artificial, bright, and analytical, emphasizing the precision engineering and sterile environment typical of high-end power generation infrastructure." src="https://lh3.googleusercontent.com/aida/AP1WRLsqh1th_tDAFTPhd-72MSBBWESDsA1VaBeA7w4dxAj9mZJ3xm2f8vAW1ClkH1Gu_imieOAQixQCVRELPqDyQ6CU_4D2z6hT9O5XgNK--NLzl-Ym80J0YIFk8bmehKhtEpBOUJJPBW1vmJYg_oHKnHXXlYttgQR6wEXOvNcZqOfZEtW2bRqKrjq22DLBwAStP5lf3ao6KQxbEcVhGQ5RwNBjs7am_c_iMHYJj4pmIx8le6b7ZStkk0EDsAW3">
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="inline-block bg-surface-container-highest px-3 py-1 font-label-sm text-label-sm text-on-background tracking-widest uppercase">Sector</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">Energy Generation</h2>
+<p class="font-body-md text-body-md text-secondary line-clamp-2">Mission-critical backup and prime power generator sets engineered for continuous grid stability.</p>
+</div>
+<div class="mt-6 flex items-center justify-between border-t border-subtle pt-4">
+<a class="font-label-md text-label-md text-primary-container uppercase hover:text-primary transition-colors flex items-center gap-2" href="#">
+                            View Technical Specs <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Oil & Gas -->
+<div class="group border border-subtle bg-white relative overflow-hidden transition-all duration-300 hover:border-primary-container flex flex-col h-[500px]">
+<div class="relative h-2/3 overflow-hidden bg-surface-container-low">
+<img alt="Oil and Gas" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida/AP1WRLsWSshdD6a-fa-D-YEPWD6-oi1HUq-ameRpi_UMdAPZEW1W5DfBuxv6Ocp02efO1P430BCP5T7n8442qYG9NXo_QlhE0pHtpL3qOu-2wLe6dUDMnEMOD9UeSjRRmOhkCBDufPilAvFWbsedmpabeG1wdFyc4X5TE9YDOOquM9ncdDtl3qIzWD3Miy5iblLXAcpB5uhvp0U21E0Zcd6GrKVPHlWT1okQ6iaSnYk79CVU7Ci-PRDcujXKrHC8">
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="inline-block bg-surface-container-highest px-3 py-1 font-label-sm text-label-sm text-on-background tracking-widest uppercase">Sector</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">Oil &amp; Gas</h2>
+<p class="font-body-md text-body-md text-secondary line-clamp-2">Hazardous-environment certified pump drives and compression systems built for remote extraction sites.</p>
+</div>
+<div class="mt-6 flex items-center justify-between border-t border-subtle pt-4">
+<a class="font-label-md text-label-md text-primary-container uppercase hover:text-primary transition-colors flex items-center gap-2" href="#">
+                            View Technical Specs <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-low dark:bg-surface-dim w-full mt-section-gap border-t border-subtle dark:border-outline-variant flat no shadows">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter py-section-gap px-gutter max-w-container-max mx-auto">
+<!-- Brand Column -->
+<div class="md:col-span-4 flex flex-col justify-between">
+<div>
+<span class="text-headline-md font-headline-md font-black text-on-background dark:text-white block mb-4">
+                        DETROIT POWER SYSTEMS
+                    </span>
+<p class="font-body-md text-body-md text-secondary max-w-sm">
+                        Engineered precision. Delivering uncompromising industrial power solutions globally.
+                    </p>
+</div>
+<div class="mt-12 md:mt-0 font-label-sm text-label-sm text-secondary dark:text-secondary-fixed-dim">
+                    © 2024 DETROIT POWER SYSTEMS. ALL RIGHTS RESERVED. ENGINEERED PRECISION.
+                </div>
+</div>
+<!-- Links Columns -->
+<div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+<!-- Column 1 -->
+<div class="flex flex-col space-y-4">
+<span class="font-label-md text-label-md text-on-background mb-2">Legal</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all transition-colors duration-200" href="#">
+                        Privacy Policy
+                    </a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all transition-colors duration-200" href="#">
+                        Terms of Service
+                    </a>
+</div>
+<!-- Column 2 -->
+<div class="flex flex-col space-y-4">
+<span class="font-label-md text-label-md text-on-background mb-2">Company</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all transition-colors duration-200" href="#">
+                        Global Locations
+                    </a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all transition-colors duration-200" href="#">
+                        Investor Relations
+                    </a>
+</div>
+<!-- Column 3 -->
+<div class="flex flex-col space-y-4">
+<span class="font-label-md text-label-md text-on-background mb-2">Contact</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all transition-colors duration-200" href="#">
+                        Technical Support
+                    </a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

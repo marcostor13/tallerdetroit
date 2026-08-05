@@ -1,0 +1,43 @@
+# --- Secretos (NUNCA commitear) ---
+.env
+.env.*
+!.env.example
+.env.deploy
+
+# --- Dependencias ---
+node_modules/
+.npm/
+
+# --- Builds ---
+dist/
+build/
+out-tsc/
+.angular/
+coverage/
+*.tsbuildinfo
+
+# --- Herramientas ---
+.nx/
+.turbo/
+playwright-report/
+test-results/
+blob-report/
+
+# --- Editor / SO ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# --- Logs ---
+*.log
+npm-debug.log*
+logs/
+
+# --- Artefactos locales ---
+/tmp/
+uploads/
+storage/

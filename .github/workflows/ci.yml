@@ -1,0 +1,164 @@
+name: CI
+
+# Requisito de `especificaciones.md`:
+#   "el cd/ci debe ejecutarse frontend cuando haya cambios en frontend
+#    y backend cuando haya cambios en backend"
+#
+# El job `changes` calcula qué cambió y el resto se condiciona a su salida.
+# `libs/shared` afecta a las tres apps, así que lo dispara todo.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  changes:
+    name: Detectar cambios
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
+      worker: ${{ steps.filter.outputs.worker }}
+      shared: ${{ steps.filter.outputs.shared }}
+      backend: ${{ steps.filter.outputs.api == 'true' || steps.filter.outputs.worker == 'true' || steps.filter.outputs.shared == 'true' }}
+      frontend: ${{ steps.filter.outputs.web == 'true' || steps.filter.outputs.shared == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'libs/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+              - '.github/workflows/ci.yml'
+            web:
+              - 'apps/web/**'
+            api:
+              - 'apps/api/**'
+            worker:
+              - 'apps/worker/**'
+
+  quality:
+    name: Lint · formato · typecheck
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @dps/shared
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+
+  test-shared:
+    name: Tests · shared
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.shared == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test -w @dps/shared
+
+  test-api:
+    name: Tests · backend
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @dps/shared
+      # Unitarios + integración con mongodb-memory-server. Cobertura ≥ 70% (NFR-11).
+      - run: npm run test:cov -w @dps/api
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-api
+          path: apps/api/coverage
+          retention-days: 7
+
+  test-web:
+    name: Tests · frontend
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @dps/shared
+      # Cobertura ≥ 50% (NFR-11).
+      - run: npm run test:cov -w @dps/web
+
+  e2e:
+    name: E2E · flujos críticos
+    runs-on: ubuntu-latest
+    needs: [changes, test-api, test-web]
+    if: |
+      always() &&
+      (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true') &&
+      needs.test-api.result != 'failure' && needs.test-web.result != 'failure'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: docker compose -f infra/docker-compose.ci.yml up -d
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  audit:
+    name: Auditoría de dependencias
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # El build falla ante vulnerabilidad crítica (§20).
+      - run: npm audit --audit-level=critical

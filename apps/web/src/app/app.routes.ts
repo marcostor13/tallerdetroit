@@ -1,0 +1,132 @@
+import type { Routes } from '@angular/router';
+import { authGuard, guestGuard, permissionGuard } from './core/auth/auth.guard';
+
+/**
+ * Rutas de la aplicación.
+ *
+ * Todo se carga de forma diferida salvo el shell: la meta de carga inicial es
+ * < 3 s en 4G (NFR-01), así que el bundle inicial solo lleva lo imprescindible.
+ * Las rutas de negocio se van habilitando por fase según `PLAN.md`.
+ */
+export const routes: Routes = [
+  {
+    path: 'login',
+    canActivate: [guestGuard],
+    title: 'Iniciar sesión — Informes Técnicos DPS',
+    loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: '',
+    canActivate: [authGuard],
+    loadComponent: () => import('./layout/app-shell.component').then((m) => m.AppShellComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+      {
+        path: 'inicio',
+        title: 'Inicio — Informes Técnicos DPS',
+        loadComponent: () => import('./features/home/home.page').then((m) => m.HomePage),
+      },
+      {
+        path: 'informes',
+        canActivate: [permissionGuard(['reports:read'])],
+        title: 'Informes — DPS',
+        // F1 · E1.8
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F1',
+          title: 'Bandeja de informes',
+          message: 'Se habilita en la fase F1 del plan de construcción.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'equipos',
+        canActivate: [permissionGuard(['masters:read'])],
+        title: 'Equipos y motores — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F1',
+          title: 'Equipos y motores',
+          message: 'Se habilita en la fase F1 del plan de construcción.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'maestros',
+        canActivate: [permissionGuard(['masters:read'])],
+        title: 'Maestros — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F1',
+          title: 'Maestros',
+          message: 'Se habilita en la fase F1 del plan de construcción.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'plantillas',
+        canActivate: [permissionGuard(['templates:read'])],
+        title: 'Plantillas — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F3',
+          title: 'Editor de plantillas',
+          message: 'Se habilita en la fase F3 del plan de construcción.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'analitica',
+        canActivate: [permissionGuard(['analytics:read'])],
+        title: 'Analítica — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F5',
+          title: 'Analítica',
+          message: 'Se habilita en la fase F5 del plan de construcción.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'administracion',
+        canActivate: [permissionGuard(['users:read', 'settings:write'])],
+        title: 'Administración — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F0',
+          title: 'Administración',
+          message: 'Gestión de usuarios y configuración del sistema.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'perfil',
+        title: 'Mi perfil — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: 'F0',
+          title: 'Mi perfil',
+          message: 'Preferencias de la cuenta y sesiones activas.',
+          icon: 'construction',
+        },
+      },
+      {
+        path: 'sin-permiso',
+        title: 'Sin permiso — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+        data: {
+          code: '403',
+          title: 'No tienes permiso',
+          message:
+            'Tu rol no incluye acceso a esta sección. Si crees que es un error, contacta al administrador.',
+          icon: 'lock',
+        },
+      },
+      {
+        path: '**',
+        title: 'No encontrado — DPS',
+        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
+      },
+    ],
+  },
+];

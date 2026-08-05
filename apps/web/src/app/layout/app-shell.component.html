@@ -1,0 +1,160 @@
+<div class="flex min-h-dvh bg-surface">
+  <!-- ============ SIDEBAR (escritorio) ============ -->
+  <aside
+    class="hidden shrink-0 flex-col border-r border-subtle bg-surface-container-low transition-[width] lg:flex"
+    [style.width.px]="sidebarCollapsed() ? 72 : 264"
+  >
+    <div class="flex h-header items-center gap-3 border-b border-subtle px-4">
+      @if (sidebarCollapsed()) {
+        <dps-logo variant="isotipo" [height]="28" />
+      } @else {
+        <dps-logo variant="lockup" [height]="30" />
+      }
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-2" aria-label="Navegación principal">
+      <ul class="flex flex-col gap-1">
+        @for (item of visibleItems(); track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: item.path === '/inicio' }"
+              #rla="routerLinkActive"
+              class="nav-link"
+              [attr.aria-current]="rla.isActive ? 'page' : null"
+              [title]="sidebarCollapsed() ? item.label : null"
+            >
+              <dps-icon [name]="item.icon" [size]="24" [filled]="rla.isActive" />
+              @if (!sidebarCollapsed()) {
+                <span class="truncate">{{ item.label }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="border-t border-subtle p-2">
+      <button type="button" class="nav-link w-full" (click)="toggleSidebar()">
+        <dps-icon
+          [name]="sidebarCollapsed() ? 'chevron_right' : 'chevron_left'"
+          [size]="24"
+          [label]="sidebarCollapsed() ? 'Expandir menú lateral' : 'Contraer menú lateral'"
+        />
+        @if (!sidebarCollapsed()) {
+          <span>Contraer</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ COLUMNA PRINCIPAL ============ -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <!-- Cabecera -->
+    <header
+      class="sticky top-0 z-40 flex h-header shrink-0 items-center gap-3 border-b border-subtle bg-surface px-margin-mobile safe-top md:px-gutter"
+    >
+      <!-- Móvil: menú + isotipo -->
+      <button
+        type="button"
+        class="flex min-h-touch min-w-touch items-center justify-center rounded text-secondary transition-colors hover:bg-surface-container lg:hidden"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        aria-controls="menu-secundario"
+        (click)="toggleMobileMenu()"
+      >
+        <dps-icon name="menu" [size]="24" label="Abrir menú" />
+      </button>
+
+      <a routerLink="/inicio" class="lg:hidden" aria-label="Ir al inicio">
+        <dps-logo variant="isotipo" [height]="28" />
+      </a>
+
+      <div class="min-w-0 flex-1"></div>
+
+      <div class="hidden md:block">
+        <dps-connection-chip />
+      </div>
+
+      <div class="hidden sm:block">
+        <dps-theme-toggle />
+      </div>
+
+      <!-- Avatar -->
+      <a
+        routerLink="/perfil"
+        class="flex min-h-touch min-w-touch items-center justify-center rounded-full bg-surface-container-high font-mono text-label-sm text-on-surface transition-colors hover:bg-surface-container-highest"
+        [attr.aria-label]="'Perfil de ' + (user()?.nombre ?? 'usuario')"
+      >
+        {{ initials() }}
+      </a>
+    </header>
+
+    <!-- Menú secundario en móvil (destinos que no caben en la barra inferior) -->
+    @if (mobileMenuOpen()) {
+      <div
+        class="fixed inset-0 z-50 bg-inverse-surface/40 lg:hidden"
+        (click)="closeMobileMenu()"
+        aria-hidden="true"
+      ></div>
+      <nav
+        id="menu-secundario"
+        class="fixed inset-x-0 bottom-0 z-50 max-h-[75dvh] overflow-y-auto rounded-t-xl border-t border-subtle bg-surface-container-lowest p-4 shadow-technical safe-bottom lg:hidden"
+        aria-label="Menú de navegación"
+      >
+        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-surface-container-highest"></div>
+        <ul class="flex flex-col gap-1">
+          @for (item of visibleItems(); track item.path) {
+            <li>
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="is-active"
+                #rla="routerLinkActive"
+                class="nav-link"
+                [attr.aria-current]="rla.isActive ? 'page' : null"
+                (click)="closeMobileMenu()"
+              >
+                <dps-icon [name]="item.icon" [size]="24" [filled]="rla.isActive" />
+                <span>{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+        <div class="mt-4 flex items-center justify-between border-t border-subtle pt-4">
+          <dps-theme-toggle />
+          <button type="button" class="dps-btn dps-btn--tertiary" (click)="logout()">
+            <dps-icon name="logout" [size]="20" />
+            Salir
+          </button>
+        </div>
+      </nav>
+    }
+
+    <!-- Contenido -->
+    <main id="contenido" class="app-content min-w-0 flex-1 px-margin-mobile py-6 md:px-gutter">
+      <div class="mx-auto w-full max-w-container">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ BARRA INFERIOR (móvil) ============ -->
+<nav
+  class="fixed inset-x-0 bottom-0 z-40 flex h-bottom-nav items-stretch border-t border-subtle bg-surface safe-bottom lg:hidden"
+  aria-label="Navegación principal"
+>
+  @for (item of bottomNavItems(); track item.path) {
+    <a
+      [routerLink]="item.path"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: item.path === '/inicio' }"
+      #rla="routerLinkActive"
+      class="bottom-nav-link"
+      [attr.aria-current]="rla.isActive ? 'page' : null"
+    >
+      <dps-icon [name]="item.icon" [size]="24" [filled]="rla.isActive" />
+      <span class="font-mono text-label-sm uppercase">{{ item.shortLabel }}</span>
+    </a>
+  }
+</nav>

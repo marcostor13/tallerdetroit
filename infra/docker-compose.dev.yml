@@ -1,0 +1,82 @@
+# Dependencias locales de desarrollo. Las apps corren fuera de Docker
+# (`npm run dev`) para tener recarga en caliente.
+#
+# En dev, `mongo` y `minio` sustituyen a Atlas y a S3.
+
+name: dps-dev
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: dps-mongo
+    restart: unless-stopped
+    ports: ['27017:27017']
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Un replica set es necesario para transacciones y change streams.
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: dps-redis
+    restart: unless-stopped
+    ports: ['6379:6379']
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: dps-minio
+    restart: unless-stopped
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: dpsdev
+      MINIO_ROOT_PASSWORD: dpsdev12345
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 dpsdev dpsdev12345 &&
+      mc mb --ignore-existing local/dps-informes-dev &&
+      mc anonymous set none local/dps-informes-dev &&
+      echo 'bucket dps-informes-dev listo'
+      "
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: dps-mailpit
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # interfaz web
+volumes:
+  mongo-data:
+  redis-data:
+  minio-data:

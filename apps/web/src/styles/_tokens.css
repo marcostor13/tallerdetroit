@@ -1,0 +1,239 @@
+/* =============================================================================
+   Sistema de diseño "Industrial Precision" — Detroit Power System Perú
+   Fuente normativa: .claude/DESIGN-SYSTEM.md
+   No añadas colores aquí sin actualizar ese documento.
+   ========================================================================== */
+
+:root {
+  /* --- Marca (solo dentro de activos de marca) --------------------------- */
+  --brand-red: #983128;
+  --brand-gray: #676669;
+  --brand-ink: #231f20;
+
+  /* --- Superficies ------------------------------------------------------- */
+  --surface: #f9f9f9;
+  --surface-dim: #dadada;
+  --surface-bright: #f9f9f9;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f3f3;
+  --surface-container: #eeeeee;
+  --surface-container-high: #e8e8e8;
+  --surface-container-highest: #e2e2e2;
+  --surface-variant: #e2e2e2;
+  --inverse-surface: #2f3131;
+  --inverse-on-surface: #f1f1f1;
+
+  /* --- Texto ------------------------------------------------------------- */
+  --on-surface: #1a1c1c;
+  --on-surface-variant: #58413f;
+  --secondary: #5f5e5e;          /* texto secundario por defecto — 6.5:1     */
+  --gray-medium: #7a7a7a;        /* 4.3:1 — solo texto grande o decorativo   */
+  --on-background: #1a1c1c;
+  --background: #f9f9f9;
+
+  /* --- Bordes ------------------------------------------------------------ */
+  --border-subtle: #e5e5e5;      /* 1.26:1 — SOLO decorativo                 */
+  --outline: #8c716e;            /* 4.47:1 — bordes de controles interactivos*/
+  --outline-variant: #e0bfbb;
+
+  /* --- Marca en UI ------------------------------------------------------- */
+  --primary: #821012;
+  --on-primary: #ffffff;
+  --primary-container: #a32a26;
+  --on-primary-container: #ffbeb7;
+  --primary-fixed: #ffdad6;
+  --primary-fixed-dim: #ffb4ac;
+  --inverse-primary: #ffb4ac;
+  --surface-tint: #ad312c;
+
+  --on-secondary: #ffffff;
+  --secondary-container: #e4e2e1;
+  --on-secondary-container: #656464;
+
+  --tertiary: #00465b;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #005f7a;
+  --on-tertiary-container: #92d7f6;
+
+  /* --- Semánticos: semáforo de mediciones y estados ---------------------- */
+  --success: #146b3a;
+  --on-success: #ffffff;
+  --success-container: #a8f0c1;
+  --on-success-container: #00210f;
+
+  --warning: #8a5300;
+  --on-warning: #ffffff;
+  --warning-container: #ffddb3;
+  --on-warning-container: #2c1700;
+
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  /* --- Elevación (único nivel permitido) --------------------------------- */
+  --shadow-technical: 0 4px 20px rgb(0 0 0 / 5%);
+
+  /* --- Forma ------------------------------------------------------------- */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* --- Espaciado --------------------------------------------------------- */
+  --space-base: 8px;
+  --gutter: 24px;
+  --margin-mobile: 20px;
+  --container-max: 1280px;
+  --section-gap-app: 48px;
+  --section-gap-public: 120px;
+
+  /* --- Alturas ----------------------------------------------------------- */
+  --header-h: 64px;
+  --bottom-nav-h: 64px;
+  --control-h-sm: 36px;
+  --control-h: 44px;
+  --control-h-lg: 56px;
+  --row-h-comfortable: 48px;
+  --row-h-compact: 36px;
+
+  /* --- Movimiento -------------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --dur-slow: 250ms;
+
+  color-scheme: light;
+}
+
+/* =============================================================================
+   Tema oscuro. Derivado según Material 3 — no es un invert.
+   Se activa por data-theme="dark" (switch explícito) o por preferencia del SO
+   cuando data-theme="system".
+   ========================================================================== */
+
+:root[data-theme='dark'] {
+  --surface: #131313;
+  --surface-dim: #0e0e0e;
+  --surface-bright: #353535;
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #1b1c1c;
+  --surface-container: #1f2020;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #353535;
+  --surface-variant: #474747;
+  --inverse-surface: #e2e2e2;
+  --inverse-on-surface: #2f3131;
+
+  --on-surface: #e2e2e2;
+  --on-surface-variant: #c8c6c6;
+  --secondary: #c8c6c6;
+  --gray-medium: #929090;
+  --on-background: #e2e2e2;
+  --background: #131313;
+
+  --border-subtle: #2e2e2e;
+  --outline: #929090;
+  --outline-variant: #474747;
+
+  --primary: #ffb4ac;
+  --on-primary: #690005;
+  --primary-container: #8b1818;
+  --on-primary-container: #ffdad6;
+  --primary-fixed: #ffdad6;
+  --primary-fixed-dim: #ffb4ac;
+  --inverse-primary: #a32a26;
+  --surface-tint: #ffb4ac;
+
+  --on-secondary: #1b1c1c;
+  --secondary-container: #474747;
+  --on-secondary-container: #e4e2e1;
+
+  --tertiary: #8bd0ef;
+  --on-tertiary: #00364a;
+  --tertiary-container: #004d64;
+  --on-tertiary-container: #bde9ff;
+
+  --success: #8cd9a8;
+  --on-success: #003919;
+  --success-container: #005226;
+  --on-success-container: #a8f0c1;
+
+  --warning: #ffb95c;
+  --on-warning: #492900;
+  --warning-container: #683c00;
+  --on-warning-container: #ffddb3;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --shadow-technical: 0 4px 20px rgb(0 0 0 / 45%);
+
+  color-scheme: dark;
+}
+
+/* Preferencia del sistema cuando el usuario no ha elegido tema explícito. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    --surface: #131313;
+    --surface-dim: #0e0e0e;
+    --surface-bright: #353535;
+    --surface-container-lowest: #0e0e0e;
+    --surface-container-low: #1b1c1c;
+    --surface-container: #1f2020;
+    --surface-container-high: #2a2a2a;
+    --surface-container-highest: #353535;
+    --surface-variant: #474747;
+    --inverse-surface: #e2e2e2;
+    --inverse-on-surface: #2f3131;
+
+    --on-surface: #e2e2e2;
+    --on-surface-variant: #c8c6c6;
+    --secondary: #c8c6c6;
+    --gray-medium: #929090;
+    --on-background: #e2e2e2;
+    --background: #131313;
+
+    --border-subtle: #2e2e2e;
+    --outline: #929090;
+    --outline-variant: #474747;
+
+    --primary: #ffb4ac;
+    --on-primary: #690005;
+    --primary-container: #8b1818;
+    --on-primary-container: #ffdad6;
+    --inverse-primary: #a32a26;
+    --surface-tint: #ffb4ac;
+
+    --on-secondary: #1b1c1c;
+    --secondary-container: #474747;
+    --on-secondary-container: #e4e2e1;
+
+    --tertiary: #8bd0ef;
+    --on-tertiary: #00364a;
+    --tertiary-container: #004d64;
+    --on-tertiary-container: #bde9ff;
+
+    --success: #8cd9a8;
+    --on-success: #003919;
+    --success-container: #005226;
+    --on-success-container: #a8f0c1;
+
+    --warning: #ffb95c;
+    --on-warning: #492900;
+    --warning-container: #683c00;
+    --on-warning-container: #ffddb3;
+
+    --error: #ffb4ab;
+    --on-error: #690005;
+    --error-container: #93000a;
+    --on-error-container: #ffdad6;
+
+    --shadow-technical: 0 4px 20px rgb(0 0 0 / 45%);
+
+    color-scheme: dark;
+  }
+}

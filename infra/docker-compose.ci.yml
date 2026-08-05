@@ -1,0 +1,37 @@
+# Stack mínimo para los tests e2e en CI. Sin volúmenes: todo efímero.
+
+name: dps-ci
+
+services:
+  mongo:
+    image: mongo:7
+    ports: ['27017:27017']
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    healthcheck:
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    ports: ['9000:9000']
+    environment:
+      MINIO_ROOT_USER: ciuser
+      MINIO_ROOT_PASSWORD: cipassword123
+    command: server /data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 10

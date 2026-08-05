@@ -1,0 +1,142 @@
+import { plainToInstance } from 'class-transformer';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+  validateSync,
+} from 'class-validator';
+
+/**
+ * Configuración tipada y validada al arrancar.
+ *
+ * Si falta un secreto o es demasiado corto, el proceso **no arranca**. Es
+ * preferible un fallo ruidoso en el despliegue a un servicio en producción
+ * firmando tokens con una clave débil.
+ */
+export class EnvironmentVariables {
+  @IsIn(['development', 'test', 'production'])
+  NODE_ENV: 'development' | 'test' | 'production' = 'development';
+
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  PORT = 3000;
+
+  @IsString()
+  @IsIn(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
+  LOG_LEVEL = 'info';
+
+  @IsString()
+  @MinLength(10)
+  MONGODB_URI!: string;
+
+  @IsOptional()
+  @IsString()
+  REDIS_URL?: string;
+
+  @IsString()
+  @MinLength(32, { message: 'JWT_ACCESS_SECRET debe tener al menos 32 caracteres' })
+  JWT_ACCESS_SECRET!: string;
+
+  @IsString()
+  @MinLength(32, { message: 'JWT_REFRESH_SECRET debe tener al menos 32 caracteres' })
+  JWT_REFRESH_SECRET!: string;
+
+  @IsString()
+  JWT_ACCESS_TTL = '15m';
+
+  @IsString()
+  JWT_REFRESH_TTL = '7d';
+
+  @IsInt()
+  @Min(8)
+  PASSWORD_MIN_LENGTH = 12;
+
+  @IsInt()
+  @Min(1)
+  LOGIN_MAX_ATTEMPTS = 5;
+
+  @IsInt()
+  @Min(1)
+  LOGIN_LOCKOUT_MINUTES = 15;
+
+  /** Orígenes permitidos para CORS, separados por coma. */
+  @IsString()
+  CORS_ORIGINS = 'http://localhost:4200';
+
+  @IsOptional()
+  @IsString()
+  S3_ENDPOINT?: string;
+
+  @IsBoolean()
+  S3_FORCE_PATH_STYLE = false;
+
+  @IsOptional()
+  @IsString()
+  AWS_REGION?: string;
+
+  @IsOptional()
+  @IsString()
+  AWS_S3_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  AWS_ACCESS_KEY_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  AWS_SECRET_ACCESS_KEY?: string;
+
+  @IsInt()
+  @Min(60)
+  S3_SIGNED_URL_TTL = 900;
+
+  @IsOptional()
+  @IsString()
+  SENTRY_DSN?: string;
+}
+
+const NUMERIC_KEYS = new Set([
+  'PORT',
+  'PASSWORD_MIN_LENGTH',
+  'LOGIN_MAX_ATTEMPTS',
+  'LOGIN_LOCKOUT_MINUTES',
+  'S3_SIGNED_URL_TTL',
+]);
+const BOOLEAN_KEYS = new Set(['S3_FORCE_PATH_STYLE']);
+
+export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {
+  const coerced: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === undefined || value === '') continue;
+    if (NUMERIC_KEYS.has(key)) coerced[key] = Number(value);
+    else if (BOOLEAN_KEYS.has(key)) coerced[key] = value === 'true' || value === true;
+    else coerced[key] = value;
+  }
+
+  const config = plainToInstance(EnvironmentVariables, coerced, {
+    enableImplicitConversion: false,
+    exposeDefaultValues: true,
+  });
+
+  const errors = validateSync(config, { skipMissingProperties: false });
+  if (errors.length > 0) {
+    const detail = errors
+      .map((e) => `  · ${e.property}: ${Object.values(e.constraints ?? {}).join(', ')}`)
+      .join('\n');
+    throw new Error(`Configuración de entorno inválida:\n${detail}`);
+  }
+
+  return config;
+}
+
+export function corsOrigins(config: EnvironmentVariables): string[] {
+  return config.CORS_ORIGINS.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+}

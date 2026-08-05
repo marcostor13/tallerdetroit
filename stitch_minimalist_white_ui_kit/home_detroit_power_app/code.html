@@ -1,0 +1,346 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Detroit Power Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#bde9ff",
+                    "inverse-primary": "#ffb4ac",
+                    "on-secondary-container": "#656464",
+                    "on-tertiary-fixed": "#001f2a",
+                    "surface-dim": "#dadada",
+                    "secondary-container": "#e4e2e1",
+                    "outline": "#8c716e",
+                    "primary": "#821012",
+                    "secondary-fixed-dim": "#c8c6c6",
+                    "on-primary-container": "#ffbeb7",
+                    "surface-tint": "#ad312c",
+                    "inverse-surface": "#2f3131",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "on-primary-fixed": "#410002",
+                    "on-error": "#ffffff",
+                    "on-background": "#1a1c1c",
+                    "on-tertiary-fixed-variant": "#004d64",
+                    "tertiary-container": "#005f7a",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f9f9f9",
+                    "tertiary-fixed-dim": "#8bd0ef",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#eeeeee",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#a32a26",
+                    "on-tertiary-container": "#92d7f6",
+                    "outline-variant": "#e0bfbb",
+                    "on-primary-fixed-variant": "#8b1818",
+                    "gray-medium": "#7A7A7A",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f3f3f3",
+                    "surface-container-high": "#e8e8e8",
+                    "inverse-on-surface": "#f1f1f1",
+                    "white": "#FFFFFF",
+                    "surface": "#f9f9f9",
+                    "primary-fixed-dim": "#ffb4ac",
+                    "primary-fixed": "#ffdad6",
+                    "on-surface-variant": "#58413f",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#00465b",
+                    "secondary": "#5f5e5e",
+                    "background": "#f9f9f9",
+                    "border-subtle": "#E5E5E5",
+                    "on-surface": "#1a1c1c",
+                    "surface-container-highest": "#e2e2e2",
+                    "surface-variant": "#e2e2e2",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-secondary-fixed-variant": "#474747"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "container-max": "1280px",
+                    "section-gap": "120px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": [
+                            "Hanken Grotesk"
+                    ],
+                    "headline-md": [
+                            "Montserrat"
+                    ],
+                    "headline-xl": [
+                            "Montserrat"
+                    ],
+                    "headline-lg-mobile": [
+                            "Montserrat"
+                    ],
+                    "headline-lg": [
+                            "Montserrat"
+                    ],
+                    "body-md": [
+                            "Hanken Grotesk"
+                    ],
+                    "label-sm": [
+                            "JetBrains Mono"
+                    ],
+                    "label-md": [
+                            "JetBrains Mono"
+                    ]
+            },
+            "fontSize": {
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-xl": [
+                            "64px",
+                            {
+                                    "lineHeight": "72px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "48px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.1em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "500"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FFFFFF;
+            color: #1a1c1c;
+        }
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+</head>
+<body class="font-body-md bg-white pb-20 antialiased selection:bg-primary-container selection:text-white">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim w-full top-0 sticky border-b border-subtle dark:border-outline-variant z-40">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-[1280px] mx-auto">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity p-2 rounded">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-container uppercase tracking-tight">DETROIT POWER</h1>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity p-2 rounded">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full">
+<!-- Hero Section -->
+<section class="w-full relative bg-surface-container-low pt-8 pb-16">
+<div class="max-w-[1280px] mx-auto px-margin-mobile md:px-gutter grid grid-cols-4 md:grid-cols-12 gap-gutter items-center">
+<div class="col-span-4 md:col-span-6 z-10 space-y-6">
+<h2 class="font-headline-lg-mobile md:font-headline-xl text-headline-lg-mobile md:text-headline-xl text-on-surface uppercase tracking-tight">
+                        Engineered Precision.<br>
+<span class="text-primary-container">Powering Industries.</span>
+</h2>
+<p class="font-body-lg text-body-lg text-secondary max-w-lg">
+                        Delivering uncompromising power solutions designed for extreme environments. Our industrial machinery sets the standard for reliability and performance.
+                    </p>
+<div class="pt-4 flex gap-4">
+<button class="bg-primary-container text-white font-headline-md text-label-md uppercase px-8 py-4 rounded-sm hover:bg-primary transition-colors">
+                            Explore Solutions
+                        </button>
+</div>
+</div>
+<div class="col-span-4 md:col-span-6 relative mt-8 md:mt-0">
+<div class="relative w-full aspect-square md:aspect-auto md:h-[600px] bg-white border border-border-subtle p-4">
+<img alt="Industrial Engine in Mining Environment" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLs1LqCzB7Djq0HxSijbPnDhutq7mSZ29_s6QHs3m6qKoKh3eQ3pWYJ4RZqymRl-bu58rAtZ1KHFoiUr0SvmXmUMboCCHLNUzNLb6jBUWBnJGpa79LgMITSRxM_HCSEzN0I9WzNaXhVYHY8z5LM8QWySApqCNbQmVpgGe4sAIZXXdFqHohgxk_7WqRX_MHLiFN9urakcN6vXO-9OZuyiLVfkUWTxGx8589Y_oszXWDq0W_AAYCt0vRz3Tvj1">
+<!-- Decorative Frame Elements -->
+<div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary-container -translate-x-1 -translate-y-1"></div>
+<div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary-container translate-x-1 translate-y-1"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Industrial Sectors Grid -->
+<section class="max-w-[1280px] mx-auto px-margin-mobile md:px-gutter py-section-gap">
+<div class="mb-12 border-b border-border-subtle pb-4 flex justify-between items-end">
+<h3 class="font-label-md text-label-md text-secondary uppercase tracking-widest">Core Sectors</h3>
+<span class="font-label-sm text-label-sm text-gray-medium">SYS.VER.4.2</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Sector Card 1: Mining -->
+<a class="group block border border-border-subtle bg-white hover:bg-surface-container-low transition-colors duration-300" href="#">
+<div class="p-6 h-full flex flex-col justify-between min-h-[240px]">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="construction">construction</span>
+<span class="font-label-sm text-label-sm text-gray-medium">01</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-2 group-hover:text-primary-container transition-colors">Mining Operations</h4>
+<p class="font-body-md text-body-md text-secondary">High-torque solutions for deep extraction environments.</p>
+</div>
+</div>
+</a>
+<!-- Sector Card 2: Marine -->
+<a class="group block border border-border-subtle bg-white hover:bg-surface-container-low transition-colors duration-300" href="#">
+<div class="p-6 h-full flex flex-col justify-between min-h-[240px]">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="sailing">sailing</span>
+<span class="font-label-sm text-label-sm text-gray-medium">02</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-2 group-hover:text-primary-container transition-colors">Marine Propulsion</h4>
+<p class="font-body-md text-body-md text-secondary">Reliable power architecture for commercial vessels.</p>
+</div>
+</div>
+</a>
+<!-- Sector Card 3: Energy -->
+<a class="group block border border-border-subtle bg-white hover:bg-surface-container-low transition-colors duration-300" href="#">
+<div class="p-6 h-full flex flex-col justify-between min-h-[240px]">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="bolt">bolt</span>
+<span class="font-label-sm text-label-sm text-gray-medium">03</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-2 group-hover:text-primary-container transition-colors">Energy Grid</h4>
+<p class="font-body-md text-body-md text-secondary">Prime and standby generation modules.</p>
+</div>
+</div>
+</a>
+<!-- Sector Card 4: Oil & Gas -->
+<a class="group block border border-border-subtle bg-white hover:bg-surface-container-low transition-colors duration-300" href="#">
+<div class="p-6 h-full flex flex-col justify-between min-h-[240px]">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="local_gas_station">local_gas_station</span>
+<span class="font-label-sm text-label-sm text-gray-medium">04</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-2 group-hover:text-primary-container transition-colors">Oil &amp; Gas</h4>
+<p class="font-body-md text-body-md text-secondary">Explosion-proof power systems for hazardous locations.</p>
+</div>
+</div>
+</a>
+</div>
+</section>
+<!-- Technical Specs Teaser -->
+<section class="bg-inverse-surface text-white py-24">
+<div class="max-w-[1280px] mx-auto px-margin-mobile md:px-gutter grid grid-cols-4 md:grid-cols-12 gap-gutter items-center">
+<div class="col-span-4 md:col-span-5 space-y-6">
+<h3 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg uppercase">Precision Architecture</h3>
+<p class="font-body-lg text-body-lg text-secondary-fixed-dim">Explore detailed technical specifications, operational tolerances, and maintenance blueprints for our entire powertrain lineup.</p>
+<button class="bg-transparent border border-white text-white font-headline-md text-label-md uppercase px-8 py-4 mt-4 rounded-sm hover:bg-white hover:text-inverse-surface transition-colors">
+                        View Specs Manual
+                    </button>
+</div>
+<div class="col-span-4 md:col-span-6 md:col-start-7 mt-12 md:mt-0">
+<!-- Tech Spec List -->
+<div class="space-y-4">
+<div class="flex items-end justify-between border-b border-secondary pb-2">
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim">Max Torque Output</span>
+<div class="flex-grow border-b border-dotted border-secondary mx-4 opacity-30 mb-1"></div>
+<span class="font-label-md text-label-md font-bold">12,500 Nm</span>
+</div>
+<div class="flex items-end justify-between border-b border-secondary pb-2">
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim">Operating Temp Range</span>
+<div class="flex-grow border-b border-dotted border-secondary mx-4 opacity-30 mb-1"></div>
+<span class="font-label-md text-label-md font-bold">-40°C to +55°C</span>
+</div>
+<div class="flex items-end justify-between border-b border-secondary pb-2">
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim">Telemetry Interface</span>
+<div class="flex-grow border-b border-dotted border-secondary mx-4 opacity-30 mb-1"></div>
+<span class="font-label-md text-label-md font-bold">CAN bus 2.0B</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface dark:bg-surface-container fixed bottom-0 w-full z-50 border-t border-subtle dark:border-outline-variant">
+<div class="flex justify-around items-center h-16 w-full px-base">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold active:scale-95 transition-transform duration-150 w-1/4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm uppercase">Home</span>
+</a>
+<!-- Solutions -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim transition-colors active:scale-95 transition-transform duration-150 w-1/4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="settings_input_component">settings_input_component</span>
+<span class="font-label-sm text-label-sm uppercase">Solutions</span>
+</a>
+<!-- Technical -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim transition-colors active:scale-95 transition-transform duration-150 w-1/4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="terminal">terminal</span>
+<span class="font-label-sm text-label-sm uppercase">Technical</span>
+</a>
+<!-- Contact -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim transition-colors active:scale-95 transition-transform duration-150 w-1/4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="mail">mail</span>
+<span class="font-label-sm text-label-sm uppercase">Contact</span>
+</a>
+</div>
+</nav>
+</body></html>

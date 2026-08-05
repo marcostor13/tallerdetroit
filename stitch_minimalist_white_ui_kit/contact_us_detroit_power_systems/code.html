@@ -1,0 +1,361 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Contact Us - Detroit Power Systems</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Montserrat:wght@500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#e0bfbb",
+                      "on-tertiary-container": "#92d7f6",
+                      "on-background": "#1a1c1c",
+                      "surface-container-highest": "#e2e2e2",
+                      "inverse-primary": "#ffb4ac",
+                      "error-container": "#ffdad6",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-container": "#005f7a",
+                      "on-secondary-fixed": "#1b1c1c",
+                      "secondary": "#5f5e5e",
+                      "surface-tint": "#ad312c",
+                      "tertiary-fixed-dim": "#8bd0ef",
+                      "border-subtle": "#E5E5E5",
+                      "primary-fixed-dim": "#ffb4ac",
+                      "gray-medium": "#7A7A7A",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f9f9f9",
+                      "on-surface-variant": "#58413f",
+                      "on-secondary-container": "#656464",
+                      "inverse-surface": "#2f3131",
+                      "on-secondary-fixed-variant": "#474747",
+                      "tertiary": "#00465b",
+                      "primary-container": "#a32a26",
+                      "on-tertiary-fixed-variant": "#004d64",
+                      "surface-bright": "#f9f9f9",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#bde9ff",
+                      "on-tertiary-fixed": "#001f2a",
+                      "outline": "#8c716e",
+                      "surface-container": "#eeeeee",
+                      "primary-fixed": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#ffbeb7",
+                      "white": "#FFFFFF",
+                      "inverse-on-surface": "#f1f1f1",
+                      "on-primary-fixed-variant": "#8b1818",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#410002",
+                      "surface-variant": "#e2e2e2",
+                      "primary": "#821012",
+                      "secondary-fixed": "#e4e2e1",
+                      "surface-container-low": "#f3f3f3",
+                      "secondary-fixed-dim": "#c8c6c6",
+                      "on-surface": "#1a1c1c",
+                      "secondary-container": "#e4e2e1",
+                      "surface-container-high": "#e8e8e8",
+                      "surface-dim": "#dadada",
+                      "on-secondary": "#ffffff",
+                      "background": "#f9f9f9",
+                      "on-error": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "container-max": "1280px",
+                      "section-gap": "120px",
+                      "base": "8px",
+                      "margin-mobile": "20px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Montserrat"
+                      ],
+                      "headline-xl": [
+                              "Montserrat"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Montserrat"
+                      ],
+                      "headline-lg": [
+                              "Montserrat"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-xl": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        .tech-grid {
+            background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+            background-size: 24px 24px;
+            background-position: center top;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky z-50 bg-surface dark:bg-background border-b border-subtle dark:border-outline-variant flat no shadows transition-all duration-300">
+<div class="flex justify-between items-center h-20 px-gutter max-w-container-max mx-auto">
+<a class="flex items-center gap-3 group" href="/">
+<img alt="Detroit Power Systems Logo" class="h-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvSK-qPs4skXAbOQl52zeH9xK-dIhfUxCdLuEHXWQDVvcFB3WboJnFbHKauNXsibOz0d33I4rdPmUtfxgTpZKcmuoCpBqo_pNFT404b2BJHgkAM3-7j_d1nl2W8YOefWSkSDXbnnxPo-UKXZcVuOudly1eRrnHGr9eUrzf0BjGKz6K9B3uht3TRC8BVHJqzX987CIG4Lm82y4YbXfGPJwMIhLYXsPU-jX4czO3QTBCOvXMS9XE_e0FcIKh78odPiUCNkY">
+</a>
+<!-- Desktop Nav -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 cursor-pointer active:opacity-70" href="#">SOLUTIONS</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 cursor-pointer active:opacity-70" href="#">ENGINES</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 cursor-pointer active:opacity-70" href="#">TECHNOLOGY</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed transition-all duration-300 cursor-pointer active:opacity-70" href="#">CORPORATE</a>
+</nav>
+<div class="hidden md:flex items-center gap-6">
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-1 cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined" style="font-size: 18px;">language</span>
+                    EN
+                </button>
+<a class="font-headline-md text-label-md tracking-widest font-bold uppercase border border-on-background px-6 py-2 hover:bg-primary-container hover:text-white hover:border-primary-container transition-colors duration-300 cursor-pointer active:opacity-70 text-primary dark:text-primary-fixed-dim border-b-2 border-primary pb-1 bg-surface dark:bg-background" href="#">CONTACT US</a>
+</div>
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-on-background p-2">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full relative overflow-hidden pb-section-gap">
+<!-- Subtle Grid Background -->
+<div class="absolute inset-0 tech-grid opacity-30 pointer-events-none z-0"></div>
+<div class="max-w-container-max mx-auto px-gutter md:px-gutter lg:px-0 relative z-10 pt-16 md:pt-24 lg:pt-32">
+<!-- Page Header -->
+<div class="mb-16 md:mb-24 lg:w-2/3">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-[1px] bg-primary-container"></div>
+<span class="font-label-sm text-label-sm text-gray-medium uppercase tracking-[0.2em]">Global Reach</span>
+</div>
+<h1 class="font-headline-xl text-headline-lg-mobile md:text-headline-xl text-on-background mb-6">Initiate Contact</h1>
+<p class="font-body-lg text-body-lg text-secondary max-w-2xl">Connect with our engineering specialists. Detroit Power Systems maintains a global presence to support complex industrial requirements with uncompromising precision.</p>
+</div>
+<!-- Two Column Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-gutter">
+<!-- Left: Contact Form -->
+<div class="lg:col-span-7 bg-white p-8 md:p-12 border border-subtle relative z-10 shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<div class="mb-10">
+<h2 class="font-headline-md text-headline-md text-on-background border-b border-subtle pb-4 inline-block">Direct Inquiry</h2>
+</div>
+<form action="#" class="space-y-8" method="POST">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="relative group">
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-widest" for="name">Full Name</label>
+<input class="w-full bg-transparent border-0 border-b border-subtle px-0 py-3 text-on-background font-body-md focus:ring-0 focus:border-on-background transition-colors placeholder:text-gray-medium/50" id="name" name="name" placeholder="e.g. Robert Oppenheimer" required="" type="text">
+</div>
+<div class="relative group">
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-widest" for="email">Corporate Email</label>
+<input class="w-full bg-transparent border-0 border-b border-subtle px-0 py-3 text-on-background font-body-md focus:ring-0 focus:border-on-background transition-colors placeholder:text-gray-medium/50" id="email" name="email" placeholder="robert@enterprise.com" required="" type="email">
+</div>
+</div>
+<div class="relative group">
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-widest" for="company">Organization / Company</label>
+<input class="w-full bg-transparent border-0 border-b border-subtle px-0 py-3 text-on-background font-body-md focus:ring-0 focus:border-on-background transition-colors placeholder:text-gray-medium/50" id="company" name="company" placeholder="Engineering Division" type="text">
+</div>
+<div class="relative group">
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-widest" for="subject">Subject Matter</label>
+<select class="w-full bg-transparent border-0 border-b border-subtle px-0 py-3 text-on-background font-body-md focus:ring-0 focus:border-on-background transition-colors appearance-none cursor-pointer" id="subject" name="subject">
+<option value="sales">Sales &amp; Procurement</option>
+<option value="technical">Technical Support</option>
+<option value="corporate">Corporate Relations</option>
+<option value="other">Other Inquiry</option>
+</select>
+<div class="absolute right-0 top-10 pointer-events-none text-secondary">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+<div class="relative group">
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-widest" for="message">Message Specification</label>
+<textarea class="w-full bg-transparent border border-subtle p-4 text-on-background font-body-md focus:ring-0 focus:border-on-background transition-colors resize-none placeholder:text-gray-medium/50" id="message" name="message" placeholder="Provide detailed requirements..." required="" rows="4"></textarea>
+</div>
+<div class="pt-4 flex justify-end">
+<button class="bg-primary-container text-white font-headline-md text-label-md uppercase tracking-widest px-10 py-4 hover:bg-primary transition-colors flex items-center gap-3 group" type="submit">
+                                Transmit Request
+                                <span class="material-symbols-outlined transform group-hover:translate-x-1 transition-transform" style="font-size: 20px;">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Right: Corporate Info -->
+<div class="lg:col-span-5 space-y-8">
+<!-- Global HQ Card -->
+<div class="bg-surface p-8 border border-subtle">
+<div class="flex items-start gap-4 mb-6">
+<div class="p-3 bg-white border border-subtle inline-flex">
+<span class="material-symbols-outlined text-primary-container" style="font-size: 24px;">domain</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg font-bold text-on-background">Global Headquarters</h3>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mt-1">Detroit, Michigan</p>
+</div>
+</div>
+<ul class="space-y-4 font-label-md text-label-md text-on-background">
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Address</span>
+<span class="text-right">13400 Outer Drive, West<br>Detroit, MI 48239, USA</span>
+</li>
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Main Switchboard</span>
+<span>+1 (313) 592-5000</span>
+</li>
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Email</span>
+<span>corporate@detroitpowersystems.com</span>
+</li>
+</ul>
+</div>
+<!-- Regional Office Card -->
+<div class="bg-surface p-8 border border-subtle">
+<div class="flex items-start gap-4 mb-6">
+<div class="p-3 bg-white border border-subtle inline-flex">
+<span class="material-symbols-outlined text-primary-container" style="font-size: 24px;">location_on</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg font-bold text-on-background">South America Operations</h3>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mt-1">Lima, Perú</p>
+</div>
+</div>
+<ul class="space-y-4 font-label-md text-label-md text-on-background">
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Address</span>
+<span class="text-right">Av. Industrial 4500<br>Callao, Lima</span>
+</li>
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Operations Desk</span>
+<span>+51 (1) 456-7890</span>
+</li>
+<li class="flex justify-between border-b border-subtle border-dotted pb-2">
+<span class="text-secondary">Technical Support</span>
+<span>latam.support@detroitpowersystems.com</span>
+</li>
+</ul>
+</div>
+<!-- Visual Accent Image -->
+<div class="h-48 border border-subtle relative overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover opacity-80 mix-blend-multiply grayscale hover:grayscale-0 transition-all duration-700" data-alt="A highly detailed, wide architectural shot of a modern, clinical industrial facility interior. Gleaming white floors, vast scale, structural steel beams painted in precise red accents. Minimalist corporate laboratory aesthetic, brilliantly lit with cool white, high-key lighting. Professional, precise, sterile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYXBJn0e35Pfe9unevKh3GMh8XADCsxso2XeBJYV0cOIV-BWrQhMR2fzr25xmHmJt-MBes5Ytkd0e1kbiEFF4Co4vJvuso5ntYiFEMBNaJAYJAOihkt20Iv7qR5PfTJfbFHrYwGAyTPyyfSHRhiArIcvxIm8QlxPrNS_8EnUTPXRMq8Fwhz4nY2B_mWzXWp9yPpnx8lmQo1t_FMEsCKoP1yB3mnmqhOlpgKv_NteuRJ_HX29vs11LwWQ">
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-section-gap bg-surface-container-low dark:bg-surface-dim text-primary dark:text-on-primary-fixed-variant border-t border-subtle dark:border-outline-variant flat no shadows transition-colors duration-200">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter py-section-gap px-gutter max-w-container-max mx-auto">
+<div class="md:col-span-12 lg:col-span-4 mb-8 lg:mb-0">
+<span class="text-headline-md font-headline-md font-black text-on-background dark:text-white block mb-4 tracking-tighter">DETROIT POWER SYSTEMS</span>
+<p class="font-body-md text-body-md text-secondary max-w-sm mb-6">Engineered Precision. Delivering uncompromising industrial power solutions across global infrastructure.</p>
+<div class="font-label-sm text-label-sm text-secondary uppercase tracking-[0.2em]">
+                    © 2024 DETROIT POWER SYSTEMS. ALL RIGHTS RESERVED. ENGINEERED PRECISION.
+                </div>
+</div>
+<div class="md:col-span-6 lg:col-span-4 lg:col-start-9 flex flex-col items-start lg:items-end gap-3">
+<span class="font-label-sm text-label-sm text-on-background font-bold uppercase tracking-widest mb-2">Documentation</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all" href="#">Privacy Policy</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all" href="#">Terms of Service</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all" href="#">Global Locations</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all" href="#">Technical Support</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all" href="#">Investor Relations</a>
+</div>
+</div>
+</footer>
+</body></html>

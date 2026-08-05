@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+coverage
+.angular
+package-lock.json
+apps/web/public
+stitch_minimalist_white_ui_kit
+Modulo IT.html
+*.docx
+*.pptx

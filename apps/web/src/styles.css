@@ -1,0 +1,8 @@
+/* Los @import van primero (los inlina postcss-import antes de Tailwind). */
+@import './styles/_tokens.css';
+@import './styles/_typography.css';
+@import './styles/_base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

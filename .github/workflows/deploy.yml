@@ -1,0 +1,177 @@
+name: Deploy
+
+# Requisito de `especificaciones.md`:
+#   "en coolify se debe crear 2 recursos, producción y develop.
+#    cuando se haga push a la rama develop, debe desplegarse automáticamente en
+#    develop, y cuando se haga push a main debe desplegarse automaticamente en
+#    production."
+#
+# Coolify construye cada app desde su Dockerfile en este repositorio. Quien decide
+# QUÉ se reconstruye es este workflow, mediante filtrado por ruta: si el push solo
+# tocó el frontend, solo se redespliega el frontend.
+#
+# El auto-deploy nativo de Coolify debe estar DESACTIVADO en los seis recursos;
+# si se deja activo, cada push redespliega las tres apps y el filtrado deja de
+# tener efecto.
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Entorno a desplegar
+        required: true
+        type: choice
+        options: [develop, production]
+      apps:
+        description: Apps a desplegar (coma) o "all"
+        required: false
+        default: all
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Planificar despliegue
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      web: ${{ steps.decide.outputs.web }}
+      api: ${{ steps.decide.outputs.api }}
+      worker: ${{ steps.decide.outputs.worker }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolver entorno
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.target }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=develop" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            shared: &shared
+              - 'libs/shared/**'
+              - 'package-lock.json'
+              - 'package.json'
+            web:
+              - *shared
+              - 'apps/web/**'
+              - 'infra/web.Dockerfile'
+              - 'infra/nginx.conf'
+            api:
+              - *shared
+              - 'apps/api/**'
+              - 'infra/api.Dockerfile'
+            worker:
+              - *shared
+              - 'apps/worker/**'
+              - 'infra/worker.Dockerfile'
+
+      - name: Decidir apps a desplegar
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SEL="${{ inputs.apps }}"
+            for APP in web api worker; do
+              if [ "$SEL" = "all" ] || [[ ",$SEL," == *",$APP,"* ]]; then
+                echo "$APP=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "$APP=false" >> "$GITHUB_OUTPUT"
+              fi
+            done
+          else
+            echo "web=${{ steps.filter.outputs.web }}"       >> "$GITHUB_OUTPUT"
+            echo "api=${{ steps.filter.outputs.api }}"       >> "$GITHUB_OUTPUT"
+            echo "worker=${{ steps.filter.outputs.worker }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    name: ${{ matrix.app }} → ${{ needs.plan.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: plan
+    if: needs.plan.outputs[matrix.app] == 'true'
+    # El entorno `production` lleva revisión manual obligatoria en GitHub.
+    environment:
+      name: ${{ needs.plan.outputs.environment }}
+    strategy:
+      fail-fast: false
+      # El backend antes que el frontend: si hay cambio de contrato, la API ya
+      # está arriba cuando el nuevo frontend empieza a llamarla.
+      max-parallel: 1
+      matrix:
+        app: [api, worker, web]
+    steps:
+      - name: Disparar despliegue en Coolify
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          UUID: ${{ secrets[format('COOLIFY_UUID_{0}', matrix.app)] }}
+        run: |
+          if [ -z "$UUID" ]; then
+            echo "::error::Falta el secret COOLIFY_UUID_${{ matrix.app }} en el entorno ${{ needs.plan.outputs.environment }}"
+            exit 1
+          fi
+          echo "Desplegando ${{ matrix.app }} (uuid ${UUID:0:8}…)"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_URL/api/v1/deploy?uuid=$UUID&force=false"
+          echo ""
+
+      - name: Verificar healthcheck
+        env:
+          BASE_URL: ${{ vars[format('BASE_URL_{0}', matrix.app)] }}
+        run: |
+          if [ -z "$BASE_URL" ]; then
+            echo "Sin URL pública para ${{ matrix.app }}; se omite la verificación."
+            exit 0
+          fi
+          HEALTH_PATH=$([ "${{ matrix.app }}" = "web" ] && echo "/" || echo "/api/v1/health")
+          echo "Esperando a $BASE_URL$HEALTH_PATH …"
+          # El build en el servidor puede tardar varios minutos.
+          for i in $(seq 1 60); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$BASE_URL$HEALTH_PATH" || true)
+            if [ "$CODE" = "200" ]; then
+              echo "✅ ${{ matrix.app }} responde 200 tras $((i*15))s"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::${{ matrix.app }} no pasó el healthcheck tras 15 min"
+          exit 1
+
+  summary:
+    name: Resumen
+    runs-on: ubuntu-latest
+    needs: [plan, deploy]
+    if: always()
+    steps:
+      - run: |
+          {
+            echo "## Despliegue a \`${{ needs.plan.outputs.environment }}\`"
+            echo ""
+            echo "| App | Desplegada |"
+            echo "|---|---|"
+            echo "| web    | ${{ needs.plan.outputs.web }} |"
+            echo "| api    | ${{ needs.plan.outputs.api }} |"
+            echo "| worker | ${{ needs.plan.outputs.worker }} |"
+            echo ""
+            echo "Commit \`${GITHUB_SHA::7}\`"
+            echo ""
+            echo "Rollback: en Coolify, desplegar el commit anterior desde el historial del recurso."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,348 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Detroit Power Systems | Engineered Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&amp;family=Montserrat:wght@600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "outline-variant": "#e0bfbb",
+                            "on-tertiary-container": "#92d7f6",
+                            "on-background": "#1a1c1c",
+                            "surface-container-highest": "#e2e2e2",
+                            "inverse-primary": "#ffb4ac",
+                            "error-container": "#ffdad6",
+                            "on-tertiary": "#ffffff",
+                            "tertiary-container": "#005f7a",
+                            "on-secondary-fixed": "#1b1c1c",
+                            "secondary": "#5f5e5e",
+                            "surface-tint": "#ad312c",
+                            "tertiary-fixed-dim": "#8bd0ef",
+                            "border-subtle": "#E5E5E5",
+                            "primary-fixed-dim": "#ffb4ac",
+                            "gray-medium": "#7A7A7A",
+                            "surface-container-lowest": "#ffffff",
+                            "surface": "#f9f9f9",
+                            "on-surface-variant": "#58413f",
+                            "on-secondary-container": "#656464",
+                            "inverse-surface": "#2f3131",
+                            "on-secondary-fixed-variant": "#474747",
+                            "tertiary": "#00465b",
+                            "primary-container": "#a32a26",
+                            "on-tertiary-fixed-variant": "#004d64",
+                            "surface-bright": "#f9f9f9",
+                            "on-primary": "#ffffff",
+                            "tertiary-fixed": "#bde9ff",
+                            "on-tertiary-fixed": "#001f2a",
+                            "outline": "#8c716e",
+                            "surface-container": "#eeeeee",
+                            "primary-fixed": "#ffdad6",
+                            "error": "#ba1a1a",
+                            "on-primary-container": "#ffbeb7",
+                            "white": "#FFFFFF",
+                            "inverse-on-surface": "#f1f1f1",
+                            "on-primary-fixed-variant": "#8b1818",
+                            "on-error-container": "#93000a",
+                            "on-primary-fixed": "#410002",
+                            "surface-variant": "#e2e2e2",
+                            "primary": "#821012",
+                            "secondary-fixed": "#e4e2e1",
+                            "surface-container-low": "#f3f3f3",
+                            "secondary-fixed-dim": "#c8c6c6",
+                            "on-surface": "#1a1c1c",
+                            "secondary-container": "#e4e2e1",
+                            "surface-container-high": "#e8e8e8",
+                            "surface-dim": "#dadada",
+                            "on-secondary": "#ffffff",
+                            "background": "#f9f9f9",
+                            "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "gutter": "24px",
+                            "container-max": "1280px",
+                            "section-gap": "120px",
+                            "base": "8px",
+                            "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                            "body-md": [
+                                    "Hanken Grotesk"
+                            ],
+                            "headline-lg-mobile": [
+                                    "Montserrat"
+                            ],
+                            "headline-xl": [
+                                    "Montserrat"
+                            ],
+                            "label-md": [
+                                    "JetBrains Mono"
+                            ],
+                            "headline-md": [
+                                    "Montserrat"
+                            ],
+                            "headline-lg": [
+                                    "Montserrat"
+                            ],
+                            "label-sm": [
+                                    "JetBrains Mono"
+                            ],
+                            "body-lg": [
+                                    "Hanken Grotesk"
+                            ]
+                    },
+                    "fontSize": {
+                            "body-md": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "24px",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "headline-lg-mobile": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "40px",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "headline-xl": [
+                                    "64px",
+                                    {
+                                            "lineHeight": "72px",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "label-md": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "20px",
+                                            "letterSpacing": "0.05em",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "32px",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "headline-lg": [
+                                    "40px",
+                                    {
+                                            "lineHeight": "48px",
+                                            "letterSpacing": "-0.01em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "label-sm": [
+                                    "12px",
+                                    {
+                                            "lineHeight": "16px",
+                                            "letterSpacing": "0.1em",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "body-lg": [
+                                    "18px",
+                                    {
+                                            "lineHeight": "28px",
+                                            "fontWeight": "400"
+                                    }
+                            ]
+                    }
+            },
+                },
+        }
+    </script>
+<style>
+        body { background-color: #ffffff; color: #1a1c1c; }
+        .grid-bg {
+            background-image: linear-gradient(to right, #f5f5f5 1px, transparent 1px),
+                              linear-gradient(to bottom, #f5f5f5 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-background w-full top-0 sticky border-b border-subtle dark:border-outline-variant z-50">
+<div class="flex justify-between items-center h-20 px-gutter max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<span class="text-headline-md font-headline-md font-bold tracking-tighter text-on-background dark:text-white">Detroit Power Systems</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70" href="#">SOLUTIONS</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70" href="#">ENGINES</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70" href="#">TECHNOLOGY</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-md text-label-md hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70" href="#">CORPORATE</a>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-label-md text-label-md text-secondary cursor-pointer hover:text-primary transition-all duration-300">EN</span>
+<button class="bg-primary-container text-white font-label-md text-label-md px-6 py-2 uppercase hover:bg-primary transition-colors">CONTACT US</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative w-full min-h-[80vh] flex items-center bg-white overflow-hidden py-section-gap">
+<div class="absolute inset-0 grid-bg opacity-50 pointer-events-none"></div>
+<div class="max-w-container-max mx-auto px-gutter w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter relative z-10 items-center">
+<div class="lg:col-span-6 flex flex-col justify-center space-y-8">
+<div class="inline-flex items-center gap-2">
+<span class="w-12 h-[1px] bg-primary"></span>
+<span class="font-label-md text-label-md text-gray-medium uppercase tracking-widest">Global Leadership</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-background uppercase">
+                    Engineered <br><span class="text-primary-container">Precision.</span><br>Powering Industries.
+                </h1>
+<p class="font-body-lg text-body-lg text-secondary max-w-lg">
+                    Delivering uncompromising performance through advanced energy and propulsion solutions. Designed for scale, engineered for absolute reliability.
+                </p>
+<div class="pt-4 flex items-center gap-6">
+<button class="bg-primary-container text-white font-label-md text-label-md px-8 py-4 uppercase hover:bg-primary transition-colors flex items-center gap-2">
+                        DISCOVER SOLUTIONS
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<button class="border border-on-background text-on-background font-label-md text-label-md px-8 py-4 uppercase hover:bg-surface-container-highest transition-colors">
+                        VIEW SPECS
+                    </button>
+</div>
+</div>
+<div class="lg:col-span-6 relative h-full min-h-[400px] lg:min-h-[600px] flex items-center justify-center mt-12 lg:mt-0">
+<div class="absolute w-[120%] h-[120%] -right-[10%] bg-surface-container-low rounded-full blur-3xl opacity-50 -z-10"></div>
+<img alt="Industrial Engine" class="object-contain w-full h-auto max-h-[700px] drop-shadow-2xl z-10" src="https://lh3.googleusercontent.com/aida/AP1WRLs1LqCzB7Djq0HxSijbPnDhutq7mSZ29_s6QHs3m6qKoKh3eQ3pWYJ4RZqymRl-bu58rAtZ1KHFoiUr0SvmXmUMboCCHLNUzNLb6jBUWBnJGpa79LgMITSRxM_HCSEzN0I9WzNaXhVYHY8z5LM8QWySApqCNbQmVpgGe4sAIZXXdFqHohgxk_7WqRX_MHLiFN9urakcN6vXO-9OZuyiLVfkUWTxGx8589Y_oszXWDq0W_AAYCt0vRz3Tvj1">
+</div>
+</div>
+</header>
+<!-- Sectors Section -->
+<section class="bg-surface py-section-gap w-full border-t border-subtle">
+<div class="max-w-container-max mx-auto px-gutter">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-background uppercase mb-4">Industrial Sectors</h2>
+<p class="font-body-lg text-body-lg text-secondary max-w-2xl">Specialized power solutions configured for the most demanding operational environments globally.</p>
+</div>
+<a class="font-label-md text-label-md text-primary hover:underline uppercase flex items-center gap-1" href="#">All Sectors <span class="material-symbols-outlined text-[16px]">chevron_right</span></a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="bg-white border border-subtle p-8 hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-shadow group relative overflow-hidden flex flex-col h-full">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center mb-8 rounded">
+<span class="material-symbols-outlined text-primary text-[24px]">precision_manufacturing</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-3 uppercase">Mining</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 flex-grow">High-torque diesel applications designed for extreme extraction environments.</p>
+<a class="font-label-sm text-label-sm text-on-background group-hover:text-primary transition-colors flex items-center gap-2 mt-auto" href="#">
+                        VIEW SYSTEMS <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border border-subtle p-8 hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-shadow group relative overflow-hidden flex flex-col h-full">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center mb-8 rounded">
+<span class="material-symbols-outlined text-primary text-[24px]">directions_boat</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-3 uppercase">Marine</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 flex-grow">Propulsion and onboard power for commercial and defense maritime operations.</p>
+<a class="font-label-sm text-label-sm text-on-background group-hover:text-primary transition-colors flex items-center gap-2 mt-auto" href="#">
+                        VIEW SYSTEMS <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border border-subtle p-8 hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-shadow group relative overflow-hidden flex flex-col h-full">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center mb-8 rounded">
+<span class="material-symbols-outlined text-primary text-[24px]">electric_bolt</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-3 uppercase">Energy</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 flex-grow">Continuous, standby, and prime power generation infrastructure.</p>
+<a class="font-label-sm text-label-sm text-on-background group-hover:text-primary transition-colors flex items-center gap-2 mt-auto" href="#">
+                        VIEW SYSTEMS <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+</div>
+<!-- Card 4 -->
+<div class="bg-white border border-subtle p-8 hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-shadow group relative overflow-hidden flex flex-col h-full">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center mb-8 rounded">
+<span class="material-symbols-outlined text-primary text-[24px]">oil_barrel</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-3 uppercase">Oil &amp; Gas</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 flex-grow">Explosion-proof power units for drilling and offshore platform reliability.</p>
+<a class="font-label-sm text-label-sm text-on-background group-hover:text-primary transition-colors flex items-center gap-2 mt-auto" href="#">
+                        VIEW SYSTEMS <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- About Section -->
+<section class="bg-white py-section-gap w-full border-t border-subtle">
+<div class="max-w-container-max mx-auto px-gutter grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-5 flex justify-center lg:justify-start">
+<img alt="Detroit Power Systems Logo" class="max-w-xs md:max-w-md h-auto opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiR3J2oH_9sp2UtThaNvYKwzVkXT4Ul2nUj3emSQO8AHRWlB80QkMNf0wzsIEbz83vC-LWhdipJMsaudaPei-P1croFGrImD3LMu3El67r4KNNtq60w1BWGsrHIKfYEARpeuAoOficvQmZPTkLdmjduMjymWu-OhQFQ9U9TojPfSAbIBkdVK_2KVqKo9Jawhy0eeUKz-QySJDXItGN-By5eVE5D4zLDtgggF-72iT4IuuD1pNdFoYba3wxex9aHPOae78">
+</div>
+<div class="lg:col-span-7 pl-0 lg:pl-12 border-l-0 lg:border-l border-subtle">
+<h2 class="font-headline-lg text-headline-lg text-on-background uppercase mb-6">The Standard in <br>Heavy Engineering</h2>
+<p class="font-body-lg text-body-lg text-secondary mb-8">
+                    For decades, Detroit Power Systems has engineered the core technology that drives global industry. Our commitment to architectural precision and mechanical reliability ensures that our systems perform flawlessly under the most extreme conditions known to engineering.
+                </p>
+<div class="grid grid-cols-2 gap-8 mb-8">
+<div>
+<div class="font-headline-md text-headline-md text-on-background mb-1">150+</div>
+<div class="font-label-sm text-label-sm text-gray-medium uppercase">Countries Served</div>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background mb-1">24/7</div>
+<div class="font-label-sm text-label-sm text-gray-medium uppercase">Global Support</div>
+</div>
+</div>
+<a class="inline-flex items-center gap-2 font-label-md text-label-md text-primary uppercase hover:underline" href="#">
+                    Read Corporate Profile <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-dim w-full mt-section-gap border-t border-subtle dark:border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter py-section-gap px-gutter max-w-container-max mx-auto">
+<div class="md:col-span-4 flex flex-col justify-between">
+<div>
+<span class="text-headline-md font-headline-md font-black text-on-background dark:text-white mb-4 block">Detroit Power Systems</span>
+<p class="font-label-sm text-label-sm text-secondary mb-6 max-w-xs">Engineered precision for global industry. Uncompromising power solutions.</p>
+</div>
+<div class="font-label-sm text-label-sm text-secondary mt-12 md:mt-0">
+                    © 2024 DETROIT POWER SYSTEMS. ALL RIGHTS RESERVED. ENGINEERED PRECISION.
+                </div>
+</div>
+<div class="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md text-on-background uppercase mb-2">Legal</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Privacy Policy</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Terms of Service</a>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md text-on-background uppercase mb-2">Network</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Global Locations</a>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md text-on-background uppercase mb-2">Support</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Technical Support</a>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md text-on-background uppercase mb-2">Corporate</span>
+<a class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm hover:text-primary dark:hover:text-primary-fixed underline transition-all duration-200" href="#">Investor Relations</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>
