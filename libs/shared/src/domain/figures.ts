@@ -19,9 +19,15 @@ export interface NumerableFoto {
 export interface NumerableBloque {
   readonly id: string;
   readonly orden: number;
-  /** Un bloque oculto por las reglas de §11.3 no aporta figuras al documento. */
-  readonly visible?: boolean;
-  readonly fotos?: readonly NumerableFoto[];
+  /**
+   * Un bloque oculto por las reglas de §11.3 no aporta figuras al documento.
+   *
+   * Admite `undefined` explícito porque quien llama suele venir de un documento
+   * donde el campo puede no estar; con `exactOptionalPropertyTypes` no basta
+   * con marcarlo opcional.
+   */
+  readonly visible?: boolean | undefined;
+  readonly fotos?: readonly NumerableFoto[] | undefined;
 }
 
 export interface FiguraNumerada {

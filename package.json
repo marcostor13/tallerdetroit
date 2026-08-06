@@ -29,6 +29,7 @@
     "typecheck:web": "tsc -p apps/web/tsconfig.json --noEmit",
     "typecheck:api": "tsc -p apps/api/tsconfig.json --noEmit",
     "typecheck:worker": "tsc -p apps/worker/tsconfig.json --noEmit",
+    "typecheck:shared": "tsc -p libs/shared/tsconfig.json --noEmit",
     "test": "npm-run-all --parallel test:api test:web",
     "test:web": "npm run test -w @dps/web",
     "test:api": "npm run test -w @dps/api",

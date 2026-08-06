@@ -175,7 +175,7 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 - [ ] **Prueba de fidelidad:** un técnico reproduce íntegramente el informe **OT746** en la plataforma;
       en una comparación ciega, un supervisor no identifica cuál PDF salió del Word y cuál de la plataforma
 - [ ] Lo mismo con el informe **OT898**, **sin cambiar código** — solo componiendo bloques distintos
-- [ ] Un informe con 45 fotos genera su PDF en < 45 s (NFR-03)
+- [x] **Un informe con 45 fotos genera su PDF en < 45 s (NFR-03)** — verificado 6-ago-2026: **4,99 s** con 45 fotografías *distintas* de 1600×1200 (14 MB de origen → PDF de 1,26 MB), medido contra Chromium real. Con la misma foto repetida el PDF la deduplica y la medida sale diez veces mejor de lo que es; el banco usa fotos diferentes a propósito. Queda fuera el tiempo de descarga desde S3
 - [ ] Dos informes no pueden compartir número: el segundo intento recibe un error claro (RN-01 adaptada a D3)
 - [ ] Al reordenar bloques, la numeración de figuras se recalcula correctamente en pantalla y en el PDF (RN-06)
 - [ ] Un técnico crea un equipo nuevo desde el formulario **sin perder el borrador en curso** (§13.3.1)
