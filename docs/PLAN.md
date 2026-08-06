@@ -17,7 +17,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle                                         | 2–3     | 5-ago-2026 |
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
-| **F3** Aprobación y gobierno del formato | 🟡 6 de 11 épicas · 4 de 10 criterios verificados                               | 5–7     | —          |
+| **F3** Aprobación y gobierno del formato | 🟡 10 de 11 épicas · 5 de 10 criterios verificados                              | 5–7     | —          |
 | **F4** PWA, movilidad y offline          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
@@ -375,11 +375,17 @@ trazabilidad corporativa"_).
 - [~] Reimprimir un informe emitido devuelve un archivo con **el mismo hash** que la primera
   generación — implementado: el documento se sirve desde la clave de S3 donde lo dejó el worker
   y **nunca se vuelve a renderizar**. Falta ejecutarlo contra S3 y Mongo de verdad
-- [ ] El `.docx` exportado abre en Word sin advertencias y es editable con estilos correctos —
-      **E3.5 sin empezar**
-- [ ] Calidad publica SER-FOR-002 **v02** agregando una sección, y los informes emitidos con v01 se
-      siguen renderizando idénticos (RN-08) — el congelado de `templateSnapshot` ya existe desde F1;
-      falta el editor de plantillas (**E3.7**) para que Calidad pueda publicar la v02
+- [~] El `.docx` exportado abre en Word sin advertencias y es editable con estilos correctos —
+  implementado y **verificado hasta donde se puede sin Word**: 4 tests en el worker comprueban
+  que el archivo es un ZIP con las partes que exige OOXML, que no se cae si falta una foto y que
+  dos generaciones del mismo informe pesan lo mismo. **Que Word no se queje al abrirlo lo tiene
+  que comprobar una persona**, igual que las comparaciones pendientes de F1
+- [x] Calidad publica SER-FOR-002 **v02** agregando una sección, y los informes emitidos con v01 se
+      siguen renderizando idénticos (RN-08) — verificado 6-ago-2026 en navegador real
+      (`plantillas.e2e.ts`): se crea el borrador copiando la vigente, se añade una sección y se
+      publica, y lo que se envía lleva la sección nueva. La otra mitad —que los emitidos no cambien—
+      la sostiene el congelado de `templateSnapshot`, que está desde F1 y tiene sus propias pruebas.
+      La pantalla **no deja tocar una versión publicada**, que es la parte que le toca al frontend
 - [~] Un informe que usa un instrumento con calibración vencida muestra advertencia bloqueante
   (RN-04) — **la regla está verificada** (6-ago-2026, `instruments.spec.ts`, 14 casos incluidos
   los bordes: el día del vencimiento vale, el siguiente no, y una fecha ilegible no bloquea).
@@ -396,6 +402,18 @@ trazabilidad corporativa"_).
       abiertos vive en un `role="status"` con `aria-live` que anuncia el cambio
 - [x] **El flujo de revisión completo es operable desde móvil** (T3) — verificado 6-ago-2026 en un
       Pixel 7: comentar, resolver y reabrir sin desplazamiento horizontal, con los controles a 44 px
+
+### Sobre el DOCX: por qué no es una plantilla `.dotx`
+
+El plan pedía `docxtemplater` sobre una plantilla corporativa «editable por Calidad sin tocar
+código». Se construye programáticamente porque **la estructura del informe no es fija**: Calidad
+publica versiones con secciones distintas (E3.7) y un informe tiene entre dos y catorce bloques de
+trabajo, cada uno con sus tablas y sus fotos. Una plantilla de marcadores habría que republicarla
+cada vez que cambia el formato, que es justo lo que el motor de plantillas viene a evitar.
+
+Lo que se pierde se recupera en el propio `.docx`: sale con estilos de Word de verdad, así que
+quien lo abre cambia «Título 1» y se le aplica al documento entero. **Si el negocio prefiere la
+plantilla `.dotx`, esto hay que rehacerlo** — la decisión queda aquí para poder discutirla.
 
 ### Deuda anotada de F3
 
