@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type {
   AppliedSpec,
+  TemplateSectionDefinition,
   ChecklistCapturado,
   ComentarioDeRevision,
   ChecklistItem,
@@ -245,10 +246,62 @@ export class ReportsService {
   }
 }
 
+/** Una versión tal como la lista el maestro documental. */
+export interface VersionDePlantilla {
+  readonly _id: string;
+  readonly codigo: string;
+  readonly version: string;
+  readonly nombre: string;
+  readonly estado: 'borrador' | 'publicada' | 'retirada';
+  readonly fechaPublicacion?: string | null;
+  readonly secciones: TemplateSectionDefinition[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class TemplatesService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/templates`;
+
+  /** Versiones de una plantilla, publicadas y en borrador. */
+  versiones(codigo: string): Promise<{ total: number; items: VersionDePlantilla[] }> {
+    return firstValueFrom(
+      this.http.get<{ total: number; items: VersionDePlantilla[] }>(
+        `${this.base}/${codigo}/versiones`,
+      ),
+    );
+  }
+
+  /** Crea una versión en borrador (E3.7). */
+  crearVersion(
+    codigo: string,
+    datos: { version: string; nombre?: string; secciones?: TemplateSectionDefinition[] },
+  ): Promise<VersionDePlantilla> {
+    return firstValueFrom(
+      this.http.post<VersionDePlantilla>(`${this.base}/${codigo}/versiones`, datos),
+    );
+  }
+
+  /** Guarda las secciones. Solo sobre un borrador: publicada es inmutable. */
+  editarVersion(
+    codigo: string,
+    version: string,
+    secciones: TemplateSectionDefinition[],
+  ): Promise<VersionDePlantilla> {
+    return firstValueFrom(
+      this.http.patch<VersionDePlantilla>(`${this.base}/${codigo}/versiones/${version}`, {
+        secciones,
+      }),
+    );
+  }
+
+  publicar(codigo: string, version: string): Promise<VersionDePlantilla> {
+    return firstValueFrom(
+      this.http.post<VersionDePlantilla>(
+        `${this.base}/${codigo}/versiones/${version}/publicar`,
+        {},
+      ),
+    );
+  }
 
   vigente(codigo: string): Promise<TemplateVersionDefinition> {
     return firstValueFrom(

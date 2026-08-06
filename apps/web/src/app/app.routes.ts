@@ -100,14 +100,9 @@ export const routes: Routes = [
       {
         path: 'plantillas',
         canActivate: [permissionGuard(['templates:read'])],
-        title: 'Plantillas — DPS',
-        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
-        data: {
-          code: 'F3',
-          title: 'Editor de plantillas',
-          message: 'Se habilita en la fase F3 del plan de construcción.',
-          icon: 'construction',
-        },
+        title: 'Formato del informe — DPS',
+        loadComponent: () =>
+          import('./features/plantillas/plantillas.page').then((m) => m.PlantillasPage),
       },
       {
         path: 'analitica',

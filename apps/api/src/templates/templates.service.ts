@@ -22,6 +22,7 @@ import {
   type ReportTemplateDocument,
   type TemplateVersionDocument,
 } from './schemas/template.schema';
+import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 @Injectable()
@@ -31,6 +32,7 @@ export class TemplatesService {
     private readonly templates: Model<ReportTemplateDocument>,
     @InjectModel(TemplateVersion.name)
     private readonly versions: Model<TemplateVersionDocument>,
+    private readonly auditoria: AuditService,
   ) {}
 
   async listTemplates() {
@@ -129,6 +131,14 @@ export class TemplatesService {
       updatedBy: new Types.ObjectId(actor.id),
     });
 
+    await this.auditoria.registrar(actor, {
+      entidad: 'templateVersions',
+      entidadId: String(doc._id),
+      accion: 'crear',
+      etiqueta: `${clave} ${datos.version}`,
+      despues: { estado: 'borrador', secciones: (datos.secciones ?? []).length },
+    });
+
     return doc.toObject();
   }
 
@@ -150,9 +160,20 @@ export class TemplatesService {
       );
     }
 
+    const antes = doc.secciones.length;
     doc.secciones = secciones;
     doc.updatedBy = new Types.ObjectId(actor.id);
     await doc.save();
+
+    await this.auditoria.registrar(actor, {
+      entidad: 'templateVersions',
+      entidadId: String(doc._id),
+      accion: 'actualizar',
+      etiqueta: `${doc.codigo} ${doc.version}`,
+      antes: { secciones: antes },
+      despues: { secciones: secciones.length },
+    });
+
     return doc.toObject();
   }
 
@@ -183,6 +204,16 @@ export class TemplatesService {
     doc.publicadaPor = new Types.ObjectId(actor.id);
     doc.updatedBy = new Types.ObjectId(actor.id);
     await doc.save();
+
+    // Publicar una versión cambia el formato de todos los informes que nazcan a
+    // partir de ahora. Es de las escrituras que más falta hace poder rastrear.
+    await this.auditoria.registrar(actor, {
+      entidad: 'templateVersions',
+      entidadId: String(doc._id),
+      accion: 'publicar',
+      etiqueta: `${doc.codigo} ${doc.version}`,
+      despues: { estado: 'publicada', secciones: doc.secciones.length },
+    });
 
     return doc.toObject();
   }
