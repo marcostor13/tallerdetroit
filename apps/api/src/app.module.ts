@@ -8,6 +8,7 @@ import { EnvironmentVariables, validateEnv } from './config/configuration';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { MastersModule } from './masters/masters.module';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -64,9 +65,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     HealthModule,
     UsersModule,
     AuthModule,
+    MastersModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
-    // MastersModule, WorkOrdersModule,
+    // WorkOrdersModule,
     // TemplatesModule, ReportsModule, SequencesModule, MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
