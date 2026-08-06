@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Report, ReportSchema } from './schemas/report.schema';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
+import { MeasurementsService } from './measurements.service';
 import { TemplatesModule } from '../templates/templates.module';
 import { DocumentsModule } from '../documents/documents.module';
 
@@ -15,7 +16,7 @@ import { DocumentsModule } from '../documents/documents.module';
     DocumentsModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService],
-  exports: [ReportsService, MongooseModule],
+  providers: [ReportsService, MeasurementsService],
+  exports: [ReportsService, MeasurementsService, MongooseModule],
 })
 export class ReportsModule {}

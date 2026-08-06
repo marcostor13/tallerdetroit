@@ -120,6 +120,24 @@ export class ReportsController {
     return this.informes.updateBlock(id, bloqueId, body, actor);
   }
 
+  @Post(':id/bloques/:bloqueId/mediciones')
+  @Permissions('reports:update')
+  @ApiOperation({
+    summary: 'Guarda una grilla de medición',
+    description:
+      'Llegan los valores en crudo; los estados, el veredicto y la tolerancia ' +
+      'aplicada los calcula el servidor y quedan congelados en la grilla (§12.4.3).',
+  })
+  guardarMedicion(
+    @Param('id') id: string,
+    @Param('bloqueId') bloqueId: string,
+    @Body()
+    body: { plantilla: string; valores: Record<string, number | null>; justificacion?: string },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.guardarMedicion(id, bloqueId, body, actor);
+  }
+
   @Delete(':id/bloques/:bloqueId')
   @Permissions('reports:update')
   @ApiOperation({ summary: 'Quita un bloque y renumera las figuras' })

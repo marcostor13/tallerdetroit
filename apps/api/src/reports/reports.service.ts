@@ -27,6 +27,7 @@ import {
 import { Report, type BloqueInforme, type ReportDocument } from './schemas/report.schema';
 import { TemplatesService } from '../templates/templates.service';
 import { DocumentsService } from '../documents/documents.service';
+import { MeasurementsService, type CapturaDeGrilla } from './measurements.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 export interface ListReportsOptions {
@@ -59,6 +60,7 @@ export class ReportsService {
     @InjectModel(Report.name) private readonly informes: Model<ReportDocument>,
     private readonly plantillas: TemplatesService,
     private readonly documentos: DocumentsService,
+    private readonly mediciones: MeasurementsService,
   ) {}
 
   // ---------------------------------------------------------------- lectura
@@ -263,6 +265,36 @@ export class ReportsService {
     return this.conFigurasNumeradas(doc.toObject());
   }
 
+  /**
+   * Guarda una grilla de medición dentro de un bloque (E2.4).
+   *
+   * Llegan valores en crudo y sale la grilla evaluada: los estados y el
+   * veredicto los calcula el servidor, y la tolerancia se congela dentro. El
+   * cliente nunca manda un `estado`; si pudiera, una petición hecha a mano
+   * bastaría para que un motor fuera de tolerancia quedara como correcto.
+   */
+  async guardarMedicion(id: string, bloqueId: string, captura: CapturaDeGrilla, actor: AuthUser) {
+    const doc = await this.documento(id);
+    this.exigirEditable(doc);
+
+    const bloque = doc.bloques.find((b) => b.id === bloqueId);
+    if (!bloque) throw new NotFoundException('No existe ese bloque en el informe.');
+
+    const grilla = await this.mediciones.resolver(doc.motor ?? {}, captura, actor.id);
+    const existentes = (bloque.mediciones ?? []) as unknown as { plantilla: string }[];
+    const indice = existentes.findIndex((g) => g.plantilla === captura.plantilla);
+
+    if (indice >= 0) existentes[indice] = grilla as never;
+    else existentes.push(grilla as never);
+
+    bloque.mediciones = existentes as never;
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    doc.markModified('bloques');
+    await doc.save();
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
   async removeBlock(id: string, bloqueId: string, actor: AuthUser) {
     const doc = await this.documento(id);
     this.exigirEditable(doc);
@@ -337,6 +369,29 @@ export class ReportsService {
           paso: 3,
         });
       }
+    }
+
+    // RN-03: un valor fuera de tolerancia no bloquea por sí solo. Bloquea si
+    // nadie ha escrito por qué se emite igual. El motor puede estar fuera de
+    // rango y ser aceptable, pero eso lo decide una persona y queda por escrito.
+    for (const pendiente of this.mediciones.sinJustificar(doc.bloques)) {
+      faltan.push({
+        seccion: pendiente.bloque,
+        clave: `${pendiente.grilla}:justificacion`,
+        titulo:
+          `«${pendiente.grilla}» tiene ${pendiente.fuera} valor(es) fuera de ` +
+          'tolerancia y no hay justificación del supervisor',
+        paso: 3,
+      });
+    }
+
+    for (const parcial of this.mediciones.incompletas(doc.bloques)) {
+      faltan.push({
+        seccion: parcial.bloque,
+        clave: `${parcial.grilla}:incompleta`,
+        titulo: `A «${parcial.grilla}» le faltan ${parcial.faltan} mediciones`,
+        paso: 3,
+      });
     }
 
     return { emitible: faltan.length === 0, faltan };
@@ -487,6 +542,10 @@ export class ReportsService {
   private tieneContenido(bloque: BloqueInforme): boolean {
     if (bloque.texto?.trim()) return true;
     if ((bloque.fotos ?? []).length > 0) return true;
+    // Un bloque cuyo aporte al informe son las mediciones no está vacío. Sin
+    // esto, un trabajo documentado solo con su grilla se reclamaba como
+    // pendiente y no había forma de emitir.
+    if ((bloque.mediciones ?? []).length > 0) return true;
     if (Array.isArray(bloque.datos)) return bloque.datos.length > 0;
     if (bloque.datos && typeof bloque.datos === 'object') {
       return Object.keys(bloque.datos).length > 0;

@@ -53,6 +53,105 @@ export class FotoBloque {
 }
 const FotoBloqueSchema = SchemaFactory.createForClass(FotoBloque);
 
+/**
+ * Tolerancia **congelada** en el momento de la captura (§12.4.3).
+ *
+ * No es una referencia a `engineSpecs` sino una copia. Si mañana Jefatura
+ * técnica corrige la especificación —y va a corregirlas, porque las de §12.5
+ * son provisionales—, los informes ya emitidos tienen que seguir diciendo con
+ * qué criterio se evaluaron. Un informe firmado que cambia de veredicto
+ * retroactivamente no vale nada.
+ */
+@Schema({ _id: false })
+export class EspecificacionAplicada {
+  @Prop({ type: Number, required: true })
+  nominal!: number;
+
+  @Prop({ type: Number, required: true })
+  tolInf!: number;
+
+  @Prop({ type: Number, required: true })
+  tolSup!: number;
+
+  @Prop({ type: String, required: true })
+  unidad!: string;
+
+  /** De dónde salió: `Manual MTU S4000`, `Informe OT898`. */
+  @Prop({ type: String, required: true })
+  fuente!: string;
+
+  /** Estaba sin validar contra el manual del fabricante al capturar (D1). */
+  @Prop({ type: Boolean, default: false })
+  provisional!: boolean;
+
+  @Prop({ type: String, enum: ['absoluto', 'desviacion'], default: 'absoluto' })
+  modo!: string;
+}
+const EspecificacionAplicadaSchema = SchemaFactory.createForClass(EspecificacionAplicada);
+
+/** Un valor medido dentro de la grilla. */
+@Schema({ _id: false })
+export class ValorMedido {
+  @Prop({ type: String, required: true })
+  fila!: string;
+
+  @Prop({ type: String, required: true })
+  columna!: string;
+
+  @Prop({ type: Number, default: null })
+  valor!: number | null;
+
+  /** `ok`, `alerta` o `fuera`. Lo calcula el backend, nunca llega del cliente. */
+  @Prop({ type: String, default: null })
+  estado!: string | null;
+
+  @Prop({ type: Boolean, default: false })
+  calculado!: boolean;
+}
+const ValorMedidoSchema = SchemaFactory.createForClass(ValorMedido);
+
+/** Grilla de medición embebida en un bloque (§16.2). */
+@Schema({ _id: false })
+export class GrillaMedicion {
+  /** Código de la plantilla de §12.3: `tunel_bancada`, `muñon_bancada`. */
+  @Prop({ type: String, required: true })
+  plantilla!: string;
+
+  @Prop({ type: String, required: true })
+  nombre!: string;
+
+  @Prop({ type: String, required: true, default: 'mm' })
+  unidad!: string;
+
+  @Prop({ type: [String], default: [] })
+  filas!: string[];
+
+  @Prop({ type: [String], default: [] })
+  columnas!: string[];
+
+  @Prop({ type: [ValorMedidoSchema], default: [] })
+  valores!: ValorMedido[];
+
+  @Prop({ type: EspecificacionAplicadaSchema, default: null })
+  especificacion!: EspecificacionAplicada | null;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: () => ({}) })
+  resumen!: Record<string, unknown>;
+
+  /**
+   * Por qué se emite pese a tener valores fuera de tolerancia (RN-03).
+   *
+   * Sin esto, un informe con un encaje fuera de rango saldría igual que uno
+   * correcto y nadie sabría que alguien lo revisó y decidió seguir.
+   */
+  @Prop({ type: String, default: null })
+  justificacion!: string | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  justificadaPor!: Types.ObjectId | null;
+}
+const GrillaMedicionSchema = SchemaFactory.createForClass(GrillaMedicion);
+
 /** Bloque embebido (§16.2). */
 @Schema({ _id: false })
 export class BloqueInforme {
@@ -89,6 +188,10 @@ export class BloqueInforme {
 
   @Prop({ type: [FotoBloqueSchema], default: [] })
   fotos!: FotoBloque[];
+
+  /** Grillas dimensionales del bloque (§12). */
+  @Prop({ type: [GrillaMedicionSchema], default: [] })
+  mediciones!: GrillaMedicion[];
 
   /** Contenido propio del tipo: filas de una tabla, viñetas, mediciones… */
   @Prop({ type: MongooseSchema.Types.Mixed, default: null })
