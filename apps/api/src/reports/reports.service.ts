@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -30,6 +31,7 @@ import { Report, type BloqueInforme, type ReportDocument } from './schemas/repor
 import { TemplatesService } from '../templates/templates.service';
 import { DocumentsService } from '../documents/documents.service';
 import { MeasurementsService, type CapturaDeGrilla } from './measurements.service';
+import { MeasurementFactsService } from './measurement-facts.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 export interface ListReportsOptions {
@@ -58,11 +60,14 @@ const CAMPOS_PROTEGIDOS = new Set([
 
 @Injectable()
 export class ReportsService {
+  private readonly logger = new Logger(ReportsService.name);
+
   constructor(
     @InjectModel(Report.name) private readonly informes: Model<ReportDocument>,
     private readonly plantillas: TemplatesService,
     private readonly documentos: DocumentsService,
     private readonly mediciones: MeasurementsService,
+    private readonly hechos: MeasurementFactsService,
   ) {}
 
   // ---------------------------------------------------------------- lectura
@@ -540,6 +545,13 @@ export class ReportsService {
     const emitido = this.conFigurasNumeradas(doc.toObject());
 
     if (destino === 'emitido') {
+      // La colección analítica se escribe aquí y no antes: un borrador cambia
+      // mientras se redacta, y sus valores no son un hecho todavía (§16.3).
+      const registrados = await this.hechos.registrar(doc);
+      if (registrados) {
+        this.logger.log(`${doc.numeroInforme}: ${registrados} mediciones a measurementFacts.`);
+      }
+
       // Se encola con las figuras ya numeradas: el PDF tiene que llevar los
       // mismos números que el técnico vio en la vista previa (RN-06).
       await this.documentos.encolarPdf(

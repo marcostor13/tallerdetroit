@@ -4,12 +4,35 @@ import type { ReportStatus } from '@dps/shared';
 import { CurrentUser, type AuthUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { ReportsService } from './reports.service';
+import { MeasurementFactsService } from './measurement-facts.service';
 
 @ApiTags('reports')
 @ApiBearerAuth()
 @Controller({ path: 'reports', version: '1' })
 export class ReportsController {
-  constructor(private readonly informes: ReportsService) {}
+  constructor(
+    private readonly informes: ReportsService,
+    private readonly hechos: MeasurementFactsService,
+  ) {}
+
+  /**
+   * La consulta que justifica toda la colección analítica (§16.3): cómo ha
+   * evolucionado un parámetro de un motor a lo largo de sus intervenciones.
+   * Un solo índice y milisegundos, en vez de abrir todos sus informes.
+   */
+  @Get('series/:motorSerie/:parametro')
+  @Permissions('reports:read')
+  @ApiQuery({ name: 'fila', required: false })
+  @ApiQuery({ name: 'columna', required: false })
+  @ApiOperation({ summary: 'Serie histórica de un parámetro para un motor' })
+  serieHistorica(
+    @Param('motorSerie') motorSerie: string,
+    @Param('parametro') parametro: string,
+    @Query('fila') fila?: string,
+    @Query('columna') columna?: string,
+  ) {
+    return this.hechos.serieHistorica(motorSerie, parametro, { fila, columna });
+  }
 
   @Get()
   @Permissions('reports:read')

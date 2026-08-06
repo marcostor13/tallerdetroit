@@ -562,6 +562,179 @@ describe('Mediciones del informe', () => {
     }, 60_000);
   });
 
+  describe('colección analítica al emitir (E2.8, §16.3)', () => {
+    /**
+     * Informe completo, con la grilla ENTERA medida y emitido.
+     *
+     * Las 33 celdas hacen falta: una grilla a medias no se emite (E2.4), que es
+     * justamente la regla que se comprobó más arriba.
+     */
+    const treintaYTresCon = (extra: Record<string, number> = {}) => {
+      const valores: Record<string, number> = {};
+      for (const fila of ['a', 'b1', 'b2']) {
+        for (let c = 1; c <= 11; c++) valores[claveDeCelda(fila, String(c))] = 171.01;
+      }
+      return { ...valores, ...extra };
+    };
+
+    const emitirCon = async (numero: string, valores: Record<string, number>) => {
+      const { id, bloqueId } = await informeConBloque(numero);
+
+      for (const bloque of [
+        { clave: 'identificacion', datos: { numeroInforme: numero } },
+        { clave: 'participantes', datos: { elaboradoPor: ['R. CÁCERES'] } },
+        { clave: 'equipo-motor', datos: { serie: '5282011236' } },
+        { clave: 'servicio', datos: { horasTotales: 17694 } },
+        { clave: 'antecedentes', texto: 'Motor desmontado para evaluación.' },
+        { clave: 'conclusiones', datos: ['Requiere reparación mayor.'] },
+        { clave: 'recomendaciones', datos: ['Rectificar el túnel de bancada.'] },
+      ]) {
+        await request(http)
+          .post(`/api/v1/reports/${id}/bloques`)
+          .set(conToken(tokenTecnico))
+          .send(bloque)
+          .expect(201);
+      }
+
+      await request(http)
+        .patch(`/api/v1/reports/${id}`)
+        .set(conToken(tokenTecnico))
+        .send({ datos: { horasTotales: 17694 } })
+        .expect(200);
+
+      await guardarGrilla(id, bloqueId, {
+        plantilla: 'tunel_bancada',
+        valores,
+        justificacion: 'Se envía a rectificado externo.',
+      }).expect(201);
+
+      await request(http)
+        .post(`/api/v1/reports/${id}/estado`)
+        .set(conToken(tokenAdmin))
+        .send({ estado: 'emitido' })
+        .expect(201);
+
+      return id;
+    };
+
+    const hechosDe = async (numeroInforme: string) => {
+      const conexion = app.get<mongoose.Connection>(
+        (await import('@nestjs/mongoose')).getConnectionToken(),
+      );
+      return conexion.collection('measurementFacts').find({ numeroInforme }).toArray();
+    };
+
+    it('escribe una fila por valor medido, con el motor y la tolerancia', async () => {
+      await emitirCon('ITS-T-E-26-003-1060', treintaYTresCon());
+
+      const hechos = await hechosDe('ITS-T-E-26-003-1060');
+      // Una fila por celda medida: 3 filas x 11 apoyos.
+      expect(hechos).toHaveLength(33);
+
+      const uno = hechos[0] as Record<string, unknown>;
+      // Desnormalizado a propósito: una curva de desgaste de años no puede
+      // depender de resolver referencias contra maestros que ya cambiaron.
+      expect(uno['motorSerie']).toBe('5282011236');
+      expect(uno['modeloMotor']).toBe('20V4000C23');
+      expect(uno['equipoCodigo']).toBe('VQT-130');
+      expect(uno['parametro']).toBe('tunel_bancada');
+      expect(uno['nominal']).toBe(171.0);
+      expect(uno['horasMotor']).toBe(17694);
+      expect(uno['specProvisional']).toBe(true);
+    }, 150_000);
+
+    it('las celdas calculadas no entran: contarían dos veces el mismo desgaste', async () => {
+      await emitirCon(
+        'ITS-T-E-26-003-1061',
+        treintaYTresCon({ [claveDeCelda('b1', '1')]: 171.02 }),
+      );
+
+      const hechos = await hechosDe('ITS-T-E-26-003-1061');
+      // a, b1 y b2 por 11 apoyos: las once ovalidades calculadas no entran.
+      expect(hechos).toHaveLength(33);
+      expect(hechos.map((h) => (h as Record<string, unknown>)['fila'])).not.toContain('Ovalidad');
+    }, 150_000);
+
+    it('un borrador no escribe nada: sus valores no son un hecho todavía', async () => {
+      const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1062');
+      await guardarGrilla(id, bloqueId, {
+        plantilla: 'tunel_bancada',
+        valores: { [claveDeCelda('a', '1')]: 171.01 },
+      }).expect(201);
+
+      expect(await hechosDe('ITS-T-E-26-003-1062')).toHaveLength(0);
+    }, 90_000);
+
+    it('reemitir no duplica los puntos de la curva', async () => {
+      const id = await emitirCon('ITS-T-E-26-003-1063', treintaYTresCon());
+
+      // Se vuelve a emitir el mismo informe.
+      const conexion = app.get<mongoose.Connection>(
+        (await import('@nestjs/mongoose')).getConnectionToken(),
+      );
+      await conexion
+        .collection('reports')
+        .updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { estado: 'borrador' } });
+
+      await request(http)
+        .post(`/api/v1/reports/${id}/estado`)
+        .set(conToken(tokenAdmin))
+        .send({ estado: 'emitido' })
+        .expect(201);
+
+      expect(await hechosDe('ITS-T-E-26-003-1063')).toHaveLength(33);
+    }, 180_000);
+
+    it('la serie histórica responde la consulta objetivo de §16.3', async () => {
+      // «Evolución del túnel de bancada del motor 5282011236».
+      const r = await request(http)
+        .get('/api/v1/reports/series/5282011236/tunel_bancada')
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      const puntos = r.body as {
+        fechaEmision: string;
+        numeroInforme: string;
+        horasMotor: number | null;
+        valor: number;
+      }[];
+
+      expect(puntos.length).toBeGreaterThan(0);
+      for (const punto of puntos) expect(punto.valor).toBeGreaterThan(0);
+
+      // Ordenados por fecha: es una curva, no un montón de puntos.
+      const fechas = puntos.map((p) => new Date(p.fechaEmision).getTime());
+      expect(fechas).toEqual([...fechas].sort((a, b) => a - b));
+
+      // Las horas del motor son el eje X del desgaste. Se comprueban en los
+      // informes donde se capturaron; otros de esta misma suite se emiten sin
+      // pasar por el paso de contexto y no las llevan.
+      const conHoras = puntos.filter((p) => p.numeroInforme === 'ITS-T-E-26-003-1060');
+      expect(conHoras.length).toBeGreaterThan(0);
+      for (const punto of conHoras) expect(punto.horasMotor).toBe(17694);
+    }, 90_000);
+
+    it('la serie se puede acotar a una celda concreta', async () => {
+      const r = await request(http)
+        .get('/api/v1/reports/series/5282011236/tunel_bancada?fila=a&columna=1')
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      for (const punto of r.body as { fila: string; columna: string }[]) {
+        expect(punto.fila).toBe('a');
+        expect(punto.columna).toBe('1');
+      }
+    }, 90_000);
+
+    it('un motor sin historial devuelve una serie vacía, no un error', async () => {
+      const r = await request(http)
+        .get('/api/v1/reports/series/0000000000/tunel_bancada')
+        .set(conToken(tokenTecnico))
+        .expect(200);
+      expect(r.body).toEqual([]);
+    }, 60_000);
+  });
+
   it('un informe emitido no admite más mediciones', async () => {
     const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1040');
     await guardarGrilla(id, bloqueId, {
