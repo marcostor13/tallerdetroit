@@ -16,6 +16,7 @@ import { MediaModule } from './media/media.module';
 import { DocumentsModule } from './documents/documents.module';
 import { AuditModule } from './audit/audit.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SyncModule } from './sync/sync.module';
 import { BullModule } from '@nestjs/bullmq';
 import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
@@ -105,6 +106,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     ReportsModule,
     MediaModule,
     DocumentsModule,
+    SyncModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule (F3) ·

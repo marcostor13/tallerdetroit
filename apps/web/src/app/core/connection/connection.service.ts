@@ -26,10 +26,24 @@ export class ConnectionService {
     return `Sin conexión — ${n} ${n === 1 ? 'cambio pendiente' : 'cambios pendientes'}`;
   });
 
+  /** Lo que hay que hacer en cuanto vuelve la red. */
+  private readonly alVolver: (() => void)[] = [];
+
   constructor() {
     const win = this.document.defaultView;
-    win?.addEventListener('online', () => this.online.set(true));
+    win?.addEventListener('online', () => {
+      this.online.set(true);
+      // Es el momento en que el técnico sale del socavón y mira el teléfono:
+      // esperar al siguiente ciclo sería tenerlo mirando «pendientes» con
+      // cobertura de sobra.
+      for (const escucha of this.alVolver) escucha();
+    });
     win?.addEventListener('offline', () => this.online.set(false));
+  }
+
+  /** Se llama al recuperar la conexión. Lo usa la cola de sincronización. */
+  alRecuperarConexion(escucha: () => void): void {
+    this.alVolver.push(escucha);
   }
 
   setPending(count: number): void {
