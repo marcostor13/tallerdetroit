@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 /**
  * Maestro 7 (`engineModels`) del §13.1. **Es el maestro más crítico de todos.**
@@ -13,7 +13,7 @@ import { Document, Types } from 'mongoose';
  */
 @Schema({ collection: 'engineModels', timestamps: true })
 export class EngineModel {
-  @Prop({ type: Types.ObjectId, ref: 'EngineBrand', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'EngineBrand', required: true })
   marcaId!: Types.ObjectId;
 
   /** Denominación del fabricante: `16V4000C21`, `20V4000C23`, `8V4000M60R`. */
@@ -62,10 +62,17 @@ export class EngineModel {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

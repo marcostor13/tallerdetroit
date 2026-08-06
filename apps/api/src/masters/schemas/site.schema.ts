@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 /** Dónde se prestó el servicio. En los informes: `TALLER - LIMA`, `Callao – Lima`. */
 export const SITE_TYPES = ['taller', 'campo', 'mina', 'planta', 'puerto', 'otro'] as const;
@@ -17,7 +17,7 @@ export class Site {
   nombre!: string;
 
   /** Nulo en las sedes propias (p. ej. `TALLER - LIMA`). */
-  @Prop({ type: Types.ObjectId, ref: 'Client', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Client', default: null })
   clienteId!: Types.ObjectId | null;
 
   @Prop({ type: String, default: null, trim: true })
@@ -38,10 +38,17 @@ export class Site {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

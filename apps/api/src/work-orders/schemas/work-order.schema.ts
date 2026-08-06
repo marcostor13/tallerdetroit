@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 export const WORK_ORDER_STATES = ['abierta', 'en_proceso', 'cerrada', 'anulada'] as const;
 export type WorkOrderState = (typeof WORK_ORDER_STATES)[number];
@@ -20,19 +20,19 @@ export class WorkOrder {
   @Prop({ type: String, required: true, trim: true })
   numero!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Client', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Client', required: true })
   clienteId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Site', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Site', default: null })
   sedeId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Equipment', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Equipment', default: null })
   equipoId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Engine', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Engine', default: null })
   motorId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'InterventionType', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'InterventionType', default: null })
   tipoIntervencionId!: Types.ObjectId | null;
 
   @Prop({ type: String, default: null, trim: true })
@@ -47,10 +47,10 @@ export class WorkOrder {
   @Prop({ type: Date, default: null })
   fechaCierre!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'BusinessUnit', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'BusinessUnit', default: null })
   unidadNegocioId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Organization', default: null })
   organizacionId!: Types.ObjectId | null;
 
   @Prop({ type: Boolean, default: true })
@@ -59,10 +59,10 @@ export class WorkOrder {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 /**
  * Maestro 1 (`clients`) del §13.1.
@@ -32,7 +32,7 @@ export class Client {
   @Prop({ type: String, default: null })
   logoS3Key!: string | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Organization', default: null })
   organizacionId!: Types.ObjectId | null;
 
   /**
@@ -49,10 +49,17 @@ export class Client {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 
@@ -61,7 +68,15 @@ export type ClientDocument = Client & Document;
 export const ClientSchema = SchemaFactory.createForClass(Client);
 
 ClientSchema.index({ nombreCorto: 1 });
-ClientSchema.index({ ruc: 1 }, { unique: true, sparse: true });
+// Índice parcial y no `sparse`. Un índice disperso solo ignora el campo
+// **ausente**, y aquí `ruc` tiene `default: null`, así que se guarda como null:
+// con `sparse` el segundo cliente sin RUC chocaba con el primero. En el alta
+// rápida desde el informe (§13.3.1) el RUC no se pide, con lo que el técnico se
+// habría encontrado un «ya existe un cliente con ruc null» sin sentido alguno.
+ClientSchema.index(
+  { ruc: 1 },
+  { unique: true, partialFilterExpression: { ruc: { $type: 'string' } } },
+);
 ClientSchema.index({ activo: 1, deletedAt: 1 });
 // Búsqueda por texto sobre los campos por los que un técnico buscaría.
 ClientSchema.index({ razonSocial: 'text', nombreCorto: 'text' });

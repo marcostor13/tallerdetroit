@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 export const ENGINE_STATES = ['operativo', 'en_taller', 'reparacion', 'baja'] as const;
 export type EngineState = (typeof ENGINE_STATES)[number];
@@ -7,7 +7,7 @@ export type EngineState = (typeof ENGINE_STATES)[number];
 /** Dónde ha estado montado el motor a lo largo de su vida. */
 @Schema({ _id: false })
 export class EngineInstallation {
-  @Prop({ type: Types.ObjectId, ref: 'Equipment', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Equipment', required: true })
   equipoId!: Types.ObjectId;
 
   /** Código del equipo al momento del montaje, congelado. */
@@ -40,11 +40,11 @@ export class Engine {
   @Prop({ type: String, required: true, trim: true })
   serie!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'EngineModel', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'EngineModel', required: true })
   modeloId!: Types.ObjectId;
 
   /** Equipo en el que está montado ahora. Nulo si está suelto en taller. */
-  @Prop({ type: Types.ObjectId, ref: 'Equipment', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Equipment', default: null })
   equipoActualId!: Types.ObjectId | null;
 
   /** Horas acumuladas. RN-05: no pueden decrecer entre informes. */
@@ -66,10 +66,17 @@ export class Engine {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

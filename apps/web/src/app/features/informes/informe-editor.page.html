@@ -247,7 +247,49 @@
                   [soloLectura]="store.soloLectura()"
                   (mover)="mover($event)"
                   (quitar)="quitar($event)"
+                  (editar)="alternar($event)"
                 />
+
+                <!--
+                  Detalle del bloque abierto. Uno cada vez: con catorce trabajos
+                  desplegados a la vez, a 360 px no se encuentra nada.
+                -->
+                @if (bloqueAbierto(); as abiertoId) {
+                  @for (trabajo of store.bloquesDe(bloque.clave); track trabajo.id) {
+                    @if (trabajo.id === abiertoId) {
+                      <div class="dps-card flex flex-col gap-4 p-4">
+                        <dps-field label="Título del trabajo" #ft>
+                          <input
+                            class="dps-input"
+                            [id]="ft.fieldId"
+                            [disabled]="store.soloLectura()"
+                            [value]="trabajo.titulo ?? ''"
+                            (change)="editarTitulo(trabajo.id, $event)"
+                          />
+                        </dps-field>
+
+                        <dps-field label="Descripción" #fd>
+                          <textarea
+                            class="dps-input min-h-32 resize-y py-3"
+                            [id]="fd.fieldId"
+                            [disabled]="store.soloLectura()"
+                            [value]="trabajo.texto ?? ''"
+                            (change)="editarTexto(trabajo.id, $event)"
+                          ></textarea>
+                        </dps-field>
+
+                        <dps-fotos-bloque
+                          [informeId]="store.informe()!._id"
+                          [fotos]="trabajo.fotos ?? []"
+                          [soloLectura]="store.soloLectura()"
+                          (agregadas)="agregarFotos(trabajo.id, $event)"
+                          (quitar)="quitarFoto(trabajo.id, $event)"
+                          (piePorFoto)="cambiarPie(trabajo.id, $event)"
+                        />
+                      </div>
+                    }
+                  }
+                }
 
                 @if (!store.soloLectura()) {
                   <button type="button" class="dps-btn dps-btn--secondary" (click)="agregarTrabajo()">

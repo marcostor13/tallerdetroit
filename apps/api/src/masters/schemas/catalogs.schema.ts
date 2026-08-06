@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 /**
  * Catálogos simples de F1. Comparten forma —nombre, activo, soft delete— así que
@@ -18,10 +18,17 @@ class BaseMaster {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 
@@ -56,7 +63,7 @@ EquipmentBrandSchema.index({ nombre: 'text' });
 /** Maestro 5 (`equipmentModels`): 930E4-SE. */
 @Schema({ collection: 'equipmentModels', timestamps: true })
 export class EquipmentModel extends BaseMaster {
-  @Prop({ type: Types.ObjectId, ref: 'EquipmentBrand', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'EquipmentBrand', required: true })
   marcaId!: Types.ObjectId;
 
   @Prop({ type: String, required: true, uppercase: true, trim: true })
@@ -91,7 +98,7 @@ export class InterventionType extends BaseMaster {
   @Prop({ type: Number, default: null })
   periodicidadHoras!: number | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'ReportTemplate', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'ReportTemplate', default: null })
   plantillaSugeridaId!: Types.ObjectId | null;
 }
 export type InterventionTypeDocument = InterventionType & Document;
@@ -131,7 +138,7 @@ export class Technician extends BaseMaster {
   @Prop({ type: String, default: null, trim: true })
   dni!: string | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Position', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Position', default: null })
   cargoId!: Types.ObjectId | null;
 
   /** Cargo congelado tal como se imprime en el informe. */
@@ -148,11 +155,17 @@ export class Technician extends BaseMaster {
   @Prop({ type: String, default: null })
   firmaS3Key!: string | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'BusinessUnit', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'BusinessUnit', default: null })
   unidadNegocioId!: Types.ObjectId | null;
 }
 export type TechnicianDocument = Technician & Document;
 export const TechnicianSchema = SchemaFactory.createForClass(Technician);
-TechnicianSchema.index({ dni: 1 }, { unique: true, sparse: true });
+// Parcial y no `sparse`, por lo mismo que en `clients`: con `default: null` el
+// campo se guarda como null y un índice disperso lo trataría como un valor,
+// haciendo chocar a dos técnicos sin DNI.
+TechnicianSchema.index(
+  { dni: 1 },
+  { unique: true, partialFilterExpression: { dni: { $type: 'string' } } },
+);
 TechnicianSchema.index({ nombre: 'text' });
 TechnicianSchema.index({ unidadNegocioId: 1, activo: 1 });

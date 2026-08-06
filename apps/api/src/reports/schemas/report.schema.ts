@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types, SchemaTypes } from 'mongoose';
 import type { ReportStatus } from '@dps/shared';
 
 /** Referencia + copia del nombre, para no resolver un `populate` en cada listado. */
 @Schema({ _id: false })
 export class ReferenciaConNombre {
-  @Prop({ type: Types.ObjectId, default: null })
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
   id!: Types.ObjectId | null;
 
   @Prop({ type: String, default: null })
@@ -78,7 +78,7 @@ export class BloqueInforme {
   @Prop({ type: String, default: null })
   texto!: string | null;
 
-  @Prop({ type: Types.ObjectId, default: null })
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
   componenteId!: Types.ObjectId | null;
 
   @Prop({ type: String, default: null })
@@ -107,7 +107,7 @@ export class CambioDeEstado {
   @Prop({ type: String, required: true })
   a!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
   usuarioId!: Types.ObjectId;
 
   @Prop({ type: Date, required: true })
@@ -133,7 +133,7 @@ export class Report {
   @Prop({ type: String, default: null, trim: true })
   numeroOt!: string | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'WorkOrder', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'WorkOrder', default: null })
   workOrderId!: Types.ObjectId | null;
 
   @Prop({ type: String, required: true })
@@ -179,23 +179,23 @@ export class Report {
   @Prop({ type: Date, default: null })
   fechaEmision!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'BusinessUnit', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'BusinessUnit', default: null })
   unidadNegocioId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Organization', default: null })
   organizacionId!: Types.ObjectId | null;
 
   /** Quién participa. Determina qué informes ve un técnico (RN-07). */
-  @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
+  @Prop({ type: [SchemaTypes.ObjectId], ref: 'User', default: [] })
   participantesIds!: Types.ObjectId[];
 
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

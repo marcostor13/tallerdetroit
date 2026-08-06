@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 /**
  * Maestro 14 (`businessUnits`) del §13.1.
@@ -29,11 +29,18 @@ export class BusinessUnit {
   @Prop({ type: Boolean, default: true })
   activo!: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Organization', default: null })
   organizacionId!: Types.ObjectId | null;
 
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
+
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
 }
 
 export type BusinessUnitDocument = BusinessUnit & Document;

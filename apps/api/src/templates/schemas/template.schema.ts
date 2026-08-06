@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types, SchemaTypes } from 'mongoose';
 import type { TemplateSectionDefinition, TemplateStatus } from '@dps/shared';
 
 /**
@@ -26,10 +26,10 @@ export class ReportTemplate {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 
@@ -53,7 +53,7 @@ ReportTemplateSchema.index({ codigo: 1 }, { unique: true });
  */
 @Schema({ collection: 'templateVersions', timestamps: true })
 export class TemplateVersion {
-  @Prop({ type: Types.ObjectId, ref: 'ReportTemplate', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'ReportTemplate', required: true })
   templateId!: Types.ObjectId;
 
   /** El código se repite aquí para no tener que resolver la referencia al leer. */
@@ -75,13 +75,13 @@ export class TemplateVersion {
   @Prop({ type: Date, default: null })
   fechaPublicacion!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   publicadaPor!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

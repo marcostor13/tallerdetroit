@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { MissingBlock } from '@dps/shared';
+import type { FotoInforme } from '../../core/api/reports.service';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { AutocompleteComponent } from '../../shared/ui/autocomplete/autocomplete.component';
 import { FieldComponent } from '../../shared/ui/field/field.component';
@@ -16,6 +17,7 @@ import { InformeStore } from './informe.store';
 import { IndicadorGuardadoComponent } from './ui/indicador-guardado.component';
 import { ListaTrabajosComponent } from './ui/lista-trabajos.component';
 import { VistaPreviaComponent } from './ui/vista-previa.component';
+import { FotosBloqueComponent } from './ui/fotos-bloque.component';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -58,6 +60,7 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     IndicadorGuardadoComponent,
     ListaTrabajosComponent,
     VistaPreviaComponent,
+    FotosBloqueComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })
@@ -70,6 +73,8 @@ export class InformeEditorPage implements OnDestroy {
   protected readonly cargando = signal(true);
   protected readonly emitiendo = signal(false);
   protected readonly mostrarFaltantes = signal(false);
+  /** Bloque abierto para editar en detalle. Uno cada vez: en móvil no cabe más. */
+  protected readonly bloqueAbierto = signal<string | null>(null);
 
   protected readonly nombreDePaso = (n: number) => NOMBRES_DE_PASO[n] ?? `Paso ${n}`;
 
@@ -192,6 +197,36 @@ export class InformeEditorPage implements OnDestroy {
 
   protected async editarTitulo(bloqueId: string, evento: Event): Promise<void> {
     await this.store.editarBloque(bloqueId, { titulo: this.desdeEvento(evento) });
+  }
+
+  protected alternar(bloqueId: string): void {
+    this.bloqueAbierto.update((abierto) => (abierto === bloqueId ? null : bloqueId));
+  }
+
+  protected fotosDe(bloqueId: string): FotoInforme[] {
+    return this.store.bloquesOrdenados().find((b) => b.id === bloqueId)?.fotos ?? [];
+  }
+
+  protected async agregarFotos(bloqueId: string, nuevas: FotoInforme[]): Promise<void> {
+    await this.store.editarBloque(bloqueId, { fotos: [...this.fotosDe(bloqueId), ...nuevas] });
+  }
+
+  protected async quitarFoto(bloqueId: string, fotoId: string): Promise<void> {
+    // Al quitar una foto, el servidor renumera las figuras solas (RN-06).
+    await this.store.editarBloque(bloqueId, {
+      fotos: this.fotosDe(bloqueId).filter((f) => f.id !== fotoId),
+    });
+  }
+
+  protected async cambiarPie(
+    bloqueId: string,
+    cambio: { id: string; caption: string },
+  ): Promise<void> {
+    await this.store.editarBloque(bloqueId, {
+      fotos: this.fotosDe(bloqueId).map((f) =>
+        f.id === cambio.id ? { ...f, caption: cambio.caption } : f,
+      ),
+    });
   }
 
   // --------------------------------------------------------------- emisión

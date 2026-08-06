@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, SchemaTypes, Types } from 'mongoose';
 
 /**
  * Maestro 33 (`organizations`) del §13.1.
@@ -46,6 +46,13 @@ export class Organization {
 
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
+
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
 }
 
 export type OrganizationDocument = Organization & Document;

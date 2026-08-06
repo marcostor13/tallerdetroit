@@ -23,6 +23,8 @@ describe('Maestros', () => {
   let clienteId: string;
 
   const PASSWORD = 'ContrasenaDePrueba2026';
+  /** Salto de linea de los CSV de prueba. */
+  const BARRA_N = String.fromCharCode(10);
 
   const login = async (email: string): Promise<string> => {
     const r = await request(http).post('/api/v1/auth/login').send({ email, password: PASSWORD });
@@ -237,6 +239,173 @@ describe('Maestros', () => {
     const borrado = items.find((x) => x._id === id);
     expect(borrado).toBeTruthy();
     expect(borrado?.deletedAt).toBeTruthy();
+  }, 30_000);
+
+  // --- §13.2: carga masiva ---
+
+  it('importa un CSV exportado de Excel en español, con punto y coma y comillas', async () => {
+    const csv = [
+      'nombre;ciudad;tipo',
+      'MINA - CUAJONE;MOQUEGUA;mina',
+      '"TALLER CENTRAL, SEDE 2";LIMA;taller',
+    ].join(BARRA_N);
+
+    const r = await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv })
+      .expect(201);
+
+    expect(r.body.creados).toBe(2);
+    expect(r.body.errores).toEqual([]);
+
+    // La coma dentro de comillas no partió el nombre: sin eso, este registro
+    // habría entrado como «TALLER CENTRAL» con la ciudad desplazada.
+    const lista = await request(http)
+      .get('/api/v1/masters/sites?q=TALLER CENTRAL')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .expect(200);
+    expect(lista.body.items[0]?.nombre).toBe('TALLER CENTRAL, SEDE 2');
+  }, 60_000);
+
+  it('una fila mala no tumba el archivo: se importa el resto y se dice cuál falló', async () => {
+    // Si 4.000 filas se rechazan por una, nadie repite la carga: se vuelve al
+    // Excel y el maestro se queda vacío.
+    const csv = ['nombre;ciudad', 'SEDE BUENA;LIMA', ';SIN NOMBRE', 'OTRA BUENA;AREQUIPA'].join(
+      BARRA_N,
+    );
+
+    const r = await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv })
+      .expect(201);
+
+    expect(r.body.creados).toBe(2);
+    expect(r.body.errores).toHaveLength(1);
+    // El número de línea es el del archivo: es lo que el usuario ve al abrirlo.
+    expect(r.body.errores[0].linea).toBe(3);
+    expect(r.body.errores[0].motivo).toMatch(/nombre/i);
+  }, 60_000);
+
+  it('la simulación comprueba el archivo sin escribir nada', async () => {
+    const csv = `nombre;ciudad${BARRA_N}SEDE SIMULADA;LIMA`;
+
+    const r = await request(http)
+      .post('/api/v1/masters/sites/importar?simulacion=true')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv })
+      .expect(201);
+
+    expect(r.body.simulacion).toBe(true);
+    expect(r.body.creados).toBe(1);
+
+    // Nada llegó a la base: probar el mapeo de columnas no debe obligar a
+    // limpiarla a mano después.
+    const lista = await request(http)
+      .get('/api/v1/masters/sites?q=SEDE SIMULADA')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .expect(200);
+    expect(lista.body.items).toHaveLength(0);
+  }, 60_000);
+
+  it('repetir la carga actualiza en vez de fallar por duplicado', async () => {
+    // El negocio corrige su Excel y vuelve a subirlo varias veces.
+    const primera = `nombre;ciudad${BARRA_N}SEDE REPETIDA;LIMA`;
+    const segunda = `nombre;ciudad${BARRA_N}SEDE REPETIDA;CALLAO`;
+
+    await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv: primera })
+      .expect(201);
+
+    const r = await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv: segunda })
+      .expect(201);
+
+    expect(r.body.creados).toBe(0);
+    expect(r.body.actualizados).toBe(1);
+  }, 60_000);
+
+  it('rechaza un archivo vacío con un mensaje claro', async () => {
+    const r = await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ csv: '' })
+      .expect(400);
+    expect(r.body.detail).toMatch(/ninguna fila/i);
+  }, 30_000);
+
+  it('el técnico no puede importar en masa', async () => {
+    await request(http)
+      .post('/api/v1/masters/sites/importar')
+      .set('Authorization', `Bearer ${tokenTecnico}`)
+      .send({ csv: `nombre${BARRA_N}X` })
+      .expect(403);
+  }, 30_000);
+
+  // --- §13.3.5: fusión de duplicados ---
+
+  it('fusiona dos clientes duplicados y reapunta lo que los referenciaba', async () => {
+    // `TOQUEPALA` y `SPCC. TOQUEPALA` son el mismo cliente escrito de dos
+    // formas; mientras convivan no hay analítica que valga.
+    const duplicado = await request(http)
+      .post('/api/v1/masters/clients')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ razonSocial: 'SOUTHERN PERU', nombreCorto: 'TOQUEPALA' })
+      .expect(201);
+    const sobrante = String(duplicado.body._id);
+
+    const sede = await request(http)
+      .post('/api/v1/masters/sites')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ nombre: 'SEDE DEL DUPLICADO', clienteId: sobrante })
+      .expect(201);
+
+    const r = await request(http)
+      .post('/api/v1/masters/clients/fusionar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ queda: clienteId, sobrante })
+      .expect(201);
+
+    expect(r.body.fusionado).toBe(true);
+    expect(r.body.referenciasReapuntadas).toBeGreaterThanOrEqual(1);
+
+    // La sede ahora cuelga del cliente que se queda.
+    const reapuntada = await request(http)
+      .get(`/api/v1/masters/sites/${String(sede.body._id)}`)
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .expect(200);
+    expect(String(reapuntada.body.clienteId)).toBe(clienteId);
+
+    // El sobrante desaparece del listado pero sigue existiendo: los informes
+    // emitidos guardan su identificador y tienen que poder resolverlo.
+    const listado = await request(http)
+      .get('/api/v1/masters/clients')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .expect(200);
+    expect(listado.body.items.map((c: { _id: string }) => c._id)).not.toContain(sobrante);
+
+    const conBajas = await request(http)
+      .get('/api/v1/masters/clients?incluirInactivos=true')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .expect(200);
+    const fusionado = (conBajas.body.items as { _id: string; fusionadoEn?: string }[]).find(
+      (c) => c._id === sobrante,
+    );
+    expect(String(fusionado?.fusionadoEn)).toBe(clienteId);
+  }, 90_000);
+
+  it('no se fusiona un registro consigo mismo', async () => {
+    const r = await request(http)
+      .post('/api/v1/masters/clients/fusionar')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({ queda: clienteId, sobrante: clienteId })
+      .expect(400);
+    expect(r.body.detail).toMatch(/consigo mismo/i);
   }, 30_000);
 
   it('un maestro inexistente devuelve 404, no 500', async () => {

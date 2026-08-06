@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MASTERS } from './master-registry';
 import { MastersController } from './masters.controller';
 import { MastersService } from './masters.service';
+import { MastersImportService } from './masters-import.service';
 
 /**
  * Registra de una vez los modelos de todos los maestros descritos en
@@ -12,7 +13,7 @@ import { MastersService } from './masters.service';
 @Module({
   imports: [MongooseModule.forFeature(MASTERS.map((m) => ({ name: m.model, schema: m.schema })))],
   controllers: [MastersController],
-  providers: [MastersService],
-  exports: [MastersService, MongooseModule],
+  providers: [MastersService, MastersImportService],
+  exports: [MastersService, MastersImportService, MongooseModule],
 })
 export class MastersModule {}

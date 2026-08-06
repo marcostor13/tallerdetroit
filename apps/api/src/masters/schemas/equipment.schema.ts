@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 
 export const EQUIPMENT_CATEGORIES = [
   'camion_minero',
@@ -26,23 +26,23 @@ export class Equipment {
   @Prop({ type: String, required: true, uppercase: true, trim: true })
   codigo!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Client', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Client', required: true })
   clienteId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Site', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Site', default: null })
   sedeId!: Types.ObjectId | null;
 
   @Prop({ type: String, enum: EQUIPMENT_CATEGORIES, default: 'otro' })
   categoria!: EquipmentCategory;
 
-  @Prop({ type: Types.ObjectId, ref: 'EquipmentBrand', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'EquipmentBrand', default: null })
   marcaId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'EquipmentModel', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'EquipmentModel', default: null })
   modeloId!: Types.ObjectId | null;
 
   /** Motor montado ahora. La cascada del wizard lo propone al elegir el equipo. */
-  @Prop({ type: Types.ObjectId, ref: 'Engine', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Engine', default: null })
   motorActualId!: Types.ObjectId | null;
 
   @Prop({ type: Boolean, default: false })
@@ -54,10 +54,17 @@ export class Equipment {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  /**
+   * A qué registro se fusionó este (§13.3.5). El duplicado no se borra: los
+   * informes emitidos guardan su identificador y tienen que poder resolverlo.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  fusionadoEn!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 

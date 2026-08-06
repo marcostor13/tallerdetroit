@@ -4,6 +4,7 @@ import { CurrentUser, type AuthUser } from '../common/decorators/current-user.de
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { MASTER_KEYS } from './master-registry';
 import { MastersService } from './masters.service';
+import { MastersImportService } from './masters-import.service';
 
 /**
  * Un único controlador para los maestros de §13.
@@ -16,7 +17,10 @@ import { MastersService } from './masters.service';
 @ApiBearerAuth()
 @Controller({ path: 'masters', version: '1' })
 export class MastersController {
-  constructor(private readonly masters: MastersService) {}
+  constructor(
+    private readonly masters: MastersService,
+    private readonly importador: MastersImportService,
+  ) {}
 
   @Get()
   @Permissions('masters:read')
@@ -82,6 +86,53 @@ export class MastersController {
     @CurrentUser() actor: AuthUser,
   ) {
     return this.masters.update(collection, id, body, actor);
+  }
+
+  @Post(':collection/importar')
+  @Permissions('masters:import')
+  @ApiQuery({
+    name: 'simulacion',
+    required: false,
+    description: 'Comprueba el archivo sin escribir nada',
+  })
+  @ApiQuery({
+    name: 'clave',
+    required: false,
+    description: 'Campo por el que se identifica la fila',
+  })
+  @ApiOperation({
+    summary: 'Carga masiva desde CSV',
+    description:
+      'Una fila con errores no tumba el archivo: se importa lo demás y se ' +
+      'devuelve la lista de fallos con su número de línea.',
+  })
+  importar(
+    @Param('collection') collection: string,
+    @Body() body: { csv: string },
+    @CurrentUser() actor: AuthUser,
+    @Query('simulacion') simulacion?: string,
+    @Query('clave') clave?: string,
+  ) {
+    return this.importador.importar(collection, body.csv ?? '', actor, {
+      simulacion: simulacion === 'true',
+      claveUnica: clave,
+    });
+  }
+
+  @Post(':collection/fusionar')
+  @Permissions('masters:merge')
+  @ApiOperation({
+    summary: 'Fusiona dos registros duplicados',
+    description:
+      'Reapunta las referencias al superviviente y da de baja el sobrante sin ' +
+      'borrarlo: los informes emitidos guardan su identificador (§13.3.5).',
+  })
+  fusionar(
+    @Param('collection') collection: string,
+    @Body() body: { queda: string; sobrante: string },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.importador.fusionar(collection, body.queda, body.sobrante, actor);
   }
 
   @Delete(':collection/:id')

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { ROLES, type Role } from '@dps/shared';
 
 /**
@@ -90,7 +90,7 @@ export class User {
   mfaSecret!: string | null;
 
   /** Técnico asociado; permite firmar informes con su firma registrada. */
-  @Prop({ type: Types.ObjectId, ref: 'Technician', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Technician', default: null })
   tecnicoId!: Types.ObjectId | null;
 
   /** Cargo denormalizado, tal como aparece en el informe (p. ej. `SUPERVISOR C`). */
@@ -98,10 +98,10 @@ export class User {
   cargo!: string | null;
 
   /** RN-07: acota qué informes ve el supervisor. */
-  @Prop({ type: Types.ObjectId, ref: 'BusinessUnit', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'BusinessUnit', default: null })
   unidadNegocioId!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Organization', default: null })
   organizacionId!: Types.ObjectId | null;
 
   @Prop({ type: UserSecurity, default: () => ({}) })
@@ -122,10 +122,10 @@ export class User {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   createdBy!: Types.ObjectId | null;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   updatedBy!: Types.ObjectId | null;
 }
 
