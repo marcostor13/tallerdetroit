@@ -167,10 +167,10 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 
 ## Criterios de aceptación
 
-> **Estado (6-ago-2026):** las diez épicas están implementadas y con tests, pero
-> **ningún criterio de esta lista está verificado todavía**. Verificarlos exige
-> datos reales, un entorno desplegado y un supervisor del negocio; sin eso la
-> fase no se cierra, por mucho código que haya.
+> **Estado (6-ago-2026):** las diez épicas están implementadas y con tests. De
+> los criterios de abajo solo está verificado el de cobertura; el resto exige
+> datos reales, un entorno desplegado y un supervisor del negocio para la
+> comparación ciega. Sin eso la fase no se cierra, por mucho código que haya.
 
 - [ ] **Prueba de fidelidad:** un técnico reproduce íntegramente el informe **OT746** en la plataforma;
       en una comparación ciega, un supervisor no identifica cuál PDF salió del Word y cuál de la plataforma
@@ -185,7 +185,7 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 - [ ] **Enviar con errores muestra una lista de campos faltantes navegables por clic**, no un alert (UX-07, T2)
 - [ ] **Todo el wizard se completa solo con teclado**, incluido el reordenamiento de bloques (T2)
 - [ ] **El editor es usable en móvil a 360 px** (T3)
-- [ ] Cobertura backend ≥ 70%, frontend ≥ 50% (NFR-11)
+- [x] **Cobertura backend ≥ 70%, frontend ≥ 50% (NFR-11)** — verificado 6-ago-2026: backend 91.9% de sentencias / 93.1% de líneas; frontend 57.1% / 56.8% medido sobre todo `src/app`. Los dos umbrales quedan declarados en la configuración, de modo que el CI falla si se baja de ahí
 
 ## Entregables
 

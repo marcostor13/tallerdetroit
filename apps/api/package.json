@@ -79,14 +79,24 @@
       "^@dps/shared$": "<rootDir>/../../../libs/shared/src/index.ts"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/*.module.ts",
+      "**/*.ts",
+      "!**/*.spec.ts",
       "!main.ts",
+      "!**/*.module.ts",
+      "!observability/**",
       "!test-setup/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "globalSetup": "<rootDir>/test-setup/global-setup.ts",
-    "globalTeardown": "<rootDir>/test-setup/global-teardown.ts"
+    "globalTeardown": "<rootDir>/test-setup/global-teardown.ts",
+    "coverageThreshold": {
+      "global": {
+        "statements": 70,
+        "lines": 70,
+        "branches": 60,
+        "functions": 70
+      }
+    }
   }
 }
