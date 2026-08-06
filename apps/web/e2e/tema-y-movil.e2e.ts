@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { sinBackend } from './sin-backend';
 
 /**
  * Requisitos transversales obligatorios de `especificaciones.md`:
@@ -23,9 +24,14 @@ async function esperarFondo(page: Page, color: string): Promise<void> {
 }
 
 test.describe('Tema claro / oscuro', () => {
+  test.beforeEach(async ({ page }) => {
+    await sinBackend(page);
+  });
+
   test('sigue la preferencia oscura del navegador sin destello', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
+    await sinBackend(page);
     await page.goto('/login');
 
     // El script inline de index.html resuelve el tema antes del primer pintado.
@@ -38,6 +44,7 @@ test.describe('Tema claro / oscuro', () => {
   test('sigue la preferencia clara del navegador', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'light' });
     const page = await context.newPage();
+    await sinBackend(page);
     await page.goto('/login');
     await esperarFondo(page, 'rgb(249, 249, 249)');
     await context.close();
@@ -46,6 +53,7 @@ test.describe('Tema claro / oscuro', () => {
   test('el switch sobrescribe la preferencia y persiste al recargar', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
+    await sinBackend(page);
     await page.goto('/login');
 
     await page.getByRole('radio', { name: 'Tema claro' }).click();
@@ -62,12 +70,16 @@ test.describe('Tema claro / oscuro', () => {
   test('el logotipo cambia según el tema', async ({ browser }) => {
     const dark = await browser.newContext({ colorScheme: 'dark' });
     const pageDark = await dark.newPage();
+    // Los contextos nuevos no heredan el stub del `beforeEach`, que se aplica
+    // sobre la página del fixture.
+    await sinBackend(pageDark);
     await pageDark.goto('/login');
     await expect(pageDark.locator('dps-logo img')).toHaveAttribute('src', /logo-detroit-dark/);
     await dark.close();
 
     const light = await browser.newContext({ colorScheme: 'light' });
     const pageLight = await light.newPage();
+    await sinBackend(pageLight);
     await pageLight.goto('/login');
     await expect(pageLight.locator('dps-logo img')).toHaveAttribute('src', /logo-detroit\.png/);
     await light.close();
@@ -76,6 +88,7 @@ test.describe('Tema claro / oscuro', () => {
   test('el theme-color de la barra del navegador acompaña al tema', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
+    await sinBackend(page);
     await page.goto('/login');
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#131313');
     await context.close();
@@ -83,6 +96,10 @@ test.describe('Tema claro / oscuro', () => {
 });
 
 test.describe('Mobile first', () => {
+  test.beforeEach(async ({ page }) => {
+    await sinBackend(page);
+  });
+
   test('no hay scroll horizontal a 360 px', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto('/login');

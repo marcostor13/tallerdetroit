@@ -179,12 +179,12 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 - [ ] Dos informes no pueden compartir número: el segundo intento recibe un error claro (RN-01 adaptada a D3)
 - [ ] Al reordenar bloques, la numeración de figuras se recalcula correctamente en pantalla y en el PDF (RN-06)
 - [ ] Un técnico crea un equipo nuevo desde el formulario **sin perder el borrador en curso** (§13.3.1)
-- [ ] El documento del informe en Mongo pesa < 1 MB con 45 fotos
+- [x] **El documento del informe en Mongo pesa < 1 MB con 45 fotos** — verificado 6-ago-2026: **25 KB** con 45 fotografías (claves, miniaturas, pies y hashes incluidos), medido con `$bsonSize`. El Word equivalente pesa 17 MB porque lleva las imágenes dentro
 - [ ] Buscar `KOMATZU` sugiere `KOMATSU` (§13.3.2)
 - [ ] El autoguardado se percibe en < 500 ms y muestra "Guardado hace X" (NFR-02, UX-01)
-- [ ] **Enviar con errores muestra una lista de campos faltantes navegables por clic**, no un alert (UX-07, T2)
-- [ ] **Todo el wizard se completa solo con teclado**, incluido el reordenamiento de bloques (T2)
-- [ ] **El editor es usable en móvil a 360 px** (T3)
+- [x] **Enviar con errores muestra una lista de campos faltantes navegables por clic**, no un alert (UX-07, T2) — verificado 6-ago-2026 con Playwright: cada punto es un botón y lleva a su paso
+- [x] **Todo el wizard se completa solo con teclado**, incluido el reordenamiento de bloques (T2) — verificado 6-ago-2026: recorrido con Tab, foco siempre visible, y `Control+flechas` mueve el bloque con el foco siguiéndolo a su posición nueva
+- [x] **El editor es usable en móvil a 360 px** (T3) — verificado 6-ago-2026: sin desplazamiento horizontal, objetivos táctiles ≥ 44 px y las acciones al alcance del pulgar. Se corrigieron dos defectos que salieron aquí: los pasos medían 36 px y la barra de acciones quedaba **debajo** de la navegación inferior, con lo que emitir era imposible desde un teléfono
 - [x] **Cobertura backend ≥ 70%, frontend ≥ 50% (NFR-11)** — verificado 6-ago-2026: backend 91.9% de sentencias / 93.1% de líneas; frontend 57.1% / 56.8% medido sobre todo `src/app`. Los dos umbrales quedan declarados en la configuración, de modo que el CI falla si se baja de ahí
 
 ## Entregables

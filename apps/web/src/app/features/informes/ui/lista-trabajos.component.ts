@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  type ElementRef,
+  Injector,
+  afterNextRender,
+  inject,
   input,
   output,
   signal,
   viewChildren,
+  type ElementRef,
 } from '@angular/core';
 import type { BloqueInforme } from '../../../core/api/reports.service';
 import { IconComponent } from '../../../shared/ui/icon/icon.component';
@@ -126,6 +129,7 @@ export class ListaTrabajosComponent {
 
   protected readonly arrastrando = signal<number | null>(null);
   private readonly filas = viewChildren<ElementRef<HTMLElement>>('fila');
+  private readonly injector = inject(Injector);
 
   protected empezarArrastre(indice: number): void {
     if (this.soloLectura()) return;
@@ -158,6 +162,11 @@ export class ListaTrabajosComponent {
    * inservible en la práctica.
    */
   enfocarFila(indice: number): void {
-    queueMicrotask(() => this.filas()[indice]?.nativeElement.focus());
+    // Un microtask se ejecuta antes de que Angular repinte la lista, así que el
+    // foco iría al elemento viejo. `afterNextRender` espera a que el DOM ya
+    // refleje el orden nuevo.
+    afterNextRender(() => this.filas()[indice]?.nativeElement.focus(), {
+      injector: this.injector,
+    });
   }
 }

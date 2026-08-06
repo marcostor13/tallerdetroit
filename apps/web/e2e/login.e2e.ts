@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { sinBackend } from './sin-backend';
 
 /**
  * Flujo crítico: acceso a la plataforma.
@@ -7,6 +8,10 @@ import { expect, test } from '@playwright/test';
  * formulario debe cumplir los requisitos de accesibilidad de `especificaciones.md`.
  */
 test.describe('Login', () => {
+  test.beforeEach(async ({ page }) => {
+    await sinBackend(page);
+  });
+
   test('redirige al login conservando el destino', async ({ page }) => {
     await page.goto('/inicio');
     await expect(page).toHaveURL(/\/login\?redirectTo=/);

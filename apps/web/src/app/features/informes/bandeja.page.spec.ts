@@ -39,12 +39,10 @@ describe('BandejaPage', () => {
 
   beforeEach(() => {
     api = {
-      list: vi
-        .fn()
-        .mockResolvedValue({
-          total: 2,
-          items: [informe('ITS-1', 'borrador'), informe('ITS-2', 'emitido')],
-        }),
+      list: vi.fn().mockResolvedValue({
+        total: 2,
+        items: [informe('ITS-1', 'borrador'), informe('ITS-2', 'emitido')],
+      }),
       create: vi.fn().mockResolvedValue({ _id: 'nuevo' }),
     };
     TestBed.configureTestingModule({

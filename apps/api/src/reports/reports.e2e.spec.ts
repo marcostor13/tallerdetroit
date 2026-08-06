@@ -1,5 +1,6 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { getConnectionToken } from '@nestjs/mongoose';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
@@ -478,6 +479,67 @@ describe('Informes', () => {
   }, 60_000);
 
   // --- RBAC ---
+
+  it('el documento pesa menos de 1 MB con 45 fotos', async () => {
+    // Es el criterio que justifica que las fotos vivan en S3 y en Mongo solo
+    // quede la clave. El Word equivalente pesa 17 MB porque lleva las imágenes
+    // dentro; aquí el informe entero tiene que caber holgadamente en el limite
+    // de 16 MB de un documento de Mongo, con sitio de sobra para las
+    // mediciones de F2.
+    const creado = await request(http)
+      .post('/api/v1/reports')
+      .set(conToken(tokenTecnico))
+      .send({ numeroInforme: 'ITS-T-E-26-003-0945', cliente: { id: clienteId } })
+      .expect(201);
+    const id = String(creado.body._id);
+
+    // Quince bloques de tres fotos, como el OT-746.
+    for (let b = 0; b < 15; b++) {
+      const bloque = await request(http)
+        .post(`/api/v1/reports/${id}/bloques`)
+        .set(conToken(tokenTecnico))
+        .send({
+          clave: 'trabajos',
+          titulo: `DESMONTAJE DE COMPONENTE ${b + 1}`,
+          texto: 'Se desmonta el componente y se verifica su estado tras las horas de servicio.',
+        })
+        .expect(201);
+
+      const nuevoId = (bloque.body.bloques as { id: string }[]).at(-1)?.id as string;
+      await request(http)
+        .patch(`/api/v1/reports/${id}/bloques/${nuevoId}`)
+        .set(conToken(tokenTecnico))
+        .send({
+          fotos: Array.from({ length: 3 }, (_, j) => ({
+            id: `f${b}-${j}`,
+            s3Key: `informes/2026/${id}/${b}-${j}-6f4a9c2e1b8d7a3f5e0c.jpg`,
+            thumbKey: `informes/2026/${id}/thumb/${b}-${j}-6f4a9c2e1b8d7a3f5e0c.jpg`,
+            printKey: `informes/2026/${id}/print/${b}-${j}-6f4a9c2e1b8d7a3f5e0c.jpg`,
+            caption: `Detalle ${b * 3 + j + 1} del componente evaluado, con desgaste visible`,
+            hash: 'sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+          })),
+        })
+        .expect(200);
+    }
+
+    const conexion = app.get<mongoose.Connection>(getConnectionToken());
+    const [{ tamano }] = (await conexion
+      .collection('reports')
+      .aggregate([
+        { $match: { numeroInforme: 'ITS-T-E-26-003-0945' } },
+        { $project: { tamano: { $bsonSize: '$$ROOT' } } },
+      ])
+      .toArray()) as unknown as [{ tamano: number }];
+
+    const fotos = (
+      await request(http).get(`/api/v1/reports/${id}`).set(conToken(tokenTecnico)).expect(200)
+    ).body.bloques.reduce((n: number, b: { fotos: unknown[] }) => n + b.fotos.length, 0);
+
+    console.log(`Documento con ${fotos} fotos: ${Math.round(tamano / 1024)} KB.`);
+
+    expect(fotos).toBe(45);
+    expect(tamano).toBeLessThan(1024 * 1024);
+  }, 180_000);
 
   it('el visor lee pero no crea ni edita', async () => {
     await request(http).get('/api/v1/reports').set(conToken(tokenVisor)).expect(200);

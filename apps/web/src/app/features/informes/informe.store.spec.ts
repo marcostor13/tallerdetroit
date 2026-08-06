@@ -28,6 +28,7 @@ describe('InformeStore', () => {
     patch: ReturnType<typeof vi.fn>;
     validate: ReturnType<typeof vi.fn>;
     reorder: ReturnType<typeof vi.fn>;
+    transition: ReturnType<typeof vi.fn>;
   };
   let store: InformeStore;
 
@@ -40,6 +41,7 @@ describe('InformeStore', () => {
         .fn()
         .mockResolvedValue({ guardadoEn: new Date().toISOString(), informe: informe() }),
       validate: vi.fn().mockResolvedValue({ emitible: false, faltan: [] }),
+      transition: vi.fn(),
       reorder: vi.fn().mockResolvedValue(informe()),
     };
 
@@ -153,6 +155,46 @@ describe('InformeStore', () => {
 
     expect(store.soloLectura()).toBe(true);
     expect(api.patch).toHaveBeenCalledTimes(0);
+  });
+
+  describe('emisión', () => {
+    it('un error de emisión trae la lista de lo que falta (UX-07)', async () => {
+      const faltan = [
+        { seccion: 'Contexto', clave: 'antecedentes', titulo: 'Antecedentes', paso: 2 },
+      ];
+      // Forma real de un error de Angular: el cuerpo del problema va en `error`.
+      api.transition.mockRejectedValue({
+        error: { detail: 'Faltan 1 datos obligatorios para emitir.', faltan },
+      });
+
+      const resultado = await store.emitir();
+
+      expect(resultado.ok).toBe(false);
+      expect(resultado.faltan).toEqual(faltan);
+      // Y queda en el almacén, que es de donde lo lee el panel navegable.
+      expect(store.faltan()).toEqual(faltan);
+      expect(store.error()).toMatch(/Faltan 1 datos/);
+    });
+
+    it('emitir con éxito deja el informe emitido', async () => {
+      api.transition.mockResolvedValue(informe({ estado: 'emitido' }));
+      const resultado = await store.emitir();
+
+      expect(resultado.ok).toBe(true);
+      expect(store.informe()?.estado).toBe('emitido');
+      expect(store.error()).toBeNull();
+    });
+
+    it('manda lo pendiente antes de emitir', async () => {
+      api.transition.mockResolvedValue(informe({ estado: 'emitido' }));
+      store.cambiar('datos.motivo', 'QL4');
+
+      await store.emitir();
+
+      // Emitir con el ultimo cambio sin guardar congelaría un informe que no
+      // es el que el técnico ve en pantalla.
+      expect(api.patch).toHaveBeenCalledWith('r1', { 'datos.motivo': 'QL4' });
+    });
   });
 
   it('mover un bloque devuelve la posición nueva, para poder seguir con el foco', async () => {

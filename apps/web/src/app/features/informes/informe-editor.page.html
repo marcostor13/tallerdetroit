@@ -40,9 +40,12 @@
       <ol class="flex min-w-max items-center gap-1">
         @for (n of store.pasos(); track n) {
           <li>
+            <!-- min-h-11 = 44 px: el objetivo tactil minimo del sistema de
+                 diseno (§9.5). Con py-2 se quedaba en 36 y en el taller se usa
+                 con guantes. -->
             <button
               type="button"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-body-sm"
+              class="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-body-sm"
               [class.bg-surface-variant]="n === paso()"
               [class.font-semibold]="n === paso()"
               [attr.aria-current]="n === paso() ? 'step' : null"
@@ -347,7 +350,15 @@
     Barra de acciones fija abajo: en móvil es la zona alcanzable con el pulgar,
     que es donde el técnico trabaja de pie junto al motor (T3).
   -->
-  <footer class="sticky bottom-0 z-20 border-t border-subtle bg-surface px-4 py-3 md:px-6">
+  <!--
+    En móvil se apoya JUSTO ENCIMA de la barra de navegación inferior, que es
+    fija y va en z-40: pegado a `bottom-0` quedaba debajo de ella y el botón de
+    emitir era inalcanzable en un teléfono, que es donde el técnico trabaja.
+    Desde `lg` no hay barra inferior y baja al borde.
+  -->
+  <footer
+    class="sticky bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-30 border-t border-subtle bg-surface px-4 py-3 md:px-6 lg:bottom-0"
+  >
     <div class="mx-auto flex max-w-3xl items-center justify-between gap-3">
       <button
         type="button"

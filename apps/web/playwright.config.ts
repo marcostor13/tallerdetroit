@@ -3,8 +3,13 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * E2E de los flujos críticos (NFR-11).
  *
- * Se ejecuta contra el build de producción servido en local: es el artefacto
- * que realmente se despliega, no el servidor de desarrollo.
+ * Se ejecuta contra un build real servido en local, no contra el servidor de
+ * desarrollo. Se usa la configuración `development` por un motivo concreto: en
+ * ella la API es `/api/v1` relativo, es decir del mismo origen, y eso permite
+ * sustituirla con `page.route`. Con la URL absoluta de producción el navegador
+ * manda un preflight OPTIONS que Playwright **no puede interceptar** —lo emite
+ * la pila de red, no la página—, se va a la API desplegada, el CORS lo rechaza
+ * y cualquier POST muere con ERR_FAILED.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -39,9 +44,10 @@ export default defineConfig({
     ? undefined
     : {
         command:
+          'npx ng build --configuration development && ' +
           'npx http-server dist/web/browser -p 4300 -a 127.0.0.1 --proxy http://127.0.0.1:4300? -s',
         url: 'http://127.0.0.1:4300',
         reuseExistingServer: !process.env['CI'],
-        timeout: 60_000,
+        timeout: 180_000,
       },
 });
