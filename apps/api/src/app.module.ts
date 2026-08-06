@@ -15,6 +15,7 @@ import { ReportsModule } from './reports/reports.module';
 import { MediaModule } from './media/media.module';
 import { DocumentsModule } from './documents/documents.module';
 import { AuditModule } from './audit/audit.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { BullModule } from '@nestjs/bullmq';
 import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
@@ -93,6 +94,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     // Global: la regla del proyecto es que toda escritura relevante deje
     // registro, asi que no puede depender de que cada modulo lo importe.
     AuditModule,
+    NotificationsModule,
 
     HealthModule,
     UsersModule,

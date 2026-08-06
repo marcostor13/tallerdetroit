@@ -6,9 +6,9 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'node:crypto';
-import { Model, Types, type FilterQuery } from 'mongoose';
+import { Connection, Model, Types, type FilterQuery } from 'mongoose';
 import {
   REPORT_TRANSITIONS,
   canTransition,
@@ -36,6 +36,7 @@ import { ChecklistService, type CapturaDeChecklist } from './checklist.service';
 import { AuditService } from '../audit/audit.service';
 import { ReviewService, type NuevoComentario } from './review.service';
 import { CalibrationService } from './calibration.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -77,6 +78,8 @@ export class ReportsService {
     private readonly auditoria: AuditService,
     private readonly revision: ReviewService,
     private readonly calibracion: CalibrationService,
+    private readonly avisos: NotificationsService,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   /** Dimensiones del motor del informe, para derivar cantidades esperadas. */
@@ -874,6 +877,10 @@ export class ReportsService {
       despues: { estado: destino, comentario: comentario ?? null },
     });
 
+    // El aviso va después de guardar y **nunca deshace la transición**: un
+    // informe aprobado lo está aunque el servidor de correo no conteste.
+    await this.avisar(destino, doc, comentario, actor);
+
     const emitido = this.conFigurasNumeradas(doc.toObject());
 
     if (destino === 'emitido') {
@@ -922,6 +929,72 @@ export class ReportsService {
   }
 
   // ---------------------------------------------------------------- apoyo
+
+  /**
+   * Avisa por correo del cambio de estado (E3.9).
+   *
+   * Los destinatarios salen de quién participa en el informe: el autor —quien
+   * lo creó— y los revisores, que hoy son los supervisores de la unidad de
+   * negocio. A quién le toca cada aviso lo decide `libs/shared`.
+   */
+  private async avisar(
+    destino: ReportStatus,
+    doc: ReportDocument,
+    comentario: string | null,
+    actor: AuthUser,
+  ): Promise<void> {
+    try {
+      const usuarios = this.connection.models['User'];
+      if (!usuarios) return;
+
+      const autorId = doc.createdBy ?? doc.participantesIds?.[0] ?? null;
+      const autor = autorId
+        ? ((await usuarios
+            .findOne({ _id: autorId, activo: true })
+            .select('email nombre')
+            .lean()
+            .exec()) as unknown as { email: string; nombre?: string } | null)
+        : null;
+
+      // Los revisores son los supervisores de la unidad del informe. Sin unidad
+      // resuelta se avisa a todos los supervisores activos: es preferible un
+      // aviso de más a que un informe se quede esperando revisión sin que nadie
+      // lo sepa.
+      const revisores = (await usuarios
+        .find({
+          rol: 'supervisor',
+          activo: true,
+          ...(doc.unidadNegocioId ? { unidadNegocioId: doc.unidadNegocioId } : {}),
+        })
+        .select('email nombre')
+        .limit(20)
+        .lean()
+        .exec()) as unknown as { email: string; nombre?: string }[];
+
+      const avisados = await this.avisos.avisarDeTransicion(
+        destino,
+        {
+          id: String(doc._id),
+          numeroInforme: doc.numeroInforme,
+          numeroOt: doc.numeroOt ?? null,
+          cliente: doc.cliente?.nombre ?? null,
+          equipo: (doc.equipo as Record<string, unknown> | undefined)?.['codigo']
+            ? String((doc.equipo as Record<string, unknown>)['codigo'])
+            : null,
+          actorNombre: actor.nombre,
+          comentario,
+          observacionesAbiertas: this.revision.abiertos(doc).length,
+        },
+        { autor, revisores },
+        actor.email,
+      );
+
+      if (avisados) this.logger.log(`${doc.numeroInforme}: ${avisados} aviso(s) de «${destino}».`);
+    } catch (e: unknown) {
+      // Que falle el aviso no puede deshacer lo que ya ocurrió.
+      this.logger.error(`No se pudo avisar del paso a «${destino}»: ${String(e)}`);
+    }
+  }
 
   private async documentoDeInforme(id: string): Promise<ReportDocument> {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('No existe ese informe.');
