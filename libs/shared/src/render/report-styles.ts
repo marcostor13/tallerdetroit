@@ -204,6 +204,77 @@ html, body {
   z-index: 100;
 }
 
+/* --- Tablas dimensionales (§12, E2.6) -------------------------------------
+   El informe se imprime y se fotocopia en blanco y negro. El color marca el
+   estado en pantalla, pero lo que sobrevive a una fotocopia es la NEGRITA y el
+   símbolo: por eso un valor fuera de tolerancia lleva las tres cosas. */
+.tabla-medicion {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9pt;
+  font-variant-numeric: tabular-nums;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.tabla-medicion caption {
+  caption-side: top;
+  text-align: left;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 9.5pt;
+  font-weight: 600;
+  padding-bottom: 1mm;
+}
+.tabla-medicion th,
+.tabla-medicion td {
+  border: 0.5pt solid var(--linea);
+  padding: 1mm 1.5mm;
+  text-align: right;
+  white-space: nowrap;
+}
+.tabla-medicion thead th,
+.tabla-medicion tbody th {
+  background: var(--fondo-cabecera);
+  font-weight: 600;
+  text-align: center;
+}
+.tabla-medicion tbody th { text-align: left; }
+
+/* Fila de referencia: contra qué se midió. Sin ella la tabla es una lista de
+   números sin significado, que es como sale hoy del Word. */
+.tabla-medicion__referencia {
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-size: 8pt;
+  color: var(--tinta-suave);
+  padding-bottom: 1mm;
+}
+.tabla-medicion__referencia strong { color: var(--tinta); }
+
+.celda--alerta { font-weight: 600; }
+
+/* Fuera de tolerancia: negrita + símbolo + color. Cualquiera de los tres por
+   separado se pierde en algún medio; los tres juntos, no. */
+.celda--fuera {
+  font-weight: 700;
+  color: var(--fuera-tolerancia);
+}
+.celda--fuera::after { content: ' A0'; }
+
+.celda--calculada {
+  background: var(--fondo-cabecera);
+  color: var(--tinta-suave);
+}
+
+.leyenda-medicion {
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-size: 7.5pt;
+  color: var(--tinta-suave);
+  margin: 1mm 0 3mm;
+}
+
+/* Anexo de mediciones: empieza en página nueva, como en el Word. */
+.hoja-mediciones { break-before: page; page-break-before: always; }
+
 @media print {
   .hoja { margin: 0; padding: 0; width: auto; min-height: 0; }
   body { background: #fff; }

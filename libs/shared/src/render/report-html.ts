@@ -23,6 +23,32 @@ export interface FotoRenderizable {
   readonly caption?: string | null;
 }
 
+/** Grilla dimensional tal como queda guardada en el bloque (§16.2). */
+export interface GrillaRenderizable {
+  readonly plantilla?: string;
+  readonly nombre?: string | null;
+  readonly unidad?: string | null;
+  readonly filas?: readonly string[];
+  readonly columnas?: readonly string[];
+  readonly valores?: readonly {
+    readonly fila: string;
+    readonly columna: string;
+    readonly valor: number | null;
+    readonly estado?: string | null;
+    readonly calculado?: boolean;
+  }[];
+  readonly especificacion?: {
+    readonly nominal: number;
+    readonly tolInf: number;
+    readonly tolSup: number;
+    readonly unidad: string;
+    readonly fuente: string;
+    readonly provisional?: boolean;
+  } | null;
+  readonly resumen?: Record<string, unknown> | null;
+  readonly justificacion?: string | null;
+}
+
 export interface BloqueRenderizable {
   readonly id: string;
   readonly clave: string;
@@ -34,6 +60,7 @@ export interface BloqueRenderizable {
   readonly veredicto?: string | null;
   readonly accionRecomendada?: string | null;
   readonly fotos?: readonly FotoRenderizable[];
+  readonly mediciones?: readonly GrillaRenderizable[];
   readonly datos?: unknown;
   readonly visible?: boolean;
 }
@@ -60,6 +87,11 @@ export interface OpcionesDeRender {
   readonly versionFormato?: string;
   /** Documento completo con `<html>`, o solo el cuerpo para incrustar. */
   readonly documentoCompleto?: boolean;
+  /**
+   * Anexo con todas las grillas al final (§12.4.7). Va por omisión: en el
+   * taller la hoja se imprime suelta para llevarla al banco.
+   */
+  readonly conAnexoDeMediciones?: boolean;
 }
 
 /** Escapa lo que venga del usuario. El texto del informe lo escribe una persona. */
@@ -148,6 +180,80 @@ function tablaDeItems(datos: unknown): string {
   return `<table class="tabla-datos"><thead><tr>${cabecera}</tr></thead><tbody>${cuerpo}</tbody></table>`;
 }
 
+/**
+ * Una tabla dimensional (E2.6).
+ *
+ * Los valores fuera de tolerancia van en **negrita y con símbolo**, no solo en
+ * rojo: este documento se imprime y se fotocopia en blanco y negro, y el color
+ * es lo primero que se pierde. Es la misma razón por la que el semáforo de la
+ * pantalla lleva icono además de fondo.
+ */
+function tablaDeMedicion(grilla: GrillaRenderizable): string {
+  const filas = grilla.filas ?? [];
+  const columnas = grilla.columnas ?? [];
+  if (!filas.length || !columnas.length) return '';
+
+  const porClave = new Map((grilla.valores ?? []).map((v) => [`${v.fila}|${v.columna}`, v]));
+
+  const decimales = 3;
+  const celda = (fila: string, columna: string): string => {
+    const v = porClave.get(`${fila}|${columna}`);
+    if (!v || v.valor === null || v.valor === undefined) return '<td>—</td>';
+
+    const clases: string[] = [];
+    if (v.calculado) clases.push('celda--calculada');
+    if (v.estado === 'alerta') clases.push('celda--alerta');
+    if (v.estado === 'fuera') clases.push('celda--fuera');
+
+    const clase = clases.length ? ` class="${clases.join(' ')}"` : '';
+    return `<td${clase}>${v.valor.toFixed(decimales)}</td>`;
+  };
+
+  const spec = grilla.especificacion;
+  const referencia = spec
+    ? `<p class="tabla-medicion__referencia">Nominal <strong>${spec.nominal.toFixed(
+        decimales,
+      )} ${escapeHtml(spec.unidad)}</strong> · Tolerancia ${
+        spec.tolInf > 0 ? '+' : ''
+      }${spec.tolInf} / ${spec.tolSup > 0 ? '+' : ''}${spec.tolSup} · Fuente: ${escapeHtml(
+        spec.fuente,
+      )}${spec.provisional ? ' (provisional)' : ''}</p>`
+    : '<p class="tabla-medicion__referencia">Sin especificación cargada: los valores no se evaluaron contra ninguna tolerancia.</p>';
+
+  const cabecera = columnas.map((c) => `<th scope="col">${escapeHtml(c)}</th>`).join('');
+  const cuerpo = filas
+    .map(
+      (fila) =>
+        `<tr><th scope="row">${escapeHtml(fila)}</th>${columnas
+          .map((columna) => celda(fila, columna))
+          .join('')}</tr>`,
+    )
+    .join('');
+
+  const fuera = Number(grilla.resumen?.['fueraTolerancia'] ?? 0);
+  const leyenda = fuera
+    ? `<p class="leyenda-medicion">En negrita y con ⚠, los ${fuera} valor(es) fuera de tolerancia.` +
+      (grilla.justificacion ? ` Justificación: ${escapeHtml(grilla.justificacion)}` : '') +
+      '</p>'
+    : '';
+
+  return `${referencia}
+    <table class="tabla-medicion">
+      <caption>${escapeHtml(grilla.nombre ?? 'Tabla dimensional')}${
+        grilla.unidad ? ` (${escapeHtml(grilla.unidad)})` : ''
+      }</caption>
+      <thead><tr><th scope="col"></th>${cabecera}</tr></thead>
+      <tbody>${cuerpo}</tbody>
+    </table>${leyenda}`;
+}
+
+/** Todas las grillas de un bloque. */
+function medicionesDe(bloque: BloqueRenderizable): string {
+  const grillas = bloque.mediciones ?? [];
+  if (!grillas.length) return '';
+  return grillas.map((g) => `<div class="bloque">${tablaDeMedicion(g)}</div>`).join('');
+}
+
 /** Un bloque del informe, según su tipo. */
 function renderBloque(
   bloque: BloqueRenderizable,
@@ -207,11 +313,14 @@ function renderBloque(
 
       return `<div class="bloque">${titulo}${cuando}<p class="bloque__texto">${escapeHtml(
         bloque.texto ?? '',
-      )}</p>${veredicto}${fotos(bloque, numeros, opciones)}</div>`;
+      )}</p>${veredicto}${medicionesDe(bloque)}${fotos(bloque, numeros, opciones)}</div>`;
     }
 
     case 'photo_grid':
       return `<div class="bloque">${titulo}${fotos(bloque, numeros, opciones)}</div>`;
+
+    case 'measurement_grid':
+      return `<div class="bloque">${titulo}${medicionesDe(bloque)}</div>`;
 
     case 'items_table':
       return `<div class="bloque">${titulo}${tablaDeItems(
@@ -325,6 +434,38 @@ function cabecera(informe: InformeRenderizable, opciones: OpcionesDeRender): str
 }
 
 /**
+ * Anexo «hoja de mediciones» (§12.4.7).
+ *
+ * Reúne todas las grillas del informe en una sección propia, que empieza en
+ * página nueva. Existe porque en el taller se usa suelta: se imprime, se lleva
+ * al banco y se compara contra la pieza sin arrastrar las cuarenta páginas de
+ * fotografías.
+ *
+ * No duplica datos: son las mismas grillas ya guardadas en sus bloques.
+ */
+export function renderMeasurementSheet(informe: InformeRenderizable): string {
+  const conGrillas = informe.bloques
+    .filter((b) => b.visible !== false && (b.mediciones ?? []).length > 0)
+    .sort((a, b) => a.orden - b.orden);
+
+  if (!conGrillas.length) return '';
+
+  const cuerpo = conGrillas
+    .map((bloque) => {
+      const titulo = bloque.titulo
+        ? `<h3 class="bloque__titulo">${escapeHtml(bloque.titulo)}</h3>`
+        : '';
+      return `<div class="bloque">${titulo}${medicionesDe(bloque)}</div>`;
+    })
+    .join('');
+
+  return `<section class="seccion hoja-mediciones">
+    <h2 class="seccion__titulo">Anexo · Hoja de mediciones</h2>
+    ${cuerpo}
+  </section>`;
+}
+
+/**
  * Documento completo del informe.
  *
  * Las figuras se numeran aquí, desde el orden de los bloques, con la misma
@@ -360,6 +501,7 @@ export function renderReportHtml(
   const cuerpo = `<div class="hoja${esBorrador ? ' borrador' : ''}">
     ${cabecera(informe, opciones)}
     ${secciones}
+    ${opciones.conAnexoDeMediciones === false ? '' : renderMeasurementSheet(informe)}
   </div>`;
 
   if (opciones.documentoCompleto === false) return cuerpo;

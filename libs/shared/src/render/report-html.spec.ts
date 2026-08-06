@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { SER_FOR_002_V01 } from '../domain/ser-for-002';
-import { escapeHtml, renderReportHtml, type InformeRenderizable } from './report-html';
+import {
+  escapeHtml,
+  renderMeasurementSheet,
+  renderReportHtml,
+  type InformeRenderizable,
+} from './report-html';
+import { REPORT_STYLES } from './report-styles';
 
 /** Informe parecido al OT-746: motor MTU de camión minero con dos trabajos. */
 const informe: InformeRenderizable = {
@@ -347,5 +353,180 @@ describe('Los dos informes reales desde la misma plantilla', () => {
     // todos los informes.
     expect(render746).not.toContain('Parámetros ECU');
     expect(render898).not.toContain('Parámetros ECU');
+  });
+});
+
+/**
+ * Tablas dimensionales en el documento (E2.6).
+ *
+ * La regla que gobierna todo esto: **el informe se imprime y se fotocopia en
+ * blanco y negro.** El color marca el estado en pantalla, pero es lo primero
+ * que se pierde en papel, así que un valor fuera de tolerancia tiene que
+ * distinguirse también sin él.
+ */
+describe('Tablas dimensionales', () => {
+  const grilla = (extra: Record<string, unknown> = {}) => ({
+    plantilla: 'tunel_bancada',
+    nombre: 'Túnel de bancada',
+    unidad: 'mm',
+    filas: ['a', 'b1', 'Ovalidad'],
+    columnas: ['1', '2', '3'],
+    valores: [
+      { fila: 'a', columna: '1', valor: 171.01, estado: 'ok', calculado: false },
+      { fila: 'a', columna: '2', valor: 171.024, estado: 'alerta', calculado: false },
+      { fila: 'a', columna: '3', valor: 171.04, estado: 'fuera', calculado: false },
+      { fila: 'b1', columna: '1', valor: 171.015, estado: 'ok', calculado: false },
+      { fila: 'Ovalidad', columna: '1', valor: 0.005, estado: null, calculado: true },
+    ],
+    especificacion: {
+      nominal: 171.0,
+      tolInf: 0,
+      tolSup: 0.025,
+      unidad: 'mm',
+      fuente: 'Informe OT898',
+      provisional: true,
+    },
+    resumen: { capturadas: 4, alertas: 1, fueraTolerancia: 1, veredicto: 'cambiar' },
+    justificacion: null,
+    ...extra,
+  });
+
+  const conGrilla = (extra: Record<string, unknown> = {}) =>
+    render({
+      bloques: [
+        {
+          id: 'm1',
+          clave: 'trabajos',
+          tipo: 'work_task',
+          orden: 1,
+          titulo: 'MEDICIÓN DEL TÚNEL DE BANCADA',
+          texto: 'Se mide apoyo por apoyo.',
+          mediciones: [grilla(extra)],
+        },
+      ],
+    });
+
+  it('saca la tabla con sus filas y columnas', () => {
+    const html = conGrilla();
+    expect(html).toContain('class="tabla-medicion"');
+    expect(html).toContain('Túnel de bancada');
+    expect(html).toContain('171.010');
+  });
+
+  it('el valor fuera de tolerancia se distingue sin depender del color', () => {
+    const html = conGrilla();
+
+    // Negrita y símbolo, además del rojo. Cualquiera de los tres por separado
+    // se pierde en algún medio; los tres juntos, no.
+    expect(html).toContain('celda--fuera');
+    expect(REPORT_STYLES).toMatch(/\.celda--fuera[\s\S]*?font-weight:\s*700/);
+    expect(REPORT_STYLES).toMatch(/\.celda--fuera::after/);
+  });
+
+  it('la alerta también va marcada, más suave', () => {
+    expect(conGrilla()).toContain('celda--alerta');
+    expect(REPORT_STYLES).toMatch(/\.celda--alerta\s*\{\s*font-weight:\s*600/);
+  });
+
+  it('dice contra qué se midió', () => {
+    const html = conGrilla();
+
+    // Sin la referencia, la tabla es una lista de números sin significado, que
+    // es como sale hoy del Word.
+    expect(html).toContain('Nominal');
+    expect(html).toContain('171.000 mm');
+    expect(html).toContain('Informe OT898');
+    // Y que la tolerancia estaba sin contrastar (D1).
+    expect(html).toContain('provisional');
+  });
+
+  it('sin especificación lo dice, en vez de callar', () => {
+    const html = conGrilla({ especificacion: null });
+    expect(html).toContain('Sin especificación cargada');
+  });
+
+  it('las celdas calculadas se distinguen de las medidas', () => {
+    expect(conGrilla()).toContain('celda--calculada');
+  });
+
+  it('una celda sin capturar sale como raya, no como cero', () => {
+    // Un cero es una medición; un hueco es que no se midió.
+    expect(conGrilla()).toContain('<td>—</td>');
+  });
+
+  it('la leyenda cuenta cuántos se salieron y recoge la justificación', () => {
+    const html = conGrilla({
+      justificacion: 'El apoyo 3 se envía a rectificado externo antes del montaje.',
+    });
+
+    expect(html).toContain('1 valor(es) fuera de tolerancia');
+    expect(html).toContain('rectificado externo');
+  });
+
+  it('sin valores fuera no pone leyenda', () => {
+    const html = conGrilla({ resumen: { capturadas: 4, fueraTolerancia: 0 } });
+    expect(html).not.toContain('fuera de tolerancia.');
+  });
+
+  it('la tabla no se parte entre páginas', () => {
+    expect(REPORT_STYLES).toMatch(/\.tabla-medicion\s*\{[\s\S]*?break-inside:\s*avoid/);
+  });
+
+  describe('anexo de la hoja de mediciones (§12.4.7)', () => {
+    it('reúne las grillas al final, en página nueva', () => {
+      const html = conGrilla();
+
+      // En el taller se imprime suelta: se lleva al banco y se compara contra
+      // la pieza sin arrastrar las cuarenta páginas de fotografías.
+      expect(html).toContain('Anexo · Hoja de mediciones');
+      expect(html).toContain('hoja-mediciones');
+      expect(REPORT_STYLES).toMatch(/\.hoja-mediciones[\s\S]*?break-before:\s*page/);
+    });
+
+    it('un informe sin mediciones no lleva anexo vacío', () => {
+      expect(render()).not.toContain('Anexo · Hoja de mediciones');
+    });
+
+    it('se puede pedir el documento sin él', () => {
+      const html = renderReportHtml(
+        {
+          ...informe,
+          bloques: [
+            {
+              id: 'm1',
+              clave: 'trabajos',
+              tipo: 'work_task',
+              orden: 1,
+              titulo: 'MEDICIÓN',
+              mediciones: [grilla()],
+            },
+          ],
+        },
+        SER_FOR_002_V01,
+        { conAnexoDeMediciones: false },
+      );
+
+      expect(html).toContain('class="tabla-medicion"');
+      expect(html).not.toContain('Anexo · Hoja de mediciones');
+    });
+
+    it('se puede generar suelto para imprimirlo aparte', () => {
+      const anexo = renderMeasurementSheet({
+        ...informe,
+        bloques: [
+          {
+            id: 'm1',
+            clave: 'trabajos',
+            tipo: 'work_task',
+            orden: 1,
+            titulo: 'MEDICIÓN',
+            mediciones: [grilla()],
+          },
+        ],
+      });
+
+      expect(anexo).toContain('Anexo · Hoja de mediciones');
+      expect(anexo).toContain('Túnel de bancada');
+    });
   });
 });
