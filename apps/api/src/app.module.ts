@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { EnvironmentVariables, validateEnv } from './config/configuration';
 import { HealthModule } from './health/health.module';
@@ -14,9 +14,11 @@ import { WorkOrdersModule } from './work-orders/work-orders.module';
 import { ReportsModule } from './reports/reports.module';
 import { MediaModule } from './media/media.module';
 import { DocumentsModule } from './documents/documents.module';
+import { AuditModule } from './audit/audit.module';
 import { BullModule } from '@nestjs/bullmq';
 import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
+import { RequestContextInterceptor } from './common/request-context';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 
@@ -88,6 +90,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     // Límite de peticiones por IP/usuario (§17).
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
 
+    // Global: la regla del proyecto es que toda escritura relevante deje
+    // registro, asi que no puede depender de que cada modulo lo importe.
+    AuditModule,
+
     HealthModule,
     UsersModule,
     AuthModule,
@@ -99,7 +105,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     DocumentsModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
-    // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
+    // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule (F3) ·
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).
   ],
@@ -115,6 +121,11 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     { provide: APP_GUARD, useClass: AppThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+
+    // La IP y el user-agent viajan por AsyncLocalStorage hasta la auditoria:
+    // pasarlos por parametro obligaria a anadir un argumento HTTP a una
+    // veintena de metodos de dominio que no tienen nada que ver con HTTP.
+    { provide: APP_INTERCEPTOR, useClass: RequestContextInterceptor },
   ],
 })
 export class AppModule {}

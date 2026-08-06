@@ -1,6 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { ChecklistCapturado, MissingBlock, TemplateVersionDefinition } from '@dps/shared';
-import { resolveTemplate } from '@dps/shared';
+import type {
+  ChecklistCapturado,
+  ComentarioDeRevision,
+  MissingBlock,
+  ReportStatus,
+  TemplateVersionDefinition,
+} from '@dps/shared';
+import { resolveTemplate, transitionsFrom } from '@dps/shared';
 import {
   ReportsService,
   TemplatesService,
@@ -237,6 +243,48 @@ export class InformeStore {
     }
   }
 
+  // ---------------------------------------------------------- revisión (E3.2)
+
+  readonly comentarios = computed<readonly ComentarioDeRevision[]>(
+    () => this.informe()?.comentarios ?? [],
+  );
+
+  /**
+   * Transiciones que este informe admite ahora mismo.
+   *
+   * Salen de la misma tabla que aplica el backend (§14.2), de forma que la
+   * pantalla no puede ofrecer una acción que el servidor va a rechazar.
+   */
+  transicionesPosibles(puede: (permiso: string) => boolean) {
+    const estado = this.informe()?.estado;
+    if (!estado) return [];
+    return transitionsFrom(estado).filter((t) => puede(t.permission));
+  }
+
+  async comentar(comentario: { bloqueId: string | null; texto: string }): Promise<void> {
+    const id = this.informe()?._id;
+    if (!id) return;
+
+    try {
+      this.informe.set(await this.api.comentar(id, comentario));
+      this.error.set(null);
+    } catch (e: unknown) {
+      this.error.set(this.mensaje(e, 'No se pudo guardar el comentario.'));
+    }
+  }
+
+  async resolverComentario(comentarioId: string, resuelto: boolean): Promise<void> {
+    const id = this.informe()?._id;
+    if (!id) return;
+
+    try {
+      this.informe.set(await this.api.resolverComentario(id, comentarioId, resuelto));
+      this.error.set(null);
+    } catch (e: unknown) {
+      this.error.set(this.mensaje(e, 'No se pudo actualizar el comentario.'));
+    }
+  }
+
   // -------------------------------------------------------------- validación
 
   async revalidar(): Promise<void> {
@@ -252,20 +300,35 @@ export class InformeStore {
   }
 
   async emitir(): Promise<{ ok: boolean; faltan: MissingBlock[] }> {
+    return this.transicionar('emitido');
+  }
+
+  /**
+   * Mueve el informe a otro estado del flujo (E3.1).
+   *
+   * Devuelve lo que falta en vez de solo fallar: el aviso tiene que ser
+   * navegable por clic, no un «no se pudo» que obliga a buscar el motivo por
+   * seis pasos (UX-07).
+   */
+  async transicionar(
+    destino: ReportStatus,
+    comentario?: string,
+  ): Promise<{ ok: boolean; faltan: MissingBlock[] }> {
     const id = this.informe()?._id;
     if (!id) return { ok: false, faltan: [] };
 
     await this.guardar();
 
     try {
-      this.informe.set(await this.api.transition(id, 'emitido'));
+      this.informe.set(await this.api.transition(id, destino, comentario));
       this.error.set(null);
+      await this.revalidar();
       return { ok: true, faltan: [] };
     } catch (e: unknown) {
       const cuerpo = (e as { error?: { faltan?: MissingBlock[]; detail?: string } }).error;
       const faltan = cuerpo?.faltan ?? [];
       this.validacion.set({ emitible: false, faltan });
-      this.error.set(cuerpo?.detail ?? 'No se pudo emitir el informe.');
+      this.error.set(cuerpo?.detail ?? 'No se pudo cambiar el estado del informe.');
       return { ok: false, faltan };
     }
   }

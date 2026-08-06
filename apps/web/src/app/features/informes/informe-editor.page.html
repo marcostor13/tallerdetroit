@@ -433,6 +433,21 @@
       </section>
     }
 
+    <!--
+      Revisión (E3.2). Va en el último paso, junto a la vista previa: es donde
+      el supervisor mira el informe entero antes de decidir, y donde el técnico
+      vuelve a ver lo que le devolvieron.
+    -->
+    @if (esUltimo() && store.informe(); as informe) {
+      <dps-revision-panel
+        [comentarios]="store.comentarios()"
+        [bloques]="store.bloquesOrdenados()"
+        [puedeComentar]="puedeRevisar()"
+        (comentar)="comentar($event)"
+        (resolver)="resolverComentario($event)"
+      />
+    }
+
     @if (faltanAqui().length) {
       <p class="flex items-start gap-2 text-body-sm text-secondary" role="status">
         <dps-icon name="info" [size]="16" class="mt-0.5 shrink-0" aria-hidden="true" />
@@ -465,14 +480,36 @@
       </button>
 
       @if (esUltimo()) {
-        <button
-          type="button"
-          class="dps-btn dps-btn--primary"
-          [disabled]="emitiendo() || store.soloLectura()"
-          (click)="emitir()"
-        >
-          {{ emitiendo() ? 'Emitiendo…' : 'Emitir informe' }}
-        </button>
+        <!--
+          Las acciones salen de la máquina de estados de §14.2 filtrada por los
+          permisos del usuario, no de una lista escrita a mano: así la pantalla
+          nunca ofrece algo que el servidor va a rechazar, y cuando el flujo
+          cambie no hará falta acordarse de tocar el wizard.
+        -->
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          @for (accion of acciones(); track accion.to) {
+            <button
+              type="button"
+              [class]="
+                'dps-btn ' +
+                (accion.to === 'emitido' || accion.to === 'aprobado'
+                  ? 'dps-btn--primary'
+                  : accion.to === 'anulado'
+                    ? 'dps-btn--danger'
+                    : 'dps-btn--secondary')
+              "
+              [disabled]="transicionando()"
+              [attr.title]="accion.description"
+              (click)="transicionar(accion.to, accion.requiresComment)"
+            >
+              {{ transicionando() ? 'Un momento…' : rotuloDe(accion.to) }}
+            </button>
+          } @empty {
+            <p class="text-body-sm text-secondary">
+              No tienes ninguna acción disponible sobre este informe.
+            </p>
+          }
+        </div>
       } @else {
         <button type="button" class="dps-btn dps-btn--primary" (click)="siguiente()">Siguiente</button>
       }

@@ -8,7 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { ChecklistCapturado, MissingBlock } from '@dps/shared';
+import type { ChecklistCapturado, MissingBlock, Permission, ReportStatus } from '@dps/shared';
 import type { FotoInforme, GrillaGuardada } from '../../core/api/reports.service';
 import {
   MedicionesBloqueComponent,
@@ -24,6 +24,8 @@ import { VistaPreviaComponent } from './ui/vista-previa.component';
 import { FotosBloqueComponent } from './ui/fotos-bloque.component';
 import { ChecklistBloqueComponent } from './ui/checklist-bloque.component';
 import { SugerenciasConclusionesComponent } from './ui/sugerencias-conclusiones.component';
+import { RevisionPanelComponent } from './ui/revision-panel.component';
+import { AuthService } from '../../core/auth/auth.service';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -32,6 +34,21 @@ interface CampoDeBloque {
   readonly tipo: string;
   readonly requerido?: boolean;
 }
+
+/**
+ * Cómo se llama cada transición en el botón.
+ *
+ * El verbo va explícito —«Anular informe», nunca «Aceptar»— porque son
+ * decisiones que cambian quién responde del documento (§7.9 del sistema de
+ * diseño).
+ */
+const ROTULOS_DE_TRANSICION: Partial<Record<ReportStatus, string>> = {
+  en_revision: 'Enviar a revisión',
+  observado: 'Devolver con observaciones',
+  aprobado: 'Aprobar',
+  emitido: 'Emitir informe',
+  anulado: 'Anular informe',
+};
 
 /** Rótulos de los pasos de §14.1. */
 const NOMBRES_DE_PASO: Record<number, string> = {
@@ -70,17 +87,21 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     MedicionesBloqueComponent,
     ChecklistBloqueComponent,
     SugerenciasConclusionesComponent,
+    RevisionPanelComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })
 export class InformeEditorPage implements OnDestroy {
   protected readonly store = inject(InformeStore);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
   private readonly trabajos = viewChild(ListaTrabajosComponent);
 
   protected readonly paso = signal(1);
   protected readonly cargando = signal(true);
   protected readonly emitiendo = signal(false);
+  /** Hay una transición en vuelo: se desactivan todas para no duplicarla. */
+  protected readonly transicionando = signal(false);
   protected readonly mostrarFaltantes = signal(false);
   /** Bloque abierto para editar en detalle. Uno cada vez: en móvil no cabe más. */
   protected readonly bloqueAbierto = signal<string | null>(null);
@@ -296,17 +317,64 @@ export class InformeEditorPage implements OnDestroy {
     await this.store.guardarChecklist(bloqueId, capturado);
   }
 
+  // --------------------------------------------------------------- revisión
+
+  /** Comentar exige poder leer el informe; resolver, lo mismo. */
+  protected puedeRevisar(): boolean {
+    return this.auth.can('reports:read') && !!this.store.informe();
+  }
+
+  protected async comentar(comentario: { bloqueId: string | null; texto: string }): Promise<void> {
+    await this.store.comentar(comentario);
+  }
+
+  protected async resolverComentario(cambio: { id: string; resuelto: boolean }): Promise<void> {
+    await this.store.resolverComentario(cambio.id, cambio.resuelto);
+  }
+
   // --------------------------------------------------------------- emisión
 
-  protected async emitir(): Promise<void> {
-    this.emitiendo.set(true);
+  /** Lo que este usuario puede hacerle al informe ahora mismo (§14.2). */
+  protected readonly acciones = computed(() =>
+    this.store.transicionesPosibles((permiso) => this.auth.can(permiso as Permission)),
+  );
+
+  protected rotuloDe(destino: ReportStatus): string {
+    return ROTULOS_DE_TRANSICION[destino] ?? destino;
+  }
+
+  /**
+   * Ejecuta una transición del flujo.
+   *
+   * Las que exigen comentario lo piden antes de llamar al servidor: mandar la
+   * petición para que la rechace por falta de motivo obliga al usuario a
+   * repetir la acción sin saber por qué falló.
+   */
+  protected async transicionar(destino: ReportStatus, exigeComentario: boolean): Promise<void> {
+    let comentario: string | undefined;
+
+    if (exigeComentario) {
+      const escrito = window.prompt(
+        destino === 'anulado'
+          ? '¿Por qué se anula el informe? El motivo queda en el historial.'
+          : '¿Qué hay que corregir? El comentario se lo lleva el técnico.',
+      );
+      if (!escrito?.trim()) return;
+      comentario = escrito.trim();
+    }
+
+    this.transicionando.set(true);
     try {
-      const { ok, faltan } = await this.store.emitir();
+      const { ok, faltan } = await this.store.transicionar(destino, comentario);
       // Con errores se muestra la lista, no un aviso: el requisito es que se
       // pueda ir a cada punto con un clic (UX-07).
       if (!ok && faltan.length) this.mostrarFaltantes.set(true);
     } finally {
-      this.emitiendo.set(false);
+      this.transicionando.set(false);
     }
+  }
+
+  protected async emitir(): Promise<void> {
+    await this.transicionar('emitido', false);
   }
 }

@@ -33,6 +33,8 @@ import { TemplatesService } from '../templates/templates.service';
 import { DocumentsService } from '../documents/documents.service';
 import { MeasurementsService, type CapturaDeGrilla } from './measurements.service';
 import { ChecklistService, type CapturaDeChecklist } from './checklist.service';
+import { AuditService } from '../audit/audit.service';
+import { ReviewService, type NuevoComentario } from './review.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -71,6 +73,8 @@ export class ReportsService {
     private readonly mediciones: MeasurementsService,
     private readonly checklists: ChecklistService,
     private readonly hechos: MeasurementFactsService,
+    private readonly auditoria: AuditService,
+    private readonly revision: ReviewService,
   ) {}
 
   /** Dimensiones del motor del informe, para derivar cantidades esperadas. */
@@ -166,6 +170,15 @@ export class ReportsService {
         createdBy: new Types.ObjectId(actor.id),
         updatedBy: new Types.ObjectId(actor.id),
       });
+
+      await this.auditoria.registrar(actor, {
+        entidad: 'reports',
+        entidadId: String(doc._id),
+        accion: 'crear',
+        etiqueta: numeroInforme,
+        despues: { numeroInforme, templateVersion: plantilla.version },
+      });
+
       return doc.toObject();
     } catch (error: unknown) {
       throw this.traducirError(error, numeroInforme);
@@ -345,6 +358,49 @@ export class ReportsService {
     doc.updatedBy = new Types.ObjectId(actor.id);
     doc.markModified('bloques');
     await doc.save();
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
+  // ------------------------------------------------------- revisión (E3.2)
+
+  /** Añade un comentario de revisión anclado a un bloque (UX-08). */
+  async comentar(id: string, entrada: NuevoComentario, actor: AuthUser) {
+    const doc = await this.documento(id);
+
+    // A diferencia del resto de escrituras, comentar SÍ vale sobre un informe
+    // emitido: es la vía para dejar constancia de un defecto detectado después,
+    // y el documento en sí no se toca.
+    const comentario = this.revision.comentar(doc, entrada, actor);
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    await doc.save();
+
+    await this.auditoria.registrar(actor, {
+      entidad: 'reports',
+      entidadId: String(doc._id),
+      accion: 'comentar',
+      etiqueta: doc.numeroInforme,
+      despues: { bloqueId: comentario.bloqueId, texto: comentario.texto },
+    });
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
+  /** Marca resuelto (o lo reabre): el supervisor comprueba, no da por hecho. */
+  async resolverComentario(id: string, comentarioId: string, resuelto: boolean, actor: AuthUser) {
+    const doc = await this.documento(id);
+
+    this.revision.resolver(doc, comentarioId, resuelto, actor);
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    await doc.save();
+
+    await this.auditoria.registrar(actor, {
+      entidad: 'reports',
+      entidadId: String(doc._id),
+      accion: resuelto ? 'resolver-comentario' : 'reabrir-comentario',
+      etiqueta: doc.numeroInforme,
+      despues: { comentarioId },
+    });
 
     return this.conFigurasNumeradas(doc.toObject());
   }
@@ -602,16 +658,39 @@ export class ReportsService {
       throw new BadRequestException(`Pasar a «${destino}» exige un comentario que lo justifique.`);
     }
 
-    if (destino === 'emitido') {
+    // Observar sin decir dónde deja al técnico repasando catorce trabajos para
+    // adivinar a qué se refería el supervisor (§14.2: «requiere al menos un
+    // comentario anclado a un bloque»).
+    if (destino === 'observado' && !this.revision.sePuedeObservar(doc)) {
+      throw new BadRequestException(
+        'Para observar el informe hace falta al menos un comentario anclado a un bloque. ' +
+          'Señala dónde está el problema antes de devolverlo.',
+      );
+    }
+
+    // Aprobar con observaciones abiertas vacía de sentido la revisión: el
+    // informe saldría señalado y aprobado a la vez.
+    if (destino === 'aprobado') this.revision.exigirSinComentariosAbiertos(doc);
+
+    // Enviar a revisión también valida (§14.2: «valida la completitud
+    // obligatoria y envía a revisión»). Sin esto, el supervisor recibe informes
+    // a medias y la revisión se convierte en un repaso de campos vacíos en vez
+    // de en un control técnico: el que sabe qué falta es quien lo escribió.
+    if (destino === 'en_revision' || destino === 'emitido') {
       const { emitible, faltan } = await this.validate(id);
       if (!emitible) {
         // El detalle lleva la lista para que el frontend pinte los enlaces sin
         // tener que volver a preguntar.
         throw new BadRequestException({
-          message: `Faltan ${faltan.length} datos obligatorios para emitir.`,
+          message:
+            `Faltan ${faltan.length} datos obligatorios para ` +
+            (destino === 'emitido' ? 'emitir.' : 'enviar a revisión.'),
           faltan,
         });
       }
+    }
+
+    if (destino === 'emitido') {
 
       // Se congela la plantilla (§11.1): a partir de aquí el informe se
       // renderiza igual para siempre, publique Calidad lo que publique.
@@ -629,6 +708,17 @@ export class ReportsService {
     });
     doc.updatedBy = new Types.ObjectId(actor.id);
     await doc.save();
+
+    // El recorrido del informe es lo primero que se le pregunta a la auditoría:
+    // quién lo envió, quién lo observó y con qué palabras, quién lo aprobó.
+    await this.auditoria.registrar(actor, {
+      entidad: 'reports',
+      entidadId: String(doc._id),
+      accion: destino === 'emitido' ? 'emitir' : destino === 'anulado' ? 'anular' : 'transicion',
+      etiqueta: doc.numeroInforme,
+      antes: { estado: origen },
+      despues: { estado: destino, comentario: comentario ?? null },
+    });
 
     const emitido = this.conFigurasNumeradas(doc.toObject());
 
@@ -663,6 +753,15 @@ export class ReportsService {
     doc.deletedAt = new Date();
     doc.updatedBy = new Types.ObjectId(actor.id);
     await doc.save();
+
+    await this.auditoria.registrar(actor, {
+      entidad: 'reports',
+      entidadId: String(doc._id),
+      accion: 'eliminar',
+      etiqueta: doc.numeroInforme,
+      antes: { estado: doc.estado },
+    });
+
     return { eliminado: true };
   }
 

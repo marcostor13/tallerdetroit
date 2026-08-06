@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import type {
   AppliedSpec,
   ChecklistCapturado,
+  ComentarioDeRevision,
   ChecklistItem,
   ConclusionPropuesta,
   MeasurementState,
@@ -89,6 +90,8 @@ export interface Informe {
   motor?: Record<string, unknown>;
   datos?: Record<string, unknown>;
   bloques: BloqueInforme[];
+  /** Comentarios de la revisión, anclados a bloque (E3.2). */
+  comentarios?: ComentarioDeRevision[];
   readonly estado: ReportStatus;
   readonly fechaEmision?: string | null;
   readonly updatedAt?: string;
@@ -220,6 +223,18 @@ export class ReportsService {
   reorder(id: string, desde: number, hasta: number): Promise<Informe> {
     return firstValueFrom(
       this.http.post<Informe>(`${this.base}/${id}/bloques/reordenar`, { desde, hasta }),
+    );
+  }
+
+  /** Comenta un bloque durante la revisión (E3.2). */
+  comentar(id: string, comentario: { bloqueId: string | null; texto: string }): Promise<Informe> {
+    return firstValueFrom(this.http.post<Informe>(`${this.base}/${id}/comentarios`, comentario));
+  }
+
+  /** Marca resuelto o reabre. Un comentario nunca se borra. */
+  resolverComentario(id: string, comentarioId: string, resuelto: boolean): Promise<Informe> {
+    return firstValueFrom(
+      this.http.patch<Informe>(`${this.base}/${id}/comentarios/${comentarioId}`, { resuelto }),
     );
   }
 

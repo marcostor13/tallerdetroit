@@ -181,6 +181,39 @@ export class ReportsController {
     return this.informes.guardarMedicion(id, bloqueId, body, actor);
   }
 
+  @Post(':id/comentarios')
+  @Permissions('reports:read')
+  @ApiOperation({
+    summary: 'Comenta un bloque durante la revisión (E3.2)',
+    description:
+      'El comentario va anclado a un bloque: «corregir la medición» sin decir ' +
+      'cuál obliga a repasar catorce trabajos para adivinar a qué se refería.',
+  })
+  comentar(
+    @Param('id') id: string,
+    @Body() body: { bloqueId?: string | null; texto?: string },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.comentar(id, body, actor);
+  }
+
+  @Patch(':id/comentarios/:comentarioId')
+  @Permissions('reports:read')
+  @ApiOperation({
+    summary: 'Marca un comentario como resuelto, o lo reabre',
+    description:
+      'Reabrir hace falta: el técnico da por resuelto lo que cree haber ' +
+      'corregido y el supervisor comprueba que no. Un comentario nunca se borra.',
+  })
+  resolverComentario(
+    @Param('id') id: string,
+    @Param('comentarioId') comentarioId: string,
+    @Body() body: { resuelto?: boolean },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.resolverComentario(id, comentarioId, body.resuelto !== false, actor);
+  }
+
   @Post(':id/bloques/:bloqueId/checklist')
   @Permissions('reports:update')
   @ApiOperation({

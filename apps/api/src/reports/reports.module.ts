@@ -6,6 +6,7 @@ import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { MeasurementsService } from './measurements.service';
 import { ChecklistService } from './checklist.service';
+import { ReviewService } from './review.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import { TemplatesModule } from '../templates/templates.module';
 import { DocumentsModule } from '../documents/documents.module';
@@ -22,12 +23,19 @@ import { DocumentsModule } from '../documents/documents.module';
     DocumentsModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService, MeasurementsService, MeasurementFactsService, ChecklistService],
+  providers: [
+    ReportsService,
+    MeasurementsService,
+    MeasurementFactsService,
+    ChecklistService,
+    ReviewService,
+  ],
   exports: [
     ReportsService,
     MeasurementsService,
     MeasurementFactsService,
     ChecklistService,
+    ReviewService,
     MongooseModule,
   ],
 })

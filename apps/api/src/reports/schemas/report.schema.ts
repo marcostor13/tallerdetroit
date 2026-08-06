@@ -232,6 +232,50 @@ export class BloqueInforme {
 }
 const BloqueInformeSchema = SchemaFactory.createForClass(BloqueInforme);
 
+/**
+ * Comentario de revisión anclado a un bloque (E3.2, UX-08).
+ *
+ * Va embebido en el informe y no en una colección aparte porque siempre se lee
+ * con él: pintar el informe en revisión exige tener los comentarios delante, y
+ * una segunda consulta por cada apertura no aporta nada.
+ *
+ * **Anclado a un bloque**, no suelto al pie. Un «corregir la medición» sin decir
+ * cuál obliga al técnico a repasar catorce trabajos para adivinar a qué se
+ * refería el supervisor, que es exactamente lo que pasa hoy con los correos.
+ */
+@Schema({ _id: false })
+export class ComentarioDeRevision {
+  @Prop({ type: String, required: true })
+  id!: string;
+
+  /** `id` del bloque del informe. Nulo solo para un comentario general. */
+  @Prop({ type: String, default: null })
+  bloqueId!: string | null;
+
+  @Prop({ type: String, required: true, trim: true })
+  texto!: string;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
+  autorId!: Types.ObjectId;
+
+  /** Denormalizado: el comentario se lee aunque el usuario cause baja. */
+  @Prop({ type: String, required: true })
+  autorNombre!: string;
+
+  @Prop({ type: Date, required: true })
+  fecha!: Date;
+
+  @Prop({ type: Boolean, default: false })
+  resuelto!: boolean;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  resueltoPor!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  resueltoEn!: Date | null;
+}
+const ComentarioDeRevisionSchema = SchemaFactory.createForClass(ComentarioDeRevision);
+
 @Schema({ _id: false })
 export class CambioDeEstado {
   @Prop({ type: String, required: true })
@@ -308,6 +352,10 @@ export class Report {
 
   @Prop({ type: [CambioDeEstadoSchema], default: [] })
   historialEstados!: CambioDeEstado[];
+
+  /** Comentarios de la revisión, anclados a bloque (E3.2). */
+  @Prop({ type: [ComentarioDeRevisionSchema], default: [] })
+  comentarios!: ComentarioDeRevision[];
 
   @Prop({ type: Date, default: null })
   fechaEmision!: Date | null;

@@ -141,10 +141,14 @@ async function conApiSimulada(page: Page): Promise<void> {
     email: 'rcaceres@detroitpower.pe',
     nombre: 'REYNALDO CÁCERES',
     rol: 'tecnico',
+    // Los mismos que le da `ROLE_PERMISSIONS.tecnico`: un tecnico envia a
+    // revision, no emite. Recortarlos aqui haria que la pantalla ofreciera
+    // menos acciones de las que ofrece de verdad.
     permisos: [
       'reports:read',
       'reports:create',
       'reports:update',
+      'reports:submit',
       'masters:read',
       'masters:write',
       'templates:read',
@@ -257,7 +261,7 @@ async function conApiSimulada(page: Page): Promise<void> {
         {
           status: 400,
           title: 'Solicitud inválida',
-          detail: 'Faltan 2 datos obligatorios para emitir.',
+          detail: 'Faltan 2 datos obligatorios para enviar a revisión.',
           faltan: FALTAN,
         },
         400,
@@ -396,12 +400,13 @@ test.describe('Editor de informes', () => {
   });
 
   test.describe('campos faltantes (UX-07)', () => {
-    test('al emitir con errores sale la lista, no un aviso genérico', async ({ page }) => {
+    test('al enviar con errores sale la lista, no un aviso genérico', async ({ page }) => {
       await irAlEditor(page);
 
-      // Se va al último paso y se intenta emitir.
+      // Se va al último paso y se intenta enviar a revisión, que es lo que
+      // puede hacer un técnico: emitir es del supervisor (§14.2).
       await page.getByRole('button', { name: /^3\s*Trabajos/ }).click();
-      await page.getByRole('button', { name: /emitir informe/i }).click();
+      await page.getByRole('button', { name: /enviar a revisión/i }).click();
 
       const panel = page.getByRole('heading', { name: /faltan .* datos para emitir/i });
       await expect(panel).toBeVisible();
@@ -413,7 +418,7 @@ test.describe('Editor de informes', () => {
     test('pulsar un punto lleva a su paso', async ({ page }) => {
       await irAlEditor(page);
       await page.getByRole('button', { name: /^3\s*Trabajos/ }).click();
-      await page.getByRole('button', { name: /emitir informe/i }).click();
+      await page.getByRole('button', { name: /enviar a revisión/i }).click();
 
       await page.getByRole('button', { name: /Antecedentes/ }).click();
 
@@ -437,7 +442,7 @@ test.describe('Editor a 360 px (T3)', () => {
     expect(desborda).toBe(false);
   });
 
-  test('las acciones de avanzar y emitir quedan al alcance del pulgar', async ({ page }) => {
+  test('las acciones de avanzar y enviar quedan al alcance del pulgar', async ({ page }) => {
     await irAlEditor(page);
 
     const siguiente = page.getByRole('button', { name: /siguiente/i });

@@ -11,6 +11,7 @@ import { Connection, Types, type FilterQuery, type Model } from 'mongoose';
 type MasterDocument = Record<string, unknown>;
 import { fuzzySearch } from '@dps/shared';
 import { type MasterDefinition, findMaster } from './master-registry';
+import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 export interface ListOptions {
@@ -29,7 +30,10 @@ const CAMPOS_PROTEGIDOS = new Set(['_id', 'createdBy', 'createdAt', 'deletedAt']
 
 @Injectable()
 export class MastersService {
-  constructor(@InjectConnection() private readonly connection: Connection) {}
+  constructor(
+    @InjectConnection() private readonly connection: Connection,
+    private readonly auditoria: AuditService,
+  ) {}
 
   definition(key: string): MasterDefinition {
     const def = findMaster(key);
@@ -149,6 +153,15 @@ export class MastersService {
         createdBy: new Types.ObjectId(actor.id),
         updatedBy: new Types.ObjectId(actor.id),
       });
+
+      await this.auditoria.registrar(actor, {
+        entidad: `masters.${key}`,
+        entidadId: String(doc._id),
+        accion: inline ? 'crear-inline' : 'crear',
+        etiqueta: this.etiquetaDe(doc.toObject() as Record<string, unknown>),
+        despues: data,
+      });
+
       return doc.toObject();
     } catch (error: unknown) {
       throw this.traducirError(error, def);
@@ -174,6 +187,15 @@ export class MastersService {
         )
         .lean()
         .exec();
+
+      await this.auditoria.registrar(actor, {
+        entidad: `masters.${key}`,
+        entidadId: id,
+        accion: 'actualizar',
+        etiqueta: this.etiquetaDe(doc as Record<string, unknown> | null),
+        despues: resto,
+      });
+
       return doc;
     } catch (error: unknown) {
       throw this.traducirError(error, def);
@@ -193,7 +215,29 @@ export class MastersService {
       { $set: { deletedAt: new Date(), activo: false, updatedBy: new Types.ObjectId(actor.id) } },
     );
 
+    await this.auditoria.registrar(actor, {
+      entidad: `masters.${key}`,
+      entidadId: id,
+      accion: 'eliminar',
+      etiqueta: def.label,
+    });
+
     return { eliminado: true, label: def.label };
+  }
+
+  /**
+   * Con qué nombre aparece el registro en el log.
+   *
+   * Un identificador de Mongo no le dice nada a quien consulta la auditoría:
+   * lo que busca es «KOMATSU» o «SPCC. TOQUEPALA».
+   */
+  private etiquetaDe(doc: Record<string, unknown> | null): string | null {
+    if (!doc) return null;
+    for (const campo of ['nombre', 'denominacion', 'razonSocial', 'nombreCorto', 'clave', 'codigo']) {
+      const valor = doc[campo];
+      if (typeof valor === 'string' && valor.trim()) return valor;
+    }
+    return null;
   }
 
   /** Traduce el error de clave duplicada a algo que el usuario entienda. */
