@@ -25,6 +25,14 @@ export const PERMISSIONS = [
   'reports:issue',
   'reports:void',
   'reports:read:all',
+  /**
+   * Salvar una advertencia bloqueante dejando el motivo por escrito.
+   *
+   * Va aparte y no dentro de `reports:issue` porque son decisiones distintas:
+   * emitir es el cierre normal del flujo; saltarse RN-04 es asumir por escrito
+   * que un informe se emite con un instrumento sin calibración vigente.
+   */
+  'reports:override',
   // Maestros
   'masters:read',
   'masters:write',

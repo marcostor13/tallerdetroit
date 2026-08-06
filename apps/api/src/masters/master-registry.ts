@@ -8,6 +8,7 @@ import { EngineModelSchema } from './schemas/engine-model.schema';
 import { EngineSpecSchema } from './schemas/engine-spec.schema';
 import {
   ChecklistSchema,
+  InstrumentSchema,
   ComponentVerdictSchema,
   EngineComponentSchema,
   UnitSchema,
@@ -168,6 +169,19 @@ export const MASTERS: readonly MasterDefinition[] = [
     label: 'inventario de desarmado',
     searchFields: ['denominacion', 'clave'],
     displayField: 'denominacion',
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  {
+    key: 'instruments',
+    model: 'Instrument',
+    schema: InstrumentSchema,
+    label: 'instrumento de medición',
+    searchFields: ['codigo', 'denominacion', 'serie'],
+    displayField: 'denominacion',
+    // Sin alta rápida: un instrumento se da de alta con su certificado y su
+    // vencimiento, y crearlo desde un desplegable a media captura produciría
+    // justo lo que RN-04 existe para evitar — uno sin fecha de calibración.
     readPermission: 'masters:read',
     writePermission: 'masters:write',
   },

@@ -395,6 +395,22 @@ export class Report {
   @Prop({ type: [DocumentoGeneradoSchema], default: [] })
   documentos!: DocumentoGenerado[];
 
+  /**
+   * Autorización del Administrador para emitir pese a un instrumento sin
+   * calibración vigente (RN-04).
+   *
+   * El motivo es obligatorio y queda escrito en el informe, no solo en el log:
+   * quien lea el documento dentro de tres años tiene que poder saber que
+   * alguien decidió esto y por qué.
+   */
+  @Prop({ type: MongooseSchema.Types.Mixed, default: null })
+  autorizacionCalibracion!: {
+    motivo: string;
+    autorizadoPor: Types.ObjectId;
+    autorizadoPorNombre: string;
+    fecha: Date;
+  } | null;
+
   @Prop({ type: Date, default: null })
   fechaEmision!: Date | null;
 

@@ -8,6 +8,7 @@ import { ReportsService } from './reports.service';
 import { MeasurementsService } from './measurements.service';
 import { ChecklistService } from './checklist.service';
 import { ReviewService } from './review.service';
+import { CalibrationService } from './calibration.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import { TemplatesModule } from '../templates/templates.module';
 import { DocumentsModule } from '../documents/documents.module';
@@ -30,6 +31,7 @@ import { DocumentsModule } from '../documents/documents.module';
     MeasurementFactsService,
     ChecklistService,
     ReviewService,
+    CalibrationService,
   ],
   exports: [
     ReportsService,
@@ -37,6 +39,7 @@ import { DocumentsModule } from '../documents/documents.module';
     MeasurementFactsService,
     ChecklistService,
     ReviewService,
+    CalibrationService,
     MongooseModule,
   ],
 })

@@ -181,6 +181,23 @@ export class ReportsController {
     return this.informes.guardarMedicion(id, bloqueId, body, actor);
   }
 
+  @Post(':id/autorizar-calibracion')
+  @Permissions('reports:override')
+  @ApiOperation({
+    summary: 'Autoriza emitir con un instrumento sin calibración vigente (RN-04)',
+    description:
+      'El motivo es obligatorio y queda escrito en el informe, no solo en el ' +
+      'log: quien lea el documento dentro de tres años tiene que poder saber ' +
+      'que alguien decidió esto y por qué.',
+  })
+  autorizarCalibracion(
+    @Param('id') id: string,
+    @Body() body: { motivo?: string },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.autorizarCalibracion(id, body.motivo ?? '', actor);
+  }
+
   @Get(':id/documento')
   @Permissions('reports:read')
   @ApiOperation({

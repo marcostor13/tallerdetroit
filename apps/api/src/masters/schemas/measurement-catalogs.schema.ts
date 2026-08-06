@@ -188,3 +188,54 @@ export type ChecklistDocument = Checklist & Document;
 export const ChecklistSchema = SchemaFactory.createForClass(Checklist);
 ChecklistSchema.index({ clave: 1 }, { unique: true });
 ChecklistSchema.index({ denominacion: 'text' });
+
+/**
+ * Maestro 17 (`instruments`): los instrumentos de medición y su calibración.
+ *
+ * Existe por RN-04. Una medición vale lo que vale el instrumento con el que se
+ * tomó, y un micrómetro descalibrado no da un error visible: da números
+ * creíbles y equivocados, que el informe presenta con tres decimales como si
+ * fueran ciertos.
+ *
+ * `calibracionVence` es el campo que gobierna la regla. Va suelto y no dentro
+ * de un histórico de certificados porque lo que se consulta al emitir es
+ * siempre el vigente; el histórico llega cuando el negocio lo pida.
+ */
+@Schema({ collection: 'instruments', timestamps: true })
+export class Instrument extends BaseMaster {
+  /** El que va impreso en la etiqueta del instrumento: `MEGDPS01`. */
+  @Prop({ type: String, required: true, trim: true, uppercase: true })
+  codigo!: string;
+
+  @Prop({ type: String, required: true, trim: true })
+  denominacion!: string;
+
+  @Prop({ type: String, default: null, trim: true })
+  marca!: string | null;
+
+  @Prop({ type: String, default: null, trim: true })
+  modelo!: string | null;
+
+  @Prop({ type: String, default: null, trim: true })
+  serie!: string | null;
+
+  @Prop({ type: Date, default: null })
+  calibradoEn!: Date | null;
+
+  /** Hasta cuándo vale. Sin esto, RN-04 no puede decidir nada. */
+  @Prop({ type: Date, default: null })
+  calibracionVence!: Date | null;
+
+  /** Certificado o patrón con el que se calibró. */
+  @Prop({ type: String, default: null, trim: true })
+  certificado!: string | null;
+
+  @Prop({ type: String, default: null, trim: true })
+  laboratorio!: string | null;
+}
+export type InstrumentDocument = Instrument & Document;
+export const InstrumentSchema = SchemaFactory.createForClass(Instrument);
+InstrumentSchema.index({ codigo: 1 }, { unique: true });
+InstrumentSchema.index({ denominacion: 'text' });
+// La consulta de «qué hay que mandar a calibrar» ordena por vencimiento.
+InstrumentSchema.index({ calibracionVence: 1 });

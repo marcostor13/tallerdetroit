@@ -35,6 +35,7 @@ import { MeasurementsService, type CapturaDeGrilla } from './measurements.servic
 import { ChecklistService, type CapturaDeChecklist } from './checklist.service';
 import { AuditService } from '../audit/audit.service';
 import { ReviewService, type NuevoComentario } from './review.service';
+import { CalibrationService } from './calibration.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -75,6 +76,7 @@ export class ReportsService {
     private readonly hechos: MeasurementFactsService,
     private readonly auditoria: AuditService,
     private readonly revision: ReviewService,
+    private readonly calibracion: CalibrationService,
   ) {}
 
   /** Dimensiones del motor del informe, para derivar cantidades esperadas. */
@@ -362,6 +364,44 @@ export class ReportsService {
     return this.conFigurasNumeradas(doc.toObject());
   }
 
+  /**
+   * Autoriza emitir pese a un instrumento sin calibración vigente (RN-04).
+   *
+   * El motivo es obligatorio y queda escrito **en el informe**, no solo en el
+   * log de auditoría: quien lea el documento dentro de tres años tiene que
+   * poder saber que alguien decidió esto y por qué.
+   */
+  async autorizarCalibracion(id: string, motivo: string, actor: AuthUser) {
+    const doc = await this.documentoDeInforme(id);
+    this.exigirEditable(doc);
+
+    const texto = motivo?.trim();
+    if (!texto) {
+      throw new BadRequestException(
+        'Hace falta el motivo: autorizar sin explicarlo es lo mismo que no tener la regla.',
+      );
+    }
+
+    doc.autorizacionCalibracion = {
+      motivo: texto,
+      autorizadoPor: new Types.ObjectId(actor.id),
+      autorizadoPorNombre: actor.nombre,
+      fecha: new Date(),
+    };
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    await doc.save();
+
+    await this.auditoria.registrar(actor, {
+      entidad: 'reports',
+      entidadId: String(doc._id),
+      accion: 'autorizar-calibracion',
+      etiqueta: doc.numeroInforme,
+      despues: { motivo: texto },
+    });
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
   // ------------------------------------------------ documento emitido (E3.4)
 
   /**
@@ -631,6 +671,21 @@ export class ReportsService {
         titulo: `A «${parcial.grilla}» le faltan ${parcial.faltan} mediciones`,
         paso: 3,
       });
+    }
+
+    // RN-04: una medición vale lo que vale el instrumento con el que se tomó.
+    // Un micrómetro descalibrado no da un error visible: da números creíbles y
+    // equivocados, que el informe presenta con tres decimales como si fueran
+    // ciertos. La salida es que el Administrador lo autorice por escrito.
+    if (!doc.autorizacionCalibracion?.motivo) {
+      for (const vencido of await this.calibracion.vencidosDe(doc)) {
+        faltan.push({
+          seccion: 'Repuestos e instrumentos',
+          clave: `instrumento:${vencido.instrumento.codigo}`,
+          titulo: this.calibracion.explicar(vencido),
+          paso: 4,
+        });
+      }
     }
 
     // Que falten piezas o estén averiadas no bloquea: es lo que el inventario
