@@ -170,14 +170,39 @@ async function conApiSimulada(page: Page): Promise<void> {
     responder((r) => json(r, PLANTILLA)),
   );
 
+  // El maestro de sedes arranca vacío para el cliente elegido: es el caso en
+  // que el técnico tiene que darla de alta desde el propio formulario.
+  const sedes: { _id: string; nombre: string }[] = [];
+
+  // La genérica va PRIMERO: en Playwright gana la ruta registrada más tarde,
+  // así que la específica de sedes tiene que ir después para no quedar tapada.
+  // Con el orden al revés, el alta inline recibía el listado del maestro en vez
+  // del registro creado, y llegaba sin `_id`.
   await page.route(
     '**/api/v1/masters/**',
     responder((r) =>
       json(r, {
         total: 1,
-        items: [{ _id: 'c1', nombreCorto: 'SPCC. TOQUEPALA', nombre: 'TALLER - LIMA' }],
+        items: [{ _id: 'c1', nombreCorto: 'SPCC. TOQUEPALA', nombre: 'SPCC. TOQUEPALA' }],
       }),
     ),
+  );
+
+  await page.route(
+    '**/api/v1/masters/sites**',
+    responder(async (route) => {
+      if (route.request().method() === 'POST') {
+        const datos = route.request().postDataJSON() as { nombre: string };
+        const creada = {
+          _id: `s${sedes.length + 1}`,
+          nombre: datos.nombre,
+          pendienteValidacion: true,
+        };
+        sedes.push(creada);
+        return json(route, creada, 201);
+      }
+      return json(route, { total: sedes.length, items: sedes });
+    }),
   );
 
   await page.route(
@@ -199,11 +224,29 @@ async function conApiSimulada(page: Page): Promise<void> {
 
   await page.route(
     '**/api/v1/reports/r1',
-    responder((route) =>
-      route.request().method() === 'PATCH'
-        ? json(route, { guardadoEn: new Date().toISOString(), informe })
-        : json(route, informe),
-    ),
+    responder((route) => {
+      if (route.request().method() !== 'PATCH') return json(route, informe);
+
+      // Se aplican los cambios de verdad. Devolver el informe intacto —como
+      // hacía antes esta simulación— hace que el autoguardado pise lo que el
+      // técnico acaba de elegir un segundo después, que es un comportamiento
+      // que el servidor real no tiene.
+      const cambios = route.request().postDataJSON() as Record<string, unknown>;
+      const copia = structuredClone(informe) as unknown as Record<string, unknown>;
+
+      for (const [ruta, valor] of Object.entries(cambios)) {
+        const tramos = ruta.split('.');
+        let actual = copia;
+        for (const tramo of tramos.slice(0, -1)) {
+          if (typeof actual[tramo] !== 'object' || actual[tramo] === null) actual[tramo] = {};
+          actual = actual[tramo] as Record<string, unknown>;
+        }
+        actual[tramos[tramos.length - 1] as string] = valor;
+      }
+
+      informe = copia as unknown as typeof informe;
+      return json(route, { guardadoEn: new Date().toISOString(), informe });
+    }),
   );
 
   await page.route(
@@ -307,6 +350,48 @@ test.describe('Editor de informes', () => {
       await expect(
         page.locator('li[aria-describedby="dps-ayuda-reordenar"]').first(),
       ).toBeVisible();
+    });
+  });
+
+  test.describe('alta inline (§13.3.1)', () => {
+    test('crea la sede desde el formulario sin perder el borrador', async ({ page }) => {
+      await irAlEditor(page);
+
+      // El técnico escribe algo en otro campo: eso es el borrador en curso.
+      const numeroOt = page.getByLabel(/de O\/T/i);
+      await numeroOt.fill('LIM-TAL-000999');
+
+      const sede = page.getByLabel(/ubicación/i);
+      await sede.click();
+      await sede.fill('TALLER - AREQUIPA');
+
+      // El alta está dentro de la propia lista, alcanzable con la misma flecha.
+      const crear = page.getByRole('option', { name: /Crear «TALLER - AREQUIPA»/ });
+      await expect(crear).toBeVisible();
+      await crear.click();
+
+      // Queda seleccionada...
+      await expect(sede).toHaveValue('TALLER - AREQUIPA');
+
+      // ...y lo que estaba escrito sigue ahí: no se navegó a ninguna parte.
+      // Si el alta obligara a salir del informe, el técnico volvería al texto
+      // libre y el catálogo dejaría de servir.
+      await expect(numeroOt).toHaveValue('LIM-TAL-000999');
+      await expect(page.getByRole('heading', { name: /ITS-T-E-26-003-0746/ })).toBeVisible();
+    });
+
+    test('el alta se alcanza solo con teclado', async ({ page }) => {
+      await irAlEditor(page);
+
+      const sede = page.getByLabel(/ubicación/i);
+      await sede.click();
+      await sede.fill('TALLER - TRUJILLO');
+      await expect(page.getByRole('option', { name: /Crear «TALLER - TRUJILLO»/ })).toBeVisible();
+
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
+
+      await expect(sede).toHaveValue('TALLER - TRUJILLO');
     });
   });
 

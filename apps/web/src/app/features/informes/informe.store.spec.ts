@@ -146,6 +146,31 @@ describe('InformeStore', () => {
     expect(api.patch.mock.calls[1]?.[1]).toEqual({ 'datos.b': 2 });
   });
 
+  it('la respuesta del servidor no pisa lo que se escribió mientras iba en vuelo', async () => {
+    let resolver: (v: unknown) => void = () => undefined;
+    api.patch.mockImplementationOnce(
+      () =>
+        new Promise((r: (v: unknown) => void) => {
+          resolver = r;
+        }),
+    );
+
+    store.cambiar('datos.a', 1);
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    // Mientras el guardado está en vuelo, el técnico elige una sede.
+    store.cambiar('sede', { id: 's1', nombre: 'TALLER - AREQUIPA' });
+    expect((store.informe()?.sede as { nombre?: string })?.nombre).toBe('TALLER - AREQUIPA');
+
+    // El servidor contesta con un informe que todavía no la conoce.
+    resolver({ guardadoEn: new Date().toISOString(), informe: informe() });
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Y aun así sigue en pantalla: lo contrario es que al técnico se le borre
+    // lo que acaba de elegir, aunque luego se guarde.
+    expect((store.informe()?.sede as { nombre?: string })?.nombre).toBe('TALLER - AREQUIPA');
+  });
+
   it('un informe emitido no acepta cambios', async () => {
     api.findById.mockResolvedValue(informe({ estado: 'emitido' }));
     await store.cargar('r1');

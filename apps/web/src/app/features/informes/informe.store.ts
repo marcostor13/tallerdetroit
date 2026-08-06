@@ -111,7 +111,16 @@ export class InformeStore {
 
     try {
       const { guardadoEn, informe } = await this.api.patch(id, cambios);
+
+      // El informe del servidor no conoce lo que el técnico haya escrito
+      // mientras la petición estaba en vuelo. Sustituirlo a secas hace que esos
+      // cambios desaparezcan de la pantalla —aunque sigan en la cola y se
+      // guarden después—, y lo que el técnico ve es que lo suyo se ha perdido.
       this.informe.set(informe);
+      for (const [campo, valor] of Object.entries(this.pendientes)) {
+        this.aplicarEnLocal(campo, valor);
+      }
+
       this.guardadoEn.set(new Date(guardadoEn));
       this.estadoGuardado.set('guardado');
       this.error.set(null);

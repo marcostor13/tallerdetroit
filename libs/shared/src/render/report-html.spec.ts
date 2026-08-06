@@ -214,3 +214,138 @@ describe('Render del informe', () => {
     });
   });
 });
+
+/**
+ * Los dos informes reales, compuestos desde LA MISMA plantilla.
+ *
+ * Es el criterio que decide si el motor de plantillas sirve: el OT-746 es un
+ * W6-1 con seguidores y varillas, y el ITS-T-E-26-898 es un QL4 con turbos,
+ * housing posterior y componentes tercerizados. Salen documentos distintos sin
+ * tocar una línea de código, solo eligiendo bloques y rellenando datos.
+ *
+ * La comparación ciega contra el Word la hace un supervisor; lo que se prueba
+ * aquí es lo que se puede probar sin él: que no hace falta programar nada para
+ * el segundo informe.
+ */
+describe('Los dos informes reales desde la misma plantilla', () => {
+  const trabajo = (id: string, orden: number, titulo: string, fotos: number) => ({
+    id,
+    clave: 'trabajos',
+    tipo: 'work_task',
+    orden,
+    titulo,
+    texto: `Se ejecuta ${titulo.toLowerCase()} y se verifica el estado del componente.`,
+    veredicto: 'cambiar',
+    fotos: Array.from({ length: fotos }, (_, i) => ({
+      id: `${id}-f${i}`,
+      s3Key: `org/${id}-${i}.jpg`,
+      caption: `Detalle ${i + 1} de ${titulo.toLowerCase()}`,
+    })),
+  });
+
+  /** OT-746: motor MTU 20V del camión VQT-130, intervención W6-1. */
+  const ot746: InformeRenderizable = {
+    numeroInforme: 'ITS-T-E-26-003-0746',
+    numeroOt: 'LIM-TAL-000746',
+    estado: 'emitido',
+    fechaEmision: '2026-06-20T00:00:00.000Z',
+    cliente: { nombre: 'SPCC. TOQUEPALA' },
+    sede: { nombre: 'TALLER - LIMA' },
+    equipo: { codigo: 'VQT-130', marca: 'KOMATSU', modelo: '930E4-SE', categoria: 'camion_minero' },
+    motor: { serie: '5282011236', marca: 'MTU', modelo: '20V4000C23', cilindros: 20 },
+    datos: {
+      motivo: 'W6-1',
+      horasTotales: 17694,
+      intervencion: { codigo: 'W6-1' },
+      conclusiones: ['Los seguidores presentan desgaste en la pista de rodadura.'],
+      tercerizados: [],
+      mediciones: [],
+    },
+    bloques: [
+      trabajo('t1', 1, 'DESMONTAJE DE SEGUIDORES', 2),
+      trabajo('t2', 2, 'DESMONTAJE DE VARILLAS DE EMPUJE', 2),
+      trabajo('t3', 3, 'DESMONTAJE DE CULATAS', 3),
+    ],
+  };
+
+  /** ITS-T-E-26-898: motor 16V de Toquepala, QL4, con componentes a terceros. */
+  const ot898: InformeRenderizable = {
+    numeroInforme: 'ITS-T-E-26-003-0898',
+    numeroOt: 'LIM-TAL-000898',
+    estado: 'emitido',
+    fechaEmision: '2026-07-15T00:00:00.000Z',
+    cliente: { nombre: 'SPCC. TOQUEPALA' },
+    sede: { nombre: 'TALLER - LIMA' },
+    equipo: { codigo: 'VQT-131', marca: 'KOMATSU', modelo: '930E4-SE', categoria: 'camion_minero' },
+    motor: { serie: '5272012973', marca: 'MTU', modelo: '16V4000C21', cilindros: 16 },
+    datos: {
+      motivo: 'QL4',
+      horasTotales: 21340,
+      intervencion: { codigo: 'QL4' },
+      conclusiones: ['El cigüeñal requiere rectificado en taller externo.'],
+      tercerizados: [{ descripcion: 'Rectificado de cigüeñal' }],
+      mediciones: [],
+    },
+    bloques: [
+      trabajo('u1', 1, 'DESMONTAJE DE TURBOS', 3),
+      trabajo('u2', 2, 'DESMONTAJE DE HOUSING POSTERIOR', 2),
+      {
+        id: 'u3',
+        clave: 'tercerizados',
+        tipo: 'items_table',
+        orden: 3,
+        titulo: 'Componentes enviados a terceros',
+        datos: [{ descripcion: 'Rectificado de cigüeñal', proveedor: 'RECTIFICADORA SAC' }],
+      },
+    ],
+  };
+
+  const render746 = renderReportHtml(ot746, SER_FOR_002_V01, { resolverImagen: (c) => c });
+  const render898 = renderReportHtml(ot898, SER_FOR_002_V01, { resolverImagen: (c) => c });
+
+  it('la plantilla es exactamente la misma para los dos', () => {
+    // Si hiciera falta una plantilla por informe, no habría motor de plantillas
+    // sino dos formularios escritos a mano.
+    expect(SER_FOR_002_V01.codigo).toBe('SER-FOR-002');
+    expect(render746).toContain('SER-FOR-002');
+    expect(render898).toContain('SER-FOR-002');
+  });
+
+  it('cada uno saca sus propios trabajos', () => {
+    expect(render746).toContain('DESMONTAJE DE SEGUIDORES');
+    expect(render746).toContain('DESMONTAJE DE VARILLAS DE EMPUJE');
+    expect(render746).not.toContain('DESMONTAJE DE TURBOS');
+
+    expect(render898).toContain('DESMONTAJE DE TURBOS');
+    expect(render898).toContain('DESMONTAJE DE HOUSING POSTERIOR');
+    expect(render898).not.toContain('DESMONTAJE DE SEGUIDORES');
+  });
+
+  it('la sección de tercerizados solo aparece en el que los tiene', () => {
+    expect(render746).not.toContain('Componentes tercerizados');
+    expect(render898).toContain('Componentes tercerizados');
+    expect(render898).toContain('RECTIFICADORA SAC');
+  });
+
+  it('los datos del motor salen del propio informe, no de la plantilla', () => {
+    expect(render746).toContain('20V4000C23');
+    expect(render746).toContain('5282011236');
+    expect(render898).toContain('16V4000C21');
+    expect(render898).toContain('5272012973');
+  });
+
+  it('las figuras se numeran de forma independiente en cada uno', () => {
+    // 7 fotos en el OT-746, 5 en el OT-898.
+    expect((render746.match(/class="foto__numero"/g) ?? []).length).toBe(7);
+    expect((render898.match(/class="foto__numero"/g) ?? []).length).toBe(5);
+    expect(render746).toContain('Fig.07');
+    expect(render898).not.toContain('Fig.06');
+  });
+
+  it('ninguno lleva el panel de ECU: los dos son motores de camión minero', () => {
+    // El prototipo lo mostraba siempre; era ruido que el técnico se saltaba en
+    // todos los informes.
+    expect(render746).not.toContain('Parámetros ECU');
+    expect(render898).not.toContain('Parámetros ECU');
+  });
+});

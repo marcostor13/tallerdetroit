@@ -541,6 +541,61 @@ describe('Informes', () => {
     expect(tamano).toBeLessThan(1024 * 1024);
   }, 180_000);
 
+  it('el autoguardado responde en menos de 500 ms (NFR-02)', async () => {
+    // Es lo que decide si el indicador «Guardado hace X» resulta creíble. Si
+    // el guardado tarda mas de medio segundo, el tecnico percibe el retardo,
+    // deja de fiarse y acaba guardando a mano.
+    const informe = await request(http)
+      .post('/api/v1/reports')
+      .set(conToken(tokenTecnico))
+      .send({ numeroInforme: 'ITS-T-E-26-003-0500', cliente: { id: clienteId } })
+      .expect(201);
+    const id = String(informe.body._id);
+
+    // Con bloques y fotos dentro: el documento vacio no se parece a uno real.
+    for (let b = 0; b < 10; b++) {
+      const creado = await request(http)
+        .post(`/api/v1/reports/${id}/bloques`)
+        .set(conToken(tokenTecnico))
+        .send({ clave: 'trabajos', titulo: `TRABAJO ${b + 1}`, texto: 'x'.repeat(400) })
+        .expect(201);
+      const bloqueId = (creado.body.bloques as { id: string }[]).at(-1)?.id as string;
+      await request(http)
+        .patch(`/api/v1/reports/${id}/bloques/${bloqueId}`)
+        .set(conToken(tokenTecnico))
+        .send({
+          fotos: Array.from({ length: 3 }, (_, j) => ({
+            id: `f${b}-${j}`,
+            s3Key: `informes/2026/${id}/${b}-${j}.jpg`,
+            caption: `Detalle ${b * 3 + j + 1}`,
+          })),
+        })
+        .expect(200);
+    }
+
+    // Veinte guardados seguidos, como los que produce escribir un parrafo.
+    const tiempos: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const inicio = Date.now();
+      await request(http)
+        .patch(`/api/v1/reports/${id}`)
+        .set(conToken(tokenTecnico))
+        .send({ datos: { antecedentes: `Motor desmontado del camion VQT-130. Revision ${i}.` } })
+        .expect(200);
+      tiempos.push(Date.now() - inicio);
+    }
+
+    const ordenados = [...tiempos].sort((a, b) => a - b);
+    const mediana = ordenados[Math.floor(ordenados.length / 2)] as number;
+    const p95 = ordenados[Math.floor(ordenados.length * 0.95)] as number;
+
+    console.log(`NFR-02 autoguardado: mediana ${mediana} ms, p95 ${p95} ms.`);
+
+    // Se exige el p95 y no la media: lo que rompe la confianza es el guardado
+    // lento ocasional, no el promedio.
+    expect(p95).toBeLessThan(500);
+  }, 180_000);
+
   it('el visor lee pero no crea ni edita', async () => {
     await request(http).get('/api/v1/reports').set(conToken(tokenVisor)).expect(200);
 

@@ -84,11 +84,17 @@ let nextId = 0;
     </p>
 
     @if (abierto()) {
+      <!--
+        z-50: es un elemento flotante y tiene que quedar por encima de la barra
+        de acciones del editor (z-30) y de la navegación inferior (z-40). Por
+        debajo, en un teléfono no se puede pulsar ninguna opción: la barra
+        intercepta el toque y el alta rápida deja de existir en móvil.
+      -->
       <ul
         [id]="listaId"
         role="listbox"
         [attr.aria-label]="'Resultados de ' + etiqueta()"
-        class="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-subtle bg-surface shadow-lg"
+        class="dps-floating absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-subtle bg-surface"
       >
         @for (opcion of opciones(); track opcion._id; let i = $index) {
           <li

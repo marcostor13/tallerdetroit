@@ -15,7 +15,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | Fase                                     | Estado                                  | Semanas | Cierre     |
 | ---------------------------------------- | --------------------------------------- | ------- | ---------- |
 | **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle | 2–3     | 5-ago-2026 |
-| **F1** Núcleo de informes (MVP)          | 🟡 Épicas implementadas — criterios sin verificar | 7–9     | —          |
+| **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | ⬜ Pendiente                            | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | ⬜ Pendiente                            | 5–7     | —          |
 | **F4** PWA, movilidad y offline          | ⬜ Pendiente                            | 4–6     | —          |
@@ -167,21 +167,27 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 
 ## Criterios de aceptación
 
-> **Estado (6-ago-2026):** las diez épicas están implementadas y con tests. De
-> los criterios de abajo solo está verificado el de cobertura; el resto exige
-> datos reales, un entorno desplegado y un supervisor del negocio para la
-> comparación ciega. Sin eso la fase no se cierra, por mucho código que haya.
+> **Estado (6-ago-2026):** las diez épicas están implementadas, y **11 de los 13
+> criterios de abajo están verificados con evidencia reproducible**.
+>
+> Los dos que faltan son las comparaciones contra el Word original, y no se
+> pueden automatizar: hacen falta los informes reales y un supervisor que no
+> sepa cuál es cuál. Del OT-898 sí está comprobada la mitad que sí depende de
+> nosotros —que no haga falta tocar código—, y queda marcada `[~]`.
+>
+> **La fase no se cierra hasta esas dos.** Es deliberado: son las que deciden si
+> los técnicos migran, y ninguna cantidad de tests verdes las sustituye.
 
 - [ ] **Prueba de fidelidad:** un técnico reproduce íntegramente el informe **OT746** en la plataforma;
       en una comparación ciega, un supervisor no identifica cuál PDF salió del Word y cuál de la plataforma
-- [ ] Lo mismo con el informe **OT898**, **sin cambiar código** — solo componiendo bloques distintos
+- [~] Lo mismo con el informe **OT898**, **sin cambiar código** — solo componiendo bloques distintos. **La parte de «sin cambiar código» está verificada** (6-ago-2026, `report-html.spec.ts`): los dos informes se componen desde la misma plantilla y salen distintos —el 746 con seguidores y varillas, el 898 con turbos, housing y tercerizados—, con su propia numeración de figuras y sin panel de ECU en ninguno. **Falta la comparación con el original**, que necesita el informe real y un supervisor
 - [x] **Un informe con 45 fotos genera su PDF en < 45 s (NFR-03)** — verificado 6-ago-2026: **4,99 s** con 45 fotografías *distintas* de 1600×1200 (14 MB de origen → PDF de 1,26 MB), medido contra Chromium real. Con la misma foto repetida el PDF la deduplica y la medida sale diez veces mejor de lo que es; el banco usa fotos diferentes a propósito. Queda fuera el tiempo de descarga desde S3
-- [ ] Dos informes no pueden compartir número: el segundo intento recibe un error claro (RN-01 adaptada a D3)
-- [ ] Al reordenar bloques, la numeración de figuras se recalcula correctamente en pantalla y en el PDF (RN-06)
-- [ ] Un técnico crea un equipo nuevo desde el formulario **sin perder el borrador en curso** (§13.3.1)
+- [x] **Dos informes no pueden compartir número: el segundo intento recibe un error claro** (RN-01 adaptada a D3) — verificado 6-ago-2026 en `reports.e2e.spec.ts`. El número se normaliza antes de comparar, así que `its-t-e-26-003-0746` choca con `ITS-T-E-26-003-0746`; sin eso el índice único no vería el duplicado. El índice se crea al arrancar (`IndexesService`), porque con `autoIndex` apagado en producción no existía
+- [x] **Al reordenar bloques, la numeración de figuras se recalcula correctamente en pantalla y en el PDF** (RN-06) — verificado 6-ago-2026 en los tres sitios: dominio (`figures.spec.ts`), API (`reports.e2e.spec.ts`) y render del documento (`report-html.spec.ts`). El número no se guarda: se deriva del orden, así que no puede quedarse viejo
+- [x] **Un técnico crea una sede nueva desde el formulario sin perder el borrador en curso** (§13.3.1) — verificado 6-ago-2026 con Playwright: lo escrito en otros campos sigue ahí y no se navega a ninguna parte. El alta está dentro del propio desplegable y se alcanza solo con teclado
 - [x] **El documento del informe en Mongo pesa < 1 MB con 45 fotos** — verificado 6-ago-2026: **25 KB** con 45 fotografías (claves, miniaturas, pies y hashes incluidos), medido con `$bsonSize`. El Word equivalente pesa 17 MB porque lleva las imágenes dentro
-- [ ] Buscar `KOMATZU` sugiere `KOMATSU` (§13.3.2)
-- [ ] El autoguardado se percibe en < 500 ms y muestra "Guardado hace X" (NFR-02, UX-01)
+- [x] **Buscar `KOMATZU` sugiere `KOMATSU`** (§13.3.2) — verificado 6-ago-2026 en `masters.e2e.spec.ts` contra una base real, y en `fuzzy-search.spec.ts` a nivel de dominio. También encuentra `SPCC. TOQUEPALA` escribiendo `TOQEPALA`, que exige comparar palabra a palabra y no solo la cadena entera
+- [x] **El autoguardado se percibe en < 500 ms y muestra «Guardado hace X»** (NFR-02, UX-01) — verificado 6-ago-2026: **mediana 17 ms, p95 18 ms** sobre 20 guardados seguidos en un informe con 10 bloques y 30 fotos. Se exige el p95 y no la media: lo que rompe la confianza es el guardado lento ocasional. ⚠️ Medido contra Mongo en memoria; **falta repetirlo contra Atlas**, que añade la latencia de red
 - [x] **Enviar con errores muestra una lista de campos faltantes navegables por clic**, no un alert (UX-07, T2) — verificado 6-ago-2026 con Playwright: cada punto es un botón y lleva a su paso
 - [x] **Todo el wizard se completa solo con teclado**, incluido el reordenamiento de bloques (T2) — verificado 6-ago-2026: recorrido con Tab, foco siempre visible, y `Control+flechas` mueve el bloque con el foco siguiéndolo a su posición nueva
 - [x] **El editor es usable en móvil a 360 px** (T3) — verificado 6-ago-2026: sin desplazamiento horizontal, objetivos táctiles ≥ 44 px y las acciones al alcance del pulgar. Se corrigieron dos defectos que salieron aquí: los pasos medían 36 px y la barra de acciones quedaba **debajo** de la navegación inferior, con lo que emitir era imposible desde un teléfono
