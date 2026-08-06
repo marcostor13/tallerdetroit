@@ -216,10 +216,15 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
       titulo: 'Mediciones dimensionales',
       orden: 6,
       paso: 3,
-      // Las grillas llegan en F2. La sección se declara aquí para que el orden
-      // del documento no cambie cuando aparezcan: un informe de F1 y uno de F2
-      // tienen que salir con la misma numeración de secciones.
-      visibleSi: 'informe.mediciones.length > 0',
+      // Sin `visibleSi`: la sección tiene que estar disponible en el wizard para
+      // poder añadir la primera tabla. Condicionarla a que ya existan mediciones
+      // la hacía inalcanzable —solo se podía añadir un bloque de una sección
+      // visible, y solo era visible si ya había uno—, así que la sección VI
+      // nunca llegaba a usarse.
+      //
+      // En el documento no aparece de más: el render omite las secciones que no
+      // tienen ninguna instancia, de modo que un informe sin tablas propias sale
+      // exactamente igual que antes.
       bloques: [
         {
           clave: 'mediciones',

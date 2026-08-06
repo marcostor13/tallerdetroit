@@ -281,6 +281,20 @@
                           ></textarea>
                         </dps-field>
 
+                        <!--
+                          Las tablas dimensionales van dentro del trabajo, no en
+                          una sección aparte: lo que se mide es el componente que
+                          ese trabajo evalúa, y separarlos obligaría al técnico a
+                          recordar a cuál pertenece cada tabla (§12.4).
+                        -->
+                        <dps-mediciones-bloque
+                          [grillas]="medicionesDe(trabajo.id)"
+                          [motor]="store.informe()?.motor ?? {}"
+                          [soloLectura]="store.soloLectura()"
+                          (guardar)="guardarMedicion(trabajo.id, $event)"
+                          (quitar)="quitarMedicion(trabajo.id, $event)"
+                        />
+
                         <dps-fotos-bloque
                           [informeId]="store.informe()!._id"
                           [fotos]="trabajo.fotos ?? []"
@@ -298,6 +312,47 @@
                   <button type="button" class="dps-btn dps-btn--secondary" (click)="agregarTrabajo()">
                     <dps-icon name="add" [size]="18" aria-hidden="true" />
                     Añadir trabajo
+                  </button>
+                }
+              }
+
+              <!--
+                Tablas dimensionales que no cuelgan de ningún trabajo: el juego
+                axial del cigüeñal o el encaje de las camisas se miden del motor
+                entero, no de un desmontaje concreto (§12.3).
+              -->
+              @case ('measurement_grid') {
+                @for (tabla of store.bloquesDe(bloque.clave); track tabla.id) {
+                  <div class="flex flex-col gap-3 rounded-lg border border-subtle p-3">
+                    <dps-mediciones-bloque
+                      [grillas]="medicionesDe(tabla.id)"
+                      [motor]="store.informe()?.motor ?? {}"
+                      [soloLectura]="store.soloLectura()"
+                      (guardar)="guardarMedicion(tabla.id, $event)"
+                      (quitar)="quitarMedicion(tabla.id, $event)"
+                    />
+
+                    @if (!store.soloLectura()) {
+                      <button
+                        type="button"
+                        class="dps-btn dps-btn--tertiary self-start text-error"
+                        (click)="quitar(tabla.id)"
+                      >
+                        <dps-icon name="delete" [size]="18" aria-hidden="true" />
+                        Quitar este grupo de tablas
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (!store.soloLectura()) {
+                  <button
+                    type="button"
+                    class="dps-btn dps-btn--secondary self-start"
+                    (click)="agregarMediciones(bloque.clave)"
+                  >
+                    <dps-icon name="add" [size]="18" aria-hidden="true" />
+                    Añadir tablas dimensionales
                   </button>
                 }
               }

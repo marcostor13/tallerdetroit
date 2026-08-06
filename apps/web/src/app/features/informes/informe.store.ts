@@ -181,6 +181,44 @@ export class InformeStore {
     return this.bloquesOrdenados().filter((b) => b.clave === clave);
   }
 
+  // --------------------------------------------------------------- mediciones
+
+  /**
+   * Manda una grilla al servidor y se queda con lo que él devuelve (E2.4).
+   *
+   * Va aparte del autoguardado por rutas: una grilla no es un campo suelto sino
+   * un conjunto que hay que evaluar entero contra la tolerancia. Y el informe
+   * que vuelve trae los estados ya calculados por el backend, que es la única
+   * versión que cuenta.
+   */
+  async guardarMedicion(
+    bloqueId: string,
+    captura: { plantilla: string; valores: Record<string, number | null>; justificacion?: string | null },
+  ): Promise<void> {
+    const id = this.informe()?._id;
+    if (!id || this.soloLectura()) return;
+
+    try {
+      this.informe.set(await this.api.guardarMedicion(id, bloqueId, captura));
+      this.error.set(null);
+      await this.revalidar();
+    } catch (e: unknown) {
+      this.error.set(this.mensaje(e, 'No se pudo guardar la tabla dimensional.'));
+    }
+  }
+
+  async quitarMedicion(bloqueId: string, plantilla: string): Promise<void> {
+    const id = this.informe()?._id;
+    if (!id || this.soloLectura()) return;
+
+    try {
+      this.informe.set(await this.api.quitarMedicion(id, bloqueId, plantilla));
+      await this.revalidar();
+    } catch (e: unknown) {
+      this.error.set(this.mensaje(e, 'No se pudo quitar la tabla dimensional.'));
+    }
+  }
+
   // -------------------------------------------------------------- validación
 
   async revalidar(): Promise<void> {

@@ -302,6 +302,35 @@ export class ReportsService {
     return this.conFigurasNumeradas(doc.toObject());
   }
 
+  /**
+   * Quita una grilla del bloque.
+   *
+   * Hace falta porque una tabla añadida por error no se puede dejar ahí: una
+   * grilla vacía no bloquea la emisión —nadie la empezó— pero sale igual en el
+   * PDF, y un informe con una tabla dimensional en blanco parece un trabajo a
+   * medias en vez de un componente que no se midió.
+   */
+  async quitarMedicion(id: string, bloqueId: string, plantilla: string, actor: AuthUser) {
+    const doc = await this.documento(id);
+    this.exigirEditable(doc);
+
+    const bloque = doc.bloques.find((b) => b.id === bloqueId);
+    if (!bloque) throw new NotFoundException('No existe ese bloque en el informe.');
+
+    const existentes = (bloque.mediciones ?? []) as unknown as { plantilla: string }[];
+    const quedan = existentes.filter((g) => g.plantilla !== plantilla);
+    if (quedan.length === existentes.length) {
+      throw new NotFoundException(`El bloque no tiene ninguna grilla «${plantilla}».`);
+    }
+
+    bloque.mediciones = quedan as never;
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    doc.markModified('bloques');
+    await doc.save();
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
   async removeBlock(id: string, bloqueId: string, actor: AuthUser) {
     const doc = await this.documento(id);
     this.exigirEditable(doc);

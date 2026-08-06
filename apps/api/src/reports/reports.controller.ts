@@ -181,6 +181,23 @@ export class ReportsController {
     return this.informes.guardarMedicion(id, bloqueId, body, actor);
   }
 
+  @Delete(':id/bloques/:bloqueId/mediciones/:plantilla')
+  @Permissions('reports:update')
+  @ApiOperation({
+    summary: 'Quita una grilla de medición del bloque',
+    description:
+      'Una tabla añadida por error saldría vacía en el PDF, y eso parece un ' +
+      'trabajo a medias en vez de un componente que no se midió.',
+  })
+  quitarMedicion(
+    @Param('id') id: string,
+    @Param('bloqueId') bloqueId: string,
+    @Param('plantilla') plantilla: string,
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.quitarMedicion(id, bloqueId, plantilla, actor);
+  }
+
   @Delete(':id/bloques/:bloqueId')
   @Permissions('reports:update')
   @ApiOperation({ summary: 'Quita un bloque y renumera las figuras' })

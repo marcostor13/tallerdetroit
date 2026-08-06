@@ -1,7 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { MissingBlock, ReportStatus, TemplateVersionDefinition } from '@dps/shared';
+import type {
+  AppliedSpec,
+  ConclusionPropuesta,
+  MeasurementState,
+  MissingBlock,
+  ReportStatus,
+  TemplateVersionDefinition,
+} from '@dps/shared';
 import { environment } from '../../../environments/environment';
 
 export interface FotoInforme {
@@ -11,6 +18,37 @@ export interface FotoInforme {
   caption?: string | null;
   /** Lo calcula el servidor desde el orden de los bloques (RN-06). Nunca se envía. */
   readonly numeroFigura?: number | null;
+}
+
+/**
+ * Grilla tal como la devuelve el servidor (§12.4.3).
+ *
+ * Los estados, el veredicto y la especificación aplicada los calcula el
+ * backend; aquí llegan ya congelados. El cliente los reevalúa en vivo mientras
+ * se teclea, pero lo que vale es esto.
+ */
+export interface GrillaGuardada {
+  readonly plantilla: string;
+  readonly nombre: string;
+  readonly unidad: string;
+  readonly filas: readonly string[];
+  readonly columnas: readonly string[];
+  readonly valores: readonly {
+    readonly fila: string;
+    readonly columna: string;
+    readonly valor: number | null;
+    readonly estado: MeasurementState | null;
+    readonly calculado: boolean;
+  }[];
+  readonly especificacion: AppliedSpec | null;
+  readonly resumen: {
+    readonly capturadas?: number;
+    readonly esperadas?: number;
+    readonly alertas?: number;
+    readonly fueraTolerancia?: number;
+    readonly veredicto?: string | null;
+  };
+  readonly justificacion?: string | null;
 }
 
 export interface BloqueInforme {
@@ -24,6 +62,7 @@ export interface BloqueInforme {
   veredicto?: string | null;
   accionRecomendada?: string | null;
   fotos?: FotoInforme[];
+  mediciones?: GrillaGuardada[];
   datos?: unknown;
   visible?: boolean;
 }
@@ -112,6 +151,45 @@ export class ReportsService {
 
   removeBlock(id: string, bloqueId: string): Promise<Informe> {
     return firstValueFrom(this.http.delete<Informe>(`${this.base}/${id}/bloques/${bloqueId}`));
+  }
+
+  /**
+   * Guarda una grilla de medición del bloque (E2.4).
+   *
+   * Solo van los valores en crudo. Los estados y la tolerancia aplicada los
+   * calcula el servidor: si el cliente pudiera enviarlos, una petición hecha a
+   * mano dejaría un motor fuera de tolerancia registrado como correcto.
+   */
+  guardarMedicion(
+    id: string,
+    bloqueId: string,
+    captura: {
+      plantilla: string;
+      valores: Record<string, number | null>;
+      justificacion?: string | null;
+    },
+  ): Promise<Informe> {
+    return firstValueFrom(
+      this.http.post<Informe>(`${this.base}/${id}/bloques/${bloqueId}/mediciones`, captura),
+    );
+  }
+
+  quitarMedicion(id: string, bloqueId: string, plantilla: string): Promise<Informe> {
+    return firstValueFrom(
+      this.http.delete<Informe>(`${this.base}/${id}/bloques/${bloqueId}/mediciones/${plantilla}`),
+    );
+  }
+
+  /** Conclusiones propuestas desde las mediciones y frases ya usadas (E2.5). */
+  conclusionesSugeridas(
+    id: string,
+  ): Promise<{ propuestas: ConclusionPropuesta[]; frecuentes: { texto: string; usos: number }[] }> {
+    return firstValueFrom(
+      this.http.get<{
+        propuestas: ConclusionPropuesta[];
+        frecuentes: { texto: string; usos: number }[];
+      }>(`${this.base}/${id}/conclusiones-sugeridas`),
+    );
   }
 
   /** Por índices: es lo que producen tanto el arrastre como el teclado. */

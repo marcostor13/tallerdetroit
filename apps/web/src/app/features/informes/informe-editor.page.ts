@@ -9,7 +9,11 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { MissingBlock } from '@dps/shared';
-import type { FotoInforme } from '../../core/api/reports.service';
+import type { FotoInforme, GrillaGuardada } from '../../core/api/reports.service';
+import {
+  MedicionesBloqueComponent,
+  type CapturaDeGrilla,
+} from '../mediciones/mediciones-bloque.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { AutocompleteComponent } from '../../shared/ui/autocomplete/autocomplete.component';
 import { FieldComponent } from '../../shared/ui/field/field.component';
@@ -61,6 +65,7 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     ListaTrabajosComponent,
     VistaPreviaComponent,
     FotosBloqueComponent,
+    MedicionesBloqueComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })
@@ -227,6 +232,28 @@ export class InformeEditorPage implements OnDestroy {
         f.id === cambio.id ? { ...f, caption: cambio.caption } : f,
       ),
     });
+  }
+
+  // ------------------------------------------------------------ mediciones
+
+  protected async agregarMediciones(clave: string): Promise<void> {
+    await this.store.agregarBloque(clave, { titulo: 'TABLA DIMENSIONAL' });
+  }
+
+  protected medicionesDe(bloqueId: string): GrillaGuardada[] {
+    return this.store.bloquesOrdenados().find((b) => b.id === bloqueId)?.mediciones ?? [];
+  }
+
+  protected async guardarMedicion(bloqueId: string, captura: CapturaDeGrilla): Promise<void> {
+    await this.store.guardarMedicion(bloqueId, {
+      plantilla: captura.plantilla,
+      valores: captura.valores,
+      justificacion: captura.justificacion ?? null,
+    });
+  }
+
+  protected async quitarMedicion(bloqueId: string, plantilla: string): Promise<void> {
+    await this.store.quitarMedicion(bloqueId, plantilla);
   }
 
   // --------------------------------------------------------------- emisión
