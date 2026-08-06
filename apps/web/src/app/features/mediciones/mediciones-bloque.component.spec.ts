@@ -5,8 +5,20 @@ import type { GrillaGuardada } from '../../core/api/reports.service';
 import { MedicionesBloqueComponent, type CapturaDeGrilla } from './mediciones-bloque.component';
 
 /** MTU 20V4000C23, el motor del OT898: 20 cilindros, 11 apoyos (§12.2). */
-const MOTOR_20V = { serie: '5282011236', modelo: '20V4000C23', cilindros: 20, apoyosBancada: 11, bancos: 2 };
-const MOTOR_16V = { serie: '5272012973', modelo: '16V4000C21', cilindros: 16, apoyosBancada: 9, bancos: 2 };
+const MOTOR_20V = {
+  serie: '5282011236',
+  modelo: '20V4000C23',
+  cilindros: 20,
+  apoyosBancada: 11,
+  bancos: 2,
+};
+const MOTOR_16V = {
+  serie: '5272012973',
+  modelo: '16V4000C21',
+  cilindros: 16,
+  apoyosBancada: 9,
+  bancos: 2,
+};
 
 /**
  * Una grilla como la devuelve el servidor tras guardar.
@@ -266,7 +278,9 @@ describe('MedicionesBloqueComponent', () => {
   });
 
   it('quitar una tabla avisa con su nombre, para no borrar la que no era', () => {
-    anfitrion.grillas.set([grillaGuardada({ plantilla: 'muñon_bancada', nombre: 'Muñón de bancada' })]);
+    anfitrion.grillas.set([
+      grillaGuardada({ plantilla: 'muñon_bancada', nombre: 'Muñón de bancada' }),
+    ]);
     fixture.detectChanges();
 
     const quitar = boton('Quitar');

@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { MissingBlock, TemplateVersionDefinition } from '@dps/shared';
+import type { ChecklistCapturado, MissingBlock, TemplateVersionDefinition } from '@dps/shared';
 import { resolveTemplate } from '@dps/shared';
 import {
   ReportsService,
@@ -193,7 +193,11 @@ export class InformeStore {
    */
   async guardarMedicion(
     bloqueId: string,
-    captura: { plantilla: string; valores: Record<string, number | null>; justificacion?: string | null },
+    captura: {
+      plantilla: string;
+      valores: Record<string, number | null>;
+      justificacion?: string | null;
+    },
   ): Promise<void> {
     const id = this.informe()?._id;
     if (!id || this.soloLectura()) return;
@@ -216,6 +220,20 @@ export class InformeStore {
       await this.revalidar();
     } catch (e: unknown) {
       this.error.set(this.mensaje(e, 'No se pudo quitar la tabla dimensional.'));
+    }
+  }
+
+  /** Inventario de desarmado del bloque (E2.7). */
+  async guardarChecklist(bloqueId: string, capturado: ChecklistCapturado[]): Promise<void> {
+    const id = this.informe()?._id;
+    if (!id || this.soloLectura()) return;
+
+    try {
+      this.informe.set(await this.api.guardarChecklist(id, bloqueId, { capturado }));
+      this.error.set(null);
+      await this.revalidar();
+    } catch (e: unknown) {
+      this.error.set(this.mensaje(e, 'No se pudo guardar el inventario de desarmado.'));
     }
   }
 

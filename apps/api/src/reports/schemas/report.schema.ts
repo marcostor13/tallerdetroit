@@ -152,6 +152,32 @@ export class GrillaMedicion {
 }
 const GrillaMedicionSchema = SchemaFactory.createForClass(GrillaMedicion);
 
+/**
+ * Inventario de desarmado embebido en un bloque `checklist` (D4).
+ *
+ * Los ítems van **copiados** del maestro, no referenciados. Es la misma regla
+ * que con el resto de maestros: si mañana Calidad añade una pieza al catálogo,
+ * un informe ya emitido tiene que seguir diciendo qué se inventarió aquel día,
+ * no lo que se inventariaría hoy.
+ */
+@Schema({ _id: false })
+export class ChecklistDelBloque {
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Checklist', default: null })
+  checklistId!: Types.ObjectId | null;
+
+  @Prop({ type: String, default: null })
+  clave!: string | null;
+
+  /** Snapshot del catálogo: clave, denominación, grupo y cantidad esperada. */
+  @Prop({ type: MongooseSchema.Types.Mixed, default: [] })
+  items!: Record<string, unknown>[];
+
+  /** Lo que el técnico encontró al abrir el motor. */
+  @Prop({ type: MongooseSchema.Types.Mixed, default: [] })
+  capturado!: Record<string, unknown>[];
+}
+const ChecklistDelBloqueSchema = SchemaFactory.createForClass(ChecklistDelBloque);
+
 /** Bloque embebido (§16.2). */
 @Schema({ _id: false })
 export class BloqueInforme {
@@ -192,6 +218,10 @@ export class BloqueInforme {
   /** Grillas dimensionales del bloque (§12). */
   @Prop({ type: [GrillaMedicionSchema], default: [] })
   mediciones!: GrillaMedicion[];
+
+  /** Inventario de desarmado del bloque `checklist` (D4). */
+  @Prop({ type: ChecklistDelBloqueSchema, default: null })
+  checklist!: ChecklistDelBloque | null;
 
   /** Contenido propio del tipo: filas de una tabla, viñetas, mediciones… */
   @Prop({ type: MongooseSchema.Types.Mixed, default: null })

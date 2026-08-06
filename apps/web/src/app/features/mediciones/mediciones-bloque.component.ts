@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import {
   MEASUREMENT_TEMPLATES,
   claveDeCelda,
@@ -105,9 +98,7 @@ const ESPERA_TRAS_TECLEAR = 1_200;
               @if ((grilla.resumen.fueraTolerancia ?? 0) > 0) {
                 <dps-field
                   label="Justificación de los valores fuera de tolerancia"
-                  [hint]="
-                    'Sin esto el informe no se puede emitir (RN-03). Explica por qué se acepta: por ejemplo, que la pieza se rectifica o se reemplaza.'
-                  "
+                  [hint]="'Sin esto el informe no se puede emitir (RN-03). Explica por qué se acepta: por ejemplo, que la pieza se rectifica o se reemplaza.'"
                   [error]="grilla.justificacion ? '' : 'Falta justificar para poder emitir.'"
                   #fJustifica
                 >

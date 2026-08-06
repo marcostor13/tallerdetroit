@@ -22,6 +22,7 @@ import {
   resolveBlocks,
   type BlockType,
   type ConclusionPropuesta,
+  type DimensionesDeMotor,
   type MissingBlock,
   type Permission,
   type ReportStatus,
@@ -31,6 +32,7 @@ import { Report, type BloqueInforme, type ReportDocument } from './schemas/repor
 import { TemplatesService } from '../templates/templates.service';
 import { DocumentsService } from '../documents/documents.service';
 import { MeasurementsService, type CapturaDeGrilla } from './measurements.service';
+import { ChecklistService, type CapturaDeChecklist } from './checklist.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -67,8 +69,19 @@ export class ReportsService {
     private readonly plantillas: TemplatesService,
     private readonly documentos: DocumentsService,
     private readonly mediciones: MeasurementsService,
+    private readonly checklists: ChecklistService,
     private readonly hechos: MeasurementFactsService,
   ) {}
+
+  /** Dimensiones del motor del informe, para derivar cantidades esperadas. */
+  private dimensionesDe(doc: ReportDocument): DimensionesDeMotor {
+    const motor = (doc.motor ?? {}) as Record<string, unknown>;
+    return {
+      cilindros: Number(motor['cilindros']) || undefined,
+      apoyosBancada: Number(motor['apoyosBancada']) || undefined,
+      bancos: Number(motor['bancos']) || undefined,
+    };
+  }
 
   // ---------------------------------------------------------------- lectura
 
@@ -303,6 +316,40 @@ export class ReportsService {
   }
 
   /**
+   * Guarda el inventario de desarmado de un bloque (E2.7, D4).
+   *
+   * El catálogo lo copia el servidor desde el maestro; del cliente solo llega
+   * lo encontrado. Así el inventario no puede acabar hablando de piezas que no
+   * están en el SER-T-FOR-002, ni perder las que sí están porque el wizard las
+   * omitiera.
+   */
+  async guardarChecklist(
+    id: string,
+    bloqueId: string,
+    captura: CapturaDeChecklist,
+    actor: AuthUser,
+  ) {
+    const doc = await this.documento(id);
+    this.exigirEditable(doc);
+
+    const bloque = doc.bloques.find((b) => b.id === bloqueId);
+    if (!bloque) throw new NotFoundException('No existe ese bloque en el informe.');
+
+    const anterior = (bloque as unknown as { checklist?: unknown }).checklist ?? null;
+    bloque.checklist = (await this.checklists.resolver(
+      doc.motor ?? {},
+      captura,
+      anterior as never,
+    )) as never;
+
+    doc.updatedBy = new Types.ObjectId(actor.id);
+    doc.markModified('bloques');
+    await doc.save();
+
+    return this.conFigurasNumeradas(doc.toObject());
+  }
+
+  /**
    * Quita una grilla del bloque.
    *
    * Hace falta porque una tabla añadida por error no se puede dejar ahí: una
@@ -426,6 +473,18 @@ export class ReportsService {
         seccion: parcial.bloque,
         clave: `${parcial.grilla}:incompleta`,
         titulo: `A «${parcial.grilla}» le faltan ${parcial.faltan} mediciones`,
+        paso: 3,
+      });
+    }
+
+    // Que falten piezas o estén averiadas no bloquea: es lo que el inventario
+    // documenta. Bloquea dejarlo a medias, porque lo que nadie miró aparece al
+    // montar el motor, tres semanas después.
+    for (const parcial of this.checklists.incompletos(doc.bloques, this.dimensionesDe(doc))) {
+      faltan.push({
+        seccion: parcial.bloque,
+        clave: `${parcial.bloque}:inventario`,
+        titulo: `Al inventario de desarmado le faltan ${parcial.faltan} ítem(s) por revisar`,
         paso: 3,
       });
     }

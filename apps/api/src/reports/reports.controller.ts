@@ -181,6 +181,23 @@ export class ReportsController {
     return this.informes.guardarMedicion(id, bloqueId, body, actor);
   }
 
+  @Post(':id/bloques/:bloqueId/checklist')
+  @Permissions('reports:update')
+  @ApiOperation({
+    summary: 'Guarda el inventario de desarmado del bloque (D4)',
+    description:
+      'Del cliente solo llega lo encontrado; el catálogo lo copia el servidor ' +
+      'desde el maestro y queda congelado en el informe.',
+  })
+  guardarChecklist(
+    @Param('id') id: string,
+    @Param('bloqueId') bloqueId: string,
+    @Body() body: { clave?: string; capturado?: Record<string, unknown>[] },
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.informes.guardarChecklist(id, bloqueId, body, actor);
+  }
+
   @Delete(':id/bloques/:bloqueId/mediciones/:plantilla')
   @Permissions('reports:update')
   @ApiOperation({

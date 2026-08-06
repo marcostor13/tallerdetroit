@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type {
   AppliedSpec,
+  ChecklistCapturado,
+  ChecklistItem,
   ConclusionPropuesta,
   MeasurementState,
   MissingBlock,
@@ -63,6 +65,12 @@ export interface BloqueInforme {
   accionRecomendada?: string | null;
   fotos?: FotoInforme[];
   mediciones?: GrillaGuardada[];
+  /** Inventario de desarmado del bloque `checklist` (D4). */
+  checklist?: {
+    clave?: string | null;
+    items?: ChecklistItem[];
+    capturado?: ChecklistCapturado[];
+  } | null;
   datos?: unknown;
   visible?: boolean;
 }
@@ -171,6 +179,22 @@ export class ReportsService {
   ): Promise<Informe> {
     return firstValueFrom(
       this.http.post<Informe>(`${this.base}/${id}/bloques/${bloqueId}/mediciones`, captura),
+    );
+  }
+
+  /**
+   * Guarda el inventario de desarmado del bloque (E2.7).
+   *
+   * Solo viaja lo encontrado: el catálogo lo copia el servidor desde el maestro
+   * y lo congela en el informe.
+   */
+  guardarChecklist(
+    id: string,
+    bloqueId: string,
+    captura: { clave?: string | null; capturado: ChecklistCapturado[] },
+  ): Promise<Informe> {
+    return firstValueFrom(
+      this.http.post<Informe>(`${this.base}/${id}/bloques/${bloqueId}/checklist`, captura),
     );
   }
 

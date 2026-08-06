@@ -5,6 +5,7 @@ import { MeasurementFact, MeasurementFactSchema } from './schemas/measurement-fa
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { MeasurementsService } from './measurements.service';
+import { ChecklistService } from './checklist.service';
 import { MeasurementFactsService } from './measurement-facts.service';
 import { TemplatesModule } from '../templates/templates.module';
 import { DocumentsModule } from '../documents/documents.module';
@@ -21,7 +22,13 @@ import { DocumentsModule } from '../documents/documents.module';
     DocumentsModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService, MeasurementsService, MeasurementFactsService],
-  exports: [ReportsService, MeasurementsService, MeasurementFactsService, MongooseModule],
+  providers: [ReportsService, MeasurementsService, MeasurementFactsService, ChecklistService],
+  exports: [
+    ReportsService,
+    MeasurementsService,
+    MeasurementFactsService,
+    ChecklistService,
+    MongooseModule,
+  ],
 })
 export class ReportsModule {}

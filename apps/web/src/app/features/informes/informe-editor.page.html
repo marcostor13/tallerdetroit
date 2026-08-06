@@ -357,6 +357,33 @@
                 }
               }
 
+              <!--
+                Inventario de desarmado (D4): sección de este informe, no un
+                documento aparte. Se añade a mano porque no todo informe
+                documenta un desarmado.
+              -->
+              @case ('checklist') {
+                @for (inventario of store.bloquesDe(bloque.clave); track inventario.id) {
+                  <dps-checklist-bloque
+                    [checklist]="inventario.checklist ?? null"
+                    [motor]="store.informe()?.motor ?? {}"
+                    [soloLectura]="store.soloLectura()"
+                    (capturar)="guardarChecklist(inventario.id, $event)"
+                  />
+                }
+
+                @if (!store.soloLectura() && !store.bloquesDe(bloque.clave).length) {
+                  <button
+                    type="button"
+                    class="dps-btn dps-btn--secondary self-start"
+                    (click)="agregarChecklist(bloque.clave)"
+                  >
+                    <dps-icon name="add" [size]="18" aria-hidden="true" />
+                    Inventariar el desarmado
+                  </button>
+                }
+              }
+
               @case ('bullet_list') {
                 <dps-field [label]="bloque.titulo" [hint]="'Una por línea.'" #fLista>
                   <textarea

@@ -8,7 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { MissingBlock } from '@dps/shared';
+import type { ChecklistCapturado, MissingBlock } from '@dps/shared';
 import type { FotoInforme, GrillaGuardada } from '../../core/api/reports.service';
 import {
   MedicionesBloqueComponent,
@@ -22,6 +22,7 @@ import { IndicadorGuardadoComponent } from './ui/indicador-guardado.component';
 import { ListaTrabajosComponent } from './ui/lista-trabajos.component';
 import { VistaPreviaComponent } from './ui/vista-previa.component';
 import { FotosBloqueComponent } from './ui/fotos-bloque.component';
+import { ChecklistBloqueComponent } from './ui/checklist-bloque.component';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -66,6 +67,7 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     VistaPreviaComponent,
     FotosBloqueComponent,
     MedicionesBloqueComponent,
+    ChecklistBloqueComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })
@@ -254,6 +256,23 @@ export class InformeEditorPage implements OnDestroy {
 
   protected async quitarMedicion(bloqueId: string, plantilla: string): Promise<void> {
     await this.store.quitarMedicion(bloqueId, plantilla);
+  }
+
+  // ------------------------------------------------------------- inventario
+
+  protected async agregarChecklist(clave: string): Promise<void> {
+    await this.store.agregarBloque(clave);
+    // El bloque nace sin catálogo; una captura vacía hace que el servidor copie
+    // el del maestro y lo devuelva, que es lo que la pantalla necesita pintar.
+    const bloque = this.store.bloquesDe(clave).at(-1);
+    if (bloque) await this.store.guardarChecklist(bloque.id, []);
+  }
+
+  protected async guardarChecklist(
+    bloqueId: string,
+    capturado: ChecklistCapturado[],
+  ): Promise<void> {
+    await this.store.guardarChecklist(bloqueId, capturado);
   }
 
   // --------------------------------------------------------------- emisión

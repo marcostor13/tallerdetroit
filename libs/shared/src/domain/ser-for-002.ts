@@ -244,8 +244,12 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
       // Decisión D4: el SER-T-FOR-002 es una sección de ESTE informe, no un
       // documento aparte. Como documento independiente se firmaría en un sitio
       // y el informe en otro, y acabarían contando cosas distintas del mismo
-      // motor. Solo aparece si se llegó a inventariar algo.
-      visibleSi: 'informe.checklist.length > 0',
+      // motor.
+      //
+      // Sin `visibleSi`, por lo mismo que la sección VI: condicionarla a que ya
+      // hubiera inventario la hacía inalcanzable, porque el bloque solo se puede
+      // añadir desde una sección visible. En el documento sigue sin aparecer si
+      // nadie inventarió: el render omite las secciones sin instancias.
       bloques: [
         {
           clave: 'inventario-desarmado',
