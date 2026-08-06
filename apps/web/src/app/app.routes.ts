@@ -30,14 +30,14 @@ export const routes: Routes = [
         path: 'informes',
         canActivate: [permissionGuard(['reports:read'])],
         title: 'Informes — DPS',
-        // F1 · E1.8
-        loadComponent: () => import('./features/errors/error.page').then((m) => m.ErrorPage),
-        data: {
-          code: 'F1',
-          title: 'Bandeja de informes',
-          message: 'Se habilita en la fase F1 del plan de construcción.',
-          icon: 'construction',
-        },
+        loadComponent: () => import('./features/informes/bandeja.page').then((m) => m.BandejaPage),
+      },
+      {
+        path: 'informes/:id',
+        canActivate: [permissionGuard(['reports:read'])],
+        title: 'Editor de informe — DPS',
+        loadComponent: () =>
+          import('./features/informes/informe-editor.page').then((m) => m.InformeEditorPage),
       },
       {
         path: 'equipos',
