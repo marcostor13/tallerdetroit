@@ -9,6 +9,7 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MastersModule } from './masters/masters.module';
+import { TemplatesModule } from './templates/templates.module';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -66,10 +67,11 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     UsersModule,
     AuthModule,
     MastersModule,
+    TemplatesModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
     // WorkOrdersModule,
-    // TemplatesModule, ReportsModule, SequencesModule, MediaModule,
+    // ReportsModule, MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).
