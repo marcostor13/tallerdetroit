@@ -12,6 +12,12 @@
  */
 
 import { numberFigures, type FiguraNumerada } from '../domain/figures';
+import {
+  CHECKLIST_STATE_LABEL,
+  resolveChecklist,
+  type ChecklistCapturado,
+  type ChecklistItem,
+} from '../domain/checklist';
 import { isVisible } from '../domain/visibility';
 import type { TemplateSectionDefinition, TemplateVersionDefinition } from '../domain/templates';
 import { REPORT_STYLES } from './report-styles';
@@ -61,6 +67,11 @@ export interface BloqueRenderizable {
   readonly accionRecomendada?: string | null;
   readonly fotos?: readonly FotoRenderizable[];
   readonly mediciones?: readonly GrillaRenderizable[];
+  /** Catálogo e inventario capturado del bloque `checklist` (D4). */
+  readonly checklist?: {
+    readonly items?: readonly ChecklistItem[];
+    readonly capturado?: readonly ChecklistCapturado[];
+  } | null;
   readonly datos?: unknown;
   readonly visible?: boolean;
 }
@@ -254,6 +265,77 @@ function medicionesDe(bloque: BloqueRenderizable): string {
   return grillas.map((g) => `<div class="bloque">${tablaDeMedicion(g)}</div>`).join('');
 }
 
+/**
+ * Inventario de desarmado (SER-T-FOR-002, decisión D4).
+ *
+ * Sale dentro del propio informe, con su mismo número y su misma aprobación.
+ * Lo que falta o está averiado va en negrita además de en color: es lo que
+ * sobrevive a la fotocopia, igual que en las tablas dimensionales.
+ */
+function checklistDe(bloque: BloqueRenderizable, motor: Record<string, unknown>): string {
+  const items = bloque.checklist?.items ?? [];
+  if (!items.length) return '';
+
+  const { filas, resumen } = resolveChecklist(items, bloque.checklist?.capturado ?? [], {
+    cilindros: Number(motor['cilindros']) || undefined,
+    apoyosBancada: Number(motor['apoyosBancada']) || undefined,
+    bancos: Number(motor['bancos']) || undefined,
+  });
+
+  const cuerpo = filas
+    .map((fila) => {
+      const clase = fila.requiereAtencion
+        ? ' class="checklist--atencion"'
+        : fila.estado === null
+          ? ' class="checklist--sin-revisar"'
+          : '';
+
+      const cantidad =
+        fila.cantidad === null
+          ? fila.cantidadEsperadaResuelta !== null
+            ? `— / ${fila.cantidadEsperadaResuelta}`
+            : '—'
+          : fila.cantidadEsperadaResuelta !== null
+            ? `${fila.cantidad} / ${fila.cantidadEsperadaResuelta}`
+            : String(fila.cantidad);
+
+      // Un ítem sin revisar se dice, no se deja en blanco: en blanco parece
+      // conforme, y dar por bueno lo que nadie miró es lo que el inventario
+      // existe para evitar.
+      const estado = fila.estado ? CHECKLIST_STATE_LABEL[fila.estado] : 'Sin revisar';
+
+      return `<tr${clase}>
+        <td>${escapeHtml(fila.denominacion)}</td>
+        <td class="cantidad">${escapeHtml(cantidad)}</td>
+        <td>${escapeHtml(estado)}</td>
+        <td>${escapeHtml(fila.observacion ?? '')}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const pendientes = resumen.total - resumen.capturados;
+  const leyenda =
+    resumen.requierenAtencion || pendientes
+      ? `<p class="leyenda-medicion">${
+          resumen.requierenAtencion
+            ? `${resumen.requierenAtencion} ítem(s) requieren atención. `
+            : ''
+        }${pendientes ? `${pendientes} sin revisar.` : ''}</p>`
+      : '';
+
+  return `<table class="tabla-checklist">
+      <thead>
+        <tr>
+          <th scope="col">Componente</th>
+          <th scope="col">Cant. / esperada</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Observación</th>
+        </tr>
+      </thead>
+      <tbody>${cuerpo}</tbody>
+    </table>${leyenda}`;
+}
+
 /** Un bloque del informe, según su tipo. */
 function renderBloque(
   bloque: BloqueRenderizable,
@@ -321,6 +403,9 @@ function renderBloque(
 
     case 'measurement_grid':
       return `<div class="bloque">${titulo}${medicionesDe(bloque)}</div>`;
+
+    case 'checklist':
+      return `<div class="bloque">${titulo}${checklistDe(bloque, informe.motor ?? {})}</div>`;
 
     case 'items_table':
       return `<div class="bloque">${titulo}${tablaDeItems(

@@ -4,6 +4,7 @@ export * from './domain/measurements';
 export * from './domain/measurement-templates';
 export * from './domain/measurement-grid';
 export * from './domain/conclusiones';
+export * from './domain/checklist';
 export * from './domain/fuzzy-search';
 export * from './domain/visibility';
 export * from './domain/templates';

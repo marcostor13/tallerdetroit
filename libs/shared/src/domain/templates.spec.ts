@@ -195,6 +195,7 @@ describe('Motor de plantillas', () => {
         'IX',
         'X',
         'XI',
+        'XII',
       ]);
     });
 

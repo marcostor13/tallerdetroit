@@ -7,6 +7,7 @@ import { EngineSchema } from './schemas/engine.schema';
 import { EngineModelSchema } from './schemas/engine-model.schema';
 import { EngineSpecSchema } from './schemas/engine-spec.schema';
 import {
+  ChecklistSchema,
   ComponentVerdictSchema,
   EngineComponentSchema,
   UnitSchema,
@@ -155,6 +156,16 @@ export const MASTERS: readonly MasterDefinition[] = [
     model: 'ComponentVerdictMaster',
     schema: ComponentVerdictSchema,
     label: 'veredicto de componente',
+    searchFields: ['denominacion', 'clave'],
+    displayField: 'denominacion',
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  {
+    key: 'checklists',
+    model: 'Checklist',
+    schema: ChecklistSchema,
+    label: 'inventario de desarmado',
     searchFields: ['denominacion', 'clave'],
     displayField: 'denominacion',
     readPermission: 'masters:read',

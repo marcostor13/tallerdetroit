@@ -272,6 +272,41 @@ html, body {
   margin: 1mm 0 3mm;
 }
 
+/* --- Inventario de desarmado (SER-T-FOR-002, D4) --------------------------
+   Va dentro del informe, no como documento aparte: una sola versión de lo que
+   se encontró al abrir el motor. */
+.tabla-checklist {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.tabla-checklist th,
+.tabla-checklist td {
+  border: 0.5pt solid var(--linea);
+  padding: 1mm 2mm;
+  text-align: left;
+}
+.tabla-checklist thead th {
+  background: var(--fondo-cabecera);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 8pt;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tabla-checklist td.cantidad {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  width: 22mm;
+}
+
+/* Lo que falta o está averiado, en negrita: sobrevive a la fotocopia. */
+.checklist--atencion { font-weight: 700; }
+.checklist--atencion td { color: var(--fuera-tolerancia); }
+.checklist--sin-revisar td { color: var(--tinta-suave); font-style: italic; }
+
 /* Anexo de mediciones: empieza en página nueva, como en el Word. */
 .hoja-mediciones { break-before: page; page-break-before: always; }
 

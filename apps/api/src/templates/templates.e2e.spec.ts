@@ -77,7 +77,7 @@ describe('Plantillas', () => {
 
     expect(r.body.version).toBe('v01');
     expect(r.body.estado).toBe('publicada');
-    expect(r.body.secciones).toHaveLength(11);
+    expect(r.body.secciones).toHaveLength(12);
   }, 30_000);
 
   it('la semilla es idempotente: repetirla no duplica ni republica', async () => {
@@ -206,7 +206,7 @@ describe('Plantillas', () => {
       .get('/api/v1/templates/SER-FOR-002/versiones/v01')
       .set('Authorization', `Bearer ${tokenTecnico}`)
       .expect(200);
-    expect(v01.body.secciones).toHaveLength(11);
+    expect(v01.body.secciones).toHaveLength(12);
   }, 60_000);
 
   it('no publica una versión incoherente y dice exactamente qué falla', async () => {

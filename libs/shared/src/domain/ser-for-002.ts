@@ -231,10 +231,32 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
       ],
     },
     {
-      clave: 'tercerizados',
+      clave: 'inventario-desarmado',
       numeral: 'VII',
-      titulo: 'Componentes tercerizados',
+      titulo: 'Inventario de desarmado',
       orden: 7,
+      paso: 3,
+      // Decisión D4: el SER-T-FOR-002 es una sección de ESTE informe, no un
+      // documento aparte. Como documento independiente se firmaría en un sitio
+      // y el informe en otro, y acabarían contando cosas distintas del mismo
+      // motor. Solo aparece si se llegó a inventariar algo.
+      visibleSi: 'informe.checklist.length > 0',
+      bloques: [
+        {
+          clave: 'inventario-desarmado',
+          tipo: 'checklist',
+          titulo: 'Inventario de desarmado (SER-T-FOR-002)',
+          orden: 1,
+          ayuda: 'Los ítems y sus cantidades salen del maestro y del modelo de motor.',
+          config: { formato: 'SER-T-FOR-002' },
+        },
+      ],
+    },
+    {
+      clave: 'tercerizados',
+      numeral: 'VIII',
+      titulo: 'Componentes tercerizados',
+      orden: 8,
       paso: 4,
       visibleSi: 'informe.tercerizados.length > 0',
       bloques: [
@@ -254,9 +276,9 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
     },
     {
       clave: 'repuestos',
-      numeral: 'VIII',
+      numeral: 'IX',
       titulo: 'Repuestos e instrumentos',
-      orden: 8,
+      orden: 9,
       paso: 4,
       bloques: [
         {
@@ -304,9 +326,9 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
     },
     {
       clave: 'registro-fotografico',
-      numeral: 'IX',
+      numeral: 'X',
       titulo: 'Registro fotográfico',
-      orden: 9,
+      orden: 10,
       paso: 3,
       // Las fotos van dentro de cada trabajo; esta sección recoge las que no
       // pertenecen a ninguno en concreto.
@@ -322,9 +344,9 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
     },
     {
       clave: 'conclusiones',
-      numeral: 'X',
+      numeral: 'XI',
       titulo: 'Conclusiones y recomendaciones',
-      orden: 10,
+      orden: 11,
       paso: 5,
       bloques: [
         {
@@ -348,9 +370,9 @@ export const SER_FOR_002_V01: TemplateVersionDefinition = {
     },
     {
       clave: 'firmas',
-      numeral: 'XI',
+      numeral: 'XII',
       titulo: 'Firmas',
-      orden: 11,
+      orden: 12,
       paso: 6,
       bloques: [
         {

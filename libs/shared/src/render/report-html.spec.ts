@@ -530,3 +530,110 @@ describe('Tablas dimensionales', () => {
     });
   });
 });
+
+/**
+ * Inventario de desarmado en el documento (E2.7, decisión D4).
+ *
+ * Sale **dentro del informe**, con su mismo número y su misma aprobación. Como
+ * documento aparte, el inventario se firmaría en un sitio y el informe en otro,
+ * y acabarían contando cosas distintas del mismo motor.
+ */
+describe('Inventario de desarmado', () => {
+  const items = [
+    { clave: 'culata', denominacion: 'Culatas', cantidadDerivadaDe: 'cilindros' as const },
+    { clave: 'piston', denominacion: 'Pistones', cantidadDerivadaDe: 'cilindros' as const },
+    { clave: 'turbo', denominacion: 'Turbocompresores', cantidadEsperada: 2 },
+  ];
+
+  const conChecklist = (capturado: Record<string, unknown>[] = []) =>
+    render({
+      datos: { ...informe.datos, checklist: [{ hay: true }] },
+      bloques: [
+        {
+          id: 'c1',
+          clave: 'inventario-desarmado',
+          tipo: 'checklist',
+          orden: 1,
+          titulo: 'Inventario de desarmado',
+          checklist: { items, capturado: capturado as never },
+        },
+      ],
+    });
+
+  it('sale en el mismo documento, no como anexo aparte', () => {
+    const html = conChecklist([{ clave: 'culata', estado: 'ok', cantidad: 20 }]);
+
+    expect(html).toContain('Inventario de desarmado');
+    expect(html).toContain('class="tabla-checklist"');
+    expect(html).toContain('Culatas');
+  });
+
+  it('la cantidad esperada sale del motor del informe', () => {
+    // El informe es de un 20V: veinte culatas, veinte pistones, dos turbos.
+    const html = conChecklist([{ clave: 'piston', estado: 'ok', cantidad: 20 }]);
+    expect(html).toContain('20 / 20');
+    expect(html).toContain('— / 2');
+  });
+
+  it('lo que falta o está averiado se distingue sin depender del color', () => {
+    const html = conChecklist([
+      { clave: 'culata', estado: 'ok', cantidad: 20 },
+      { clave: 'piston', estado: 'averiado', observacion: 'Dos con falda rayada' },
+      { clave: 'turbo', estado: 'falta' },
+    ]);
+
+    expect(html).toContain('checklist--atencion');
+    expect(html).toContain('Averiado');
+    expect(html).toContain('Dos con falda rayada');
+    // Negrita además del color, como en las tablas dimensionales.
+    expect(REPORT_STYLES).toMatch(/\.checklist--atencion\s*\{\s*font-weight:\s*700/);
+  });
+
+  it('un ítem sin revisar lo dice, no se deja en blanco', () => {
+    // En blanco parece conforme, y dar por bueno lo que nadie miró es lo que
+    // el inventario existe para evitar.
+    const html = conChecklist([{ clave: 'culata', estado: 'ok', cantidad: 20 }]);
+
+    expect(html).toContain('Sin revisar');
+    expect(html).toContain('checklist--sin-revisar');
+  });
+
+  it('resume lo que hay que mirar', () => {
+    const html = conChecklist([
+      { clave: 'culata', estado: 'falta' },
+      { clave: 'piston', estado: 'ok', cantidad: 20 },
+    ]);
+
+    expect(html).toContain('1 ítem(s) requieren atención');
+    expect(html).toContain('1 sin revisar');
+  });
+
+  it('sin nada que señalar no pone leyenda', () => {
+    const html = conChecklist([
+      { clave: 'culata', estado: 'ok', cantidad: 20 },
+      { clave: 'piston', estado: 'ok', cantidad: 20 },
+      { clave: 'turbo', estado: 'ok', cantidad: 2 },
+    ]);
+    expect(html).not.toContain('requieren atención');
+  });
+
+  it('un bloque de checklist sin catálogo no saca una tabla vacía', () => {
+    const html = render({
+      datos: { ...informe.datos, checklist: [{ hay: true }] },
+      bloques: [
+        {
+          id: 'c1',
+          clave: 'inventario-desarmado',
+          tipo: 'checklist',
+          orden: 1,
+          titulo: 'Inventario',
+        },
+      ],
+    });
+    expect(html).not.toContain('class="tabla-checklist"');
+  });
+
+  it('la tabla no se parte entre páginas', () => {
+    expect(REPORT_STYLES).toMatch(/\.tabla-checklist\s*\{[\s\S]*?break-inside:\s*avoid/);
+  });
+});

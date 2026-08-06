@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes, Types } from 'mongoose';
+import { Schema as MongooseSchema } from 'mongoose';
 import { COMPONENT_VERDICTS } from '@dps/shared';
 
 /**
@@ -145,3 +146,45 @@ export class ComponentVerdictMaster extends BaseMaster {
 export type ComponentVerdictDocument = ComponentVerdictMaster & Document;
 export const ComponentVerdictSchema = SchemaFactory.createForClass(ComponentVerdictMaster);
 ComponentVerdictSchema.index({ clave: 1 }, { unique: true });
+
+/**
+ * Maestro 29 (`checklists`): el inventario de desarmado (SER-T-FOR-002).
+ *
+ * D4 quedó resuelta en sección dentro del mismo informe, no en documento
+ * aparte. Este maestro guarda **qué se inventaría**, no lo inventariado: lo
+ * capturado vive en el bloque del informe, como el resto.
+ *
+ * Como documento independiente, el inventario se firmaría en un sitio y el
+ * informe en otro, y acabarían contando cosas distintas del mismo motor.
+ */
+@Schema({ collection: 'checklists', timestamps: true })
+export class Checklist extends BaseMaster {
+  @Prop({ type: String, required: true, trim: true, lowercase: true })
+  clave!: string;
+
+  @Prop({ type: String, required: true, trim: true })
+  denominacion!: string;
+
+  /** Código del formato del que sale: `SER-T-FOR-002`. */
+  @Prop({ type: String, default: null, trim: true })
+  formato!: string | null;
+
+  /**
+   * Modelos de motor a los que aplica. Vacío significa todos: la mayoría de
+   * los inventarios sirven para cualquier motor de la familia.
+   */
+  @Prop({ type: [SchemaTypes.ObjectId], ref: 'EngineModel', default: [] })
+  aplicaAModelos!: Types.ObjectId[];
+
+  /**
+   * Ítems, con su cantidad esperada o el campo del motor del que se deriva.
+   * Van embebidos porque nunca se leen sueltos: para pintar el bloque hace
+   * falta la lista entera.
+   */
+  @Prop({ type: MongooseSchema.Types.Mixed, default: [] })
+  items!: Record<string, unknown>[];
+}
+export type ChecklistDocument = Checklist & Document;
+export const ChecklistSchema = SchemaFactory.createForClass(Checklist);
+ChecklistSchema.index({ clave: 1 }, { unique: true });
+ChecklistSchema.index({ denominacion: 'text' });

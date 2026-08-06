@@ -18,6 +18,7 @@ import { EngineBrandSchema } from '../masters/schemas/catalogs.schema';
 import { EngineModelSchema } from '../masters/schemas/engine-model.schema';
 import { EngineSpecSchema } from '../masters/schemas/engine-spec.schema';
 import {
+  ChecklistSchema,
   ComponentVerdictSchema,
   EngineComponentSchema,
   UnitSchema,
@@ -265,6 +266,96 @@ const ESPECIFICACIONES = [
   },
 ];
 
+/**
+ * Inventario de desarmado (SER-T-FOR-002, decisión D4).
+ *
+ * Las cantidades variables se derivan del motor: un 20V lleva veinte pistones y
+ * un 16V dieciséis, así que el número no puede estar escrito aquí.
+ */
+const INVENTARIO_DESARMADO = {
+  clave: 'desarmado_motor',
+  denominacion: 'Inventario de desarmado de motor',
+  formato: 'SER-T-FOR-002',
+  aplicaAModelos: [],
+  items: [
+    { clave: 'culata', denominacion: 'Culatas', grupo: 'culatas', cantidadDerivadaDe: 'cilindros' },
+    {
+      clave: 'piston',
+      denominacion: 'Pistones',
+      grupo: 'tren_alternativo',
+      cantidadDerivadaDe: 'cilindros',
+    },
+    {
+      clave: 'biela',
+      denominacion: 'Bielas',
+      grupo: 'tren_alternativo',
+      cantidadDerivadaDe: 'cilindros',
+    },
+    {
+      clave: 'camisa',
+      denominacion: 'Camisas de cilindro',
+      grupo: 'bloque',
+      cantidadDerivadaDe: 'cilindros',
+    },
+    {
+      clave: 'cojinete_bancada',
+      denominacion: 'Cojinetes de bancada',
+      grupo: 'bloque',
+      cantidadDerivadaDe: 'apoyosBancada',
+    },
+    { clave: 'cigueñal', denominacion: 'Cigüeñal', grupo: 'tren_alternativo', cantidadEsperada: 1 },
+    {
+      clave: 'volante',
+      denominacion: 'Volante de inercia',
+      grupo: 'tren_alternativo',
+      cantidadEsperada: 1,
+    },
+    {
+      clave: 'eje_levas',
+      denominacion: 'Ejes de levas',
+      grupo: 'distribucion',
+      cantidadEsperada: 2,
+    },
+    {
+      clave: 'piñon_intermedio',
+      denominacion: 'Piñones intermedios',
+      grupo: 'distribucion',
+      cantidadEsperada: 2,
+    },
+    {
+      clave: 'turbo',
+      denominacion: 'Turbocompresores',
+      grupo: 'admision_escape',
+      cantidadEsperada: 2,
+    },
+    {
+      clave: 'cac',
+      denominacion: 'Enfriador de aire de carga (CAC)',
+      grupo: 'admision_escape',
+      cantidadEsperada: 1,
+    },
+    {
+      clave: 'bomba_agua',
+      denominacion: 'Bomba de agua',
+      grupo: 'refrigeracion',
+      cantidadEsperada: 1,
+    },
+    {
+      clave: 'bomba_aceite',
+      denominacion: 'Bomba de aceite',
+      grupo: 'lubricacion',
+      cantidadEsperada: 1,
+    },
+    { clave: 'carter', denominacion: 'Cárter', grupo: 'lubricacion', cantidadEsperada: 1 },
+    {
+      clave: 'multiple_escape',
+      denominacion: 'Múltiples de escape',
+      grupo: 'admision_escape',
+      cantidadEsperada: 2,
+    },
+  ],
+};
+
 export async function seedMeasurements(uri: string): Promise<void> {
   const connection = mongoose.createConnection(uri, { serverSelectionTimeoutMS: 20000 });
   await connection.asPromise();
@@ -275,6 +366,7 @@ export async function seedMeasurements(uri: string): Promise<void> {
   const Brand = connection.model('EngineBrand', EngineBrandSchema);
   const Model = connection.model('EngineModel', EngineModelSchema);
   const Spec = connection.model('EngineSpec', EngineSpecSchema);
+  const ChecklistModel = connection.model('Checklist', ChecklistSchema);
 
   try {
     for (const unidad of UNIDADES) {
@@ -303,6 +395,13 @@ export async function seedMeasurements(uri: string): Promise<void> {
       );
     }
     console.log(`componentes: ${COMPONENTES.length}`);
+
+    await ChecklistModel.findOneAndUpdate(
+      { clave: INVENTARIO_DESARMADO.clave },
+      { $set: INVENTARIO_DESARMADO },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
+    console.log(`inventario de desarmado: ${INVENTARIO_DESARMADO.items.length} ítems`);
 
     const mtu = await Brand.findOneAndUpdate(
       { nombre: 'MTU' },

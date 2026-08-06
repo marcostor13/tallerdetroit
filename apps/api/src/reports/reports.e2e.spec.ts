@@ -388,7 +388,7 @@ describe('Informes', () => {
     // A partir de aquí se renderiza igual para siempre, publique Calidad lo que
     // publique.
     expect(emitido.body.templateSnapshot.version).toBe('v01');
-    expect(emitido.body.templateSnapshot.secciones).toHaveLength(11);
+    expect(emitido.body.templateSnapshot.secciones).toHaveLength(12);
     expect(emitido.body.historialEstados[0].de).toBe('borrador');
 
     // RN-02: un informe emitido ya no se edita.
