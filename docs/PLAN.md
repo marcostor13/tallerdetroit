@@ -12,15 +12,15 @@ en `.claude/DESIGN-SYSTEM.md`.
 
 ## Estado actual
 
-| Fase                                     | Estado                                  | Semanas | Cierre     |
-| ---------------------------------------- | --------------------------------------- | ------- | ---------- |
-| **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle | 2–3     | 5-ago-2026 |
+| Fase                                     | Estado                                                                          | Semanas | Cierre     |
+| ---------------------------------------- | ------------------------------------------------------------------------------- | ------- | ---------- |
+| **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle                                         | 2–3     | 5-ago-2026 |
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
-| **F2** Mediciones dimensionales          | 🟡 En curso — abierta 6-ago-2026        | 4–6     | —          |
-| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                            | 5–7     | —          |
-| **F4** PWA, movilidad y offline          | ⬜ Pendiente                            | 4–6     | —          |
-| **F5** Analítica y conocimiento          | ⬜ Pendiente                            | 4–6     | —          |
-| **F6** Integración corporativa           | ⬜ Pendiente                            | 4–6     | —          |
+| **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
+| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                                                                    | 5–7     | —          |
+| **F4** PWA, movilidad y offline          | ⬜ Pendiente                                                                    | 4–6     | —          |
+| **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
+| **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
 
 > Actualiza esta tabla al abrir y cerrar cada fase (skill `/dps-fase`).
 
@@ -152,18 +152,18 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 
 ## Alcance
 
-| Épica                                  | Historias principales                                                                                                                                                                                                                                                                     |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ✅ **E1.1 Maestros base**              | Módulo `MastersModule` genérico (CRUD, paginación, búsqueda, auditoría) · maestros 1, 2, 3, 6, 7, 8, 10, 12, 13, 14, 31, 32, 33 · **creación inline** desde el formulario · búsqueda difusa tolerante a typos · importador CSV/XLSX con reporte de errores · merge de duplicados          |
+| Épica                                     | Historias principales                                                                                                                                                                                                                                                                     |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅ **E1.1 Maestros base**                 | Módulo `MastersModule` genérico (CRUD, paginación, búsqueda, auditoría) · maestros 1, 2, 3, 6, 7, 8, 10, 12, 13, 14, 31, 32, 33 · **creación inline** desde el formulario · búsqueda difusa tolerante a typos · importador CSV/XLSX con reporte de errores · merge de duplicados          |
 | ✅ **E1.2 Motor de plantillas (runtime)** | Modelo `templateVersions` con secciones y bloques embebidos · semilla de SER-FOR-002 v01 · renderizado del formulario desde la definición · visibilidad condicional declarativa                                                                                                           |
-| ✅ **E1.3 Órdenes de trabajo**         | CRUD mínimo de OT · relación OT ↔ informes (1..n)                                                                                                                                                                                                                                         |
-| ~~**E1.4 Correlativos**~~              | ❌ **Fuera de alcance (D3).** El número de informe y el de OT se escriben a mano. En su lugar: validación de formato y **unicidad** del número. `sequences` queda para cuando el negocio fije la convención                                                                               |
-| ✅ **E1.5 Editor de informes**         | Wizard de 6 pasos · cascada Cliente→Sede→Equipo→Motor con autocompletado · **autoguardado cada 20–30 s** con indicador · bloques `work_task` ordenables por drag & drop **con alternativa por teclado** · `rich_text` · `bullet_list` · `items_table` · duplicar informe anterior (UX-05) |
-| ✅ **E1.6 Evidencia fotográfica**      | Subida directa a S3 con URL prefirmada · **compresión en cliente** (máx. 1600 px, JPEG q80) · caption obligatorio · numeración `Fig.NN` automática y recalculada al reordenar · derivados thumb/web/print en el worker                                                                    |
-| ✅ **E1.7 Generación de PDF**          | Render servidor con Playwright · réplica fiel de la cabecera SER-FOR-002 · tablas de datos generales y de equipo · bloques con fotos en pares · reglas de paginación (mantener juntos título+párrafo, foto+caption, tabla completa)                                                       |
-| ✅ **E1.8 Bandeja e historial**        | Listado con filtros (estado, cliente, equipo, motor, técnico, fecha) · búsqueda · descarga · vista móvil como lista de cards                                                                                                                                                              |
-| ✅ **E1.9 Estados básicos**            | `borrador` → `emitido` (el flujo de revisión completo llega en F3)                                                                                                                                                                                                                        |
-| ✅ **E1.10 Vista previa**              | Panel lateral WYSIWYG idéntico al PDF (UX-06)                                                                                                                                                                                                                                             |
+| ✅ **E1.3 Órdenes de trabajo**            | CRUD mínimo de OT · relación OT ↔ informes (1..n)                                                                                                                                                                                                                                         |
+| ~~**E1.4 Correlativos**~~                 | ❌ **Fuera de alcance (D3).** El número de informe y el de OT se escriben a mano. En su lugar: validación de formato y **unicidad** del número. `sequences` queda para cuando el negocio fije la convención                                                                               |
+| ✅ **E1.5 Editor de informes**            | Wizard de 6 pasos · cascada Cliente→Sede→Equipo→Motor con autocompletado · **autoguardado cada 20–30 s** con indicador · bloques `work_task` ordenables por drag & drop **con alternativa por teclado** · `rich_text` · `bullet_list` · `items_table` · duplicar informe anterior (UX-05) |
+| ✅ **E1.6 Evidencia fotográfica**         | Subida directa a S3 con URL prefirmada · **compresión en cliente** (máx. 1600 px, JPEG q80) · caption obligatorio · numeración `Fig.NN` automática y recalculada al reordenar · derivados thumb/web/print en el worker                                                                    |
+| ✅ **E1.7 Generación de PDF**             | Render servidor con Playwright · réplica fiel de la cabecera SER-FOR-002 · tablas de datos generales y de equipo · bloques con fotos en pares · reglas de paginación (mantener juntos título+párrafo, foto+caption, tabla completa)                                                       |
+| ✅ **E1.8 Bandeja e historial**           | Listado con filtros (estado, cliente, equipo, motor, técnico, fecha) · búsqueda · descarga · vista móvil como lista de cards                                                                                                                                                              |
+| ✅ **E1.9 Estados básicos**               | `borrador` → `emitido` (el flujo de revisión completo llega en F3)                                                                                                                                                                                                                        |
+| ✅ **E1.10 Vista previa**                 | Panel lateral WYSIWYG idéntico al PDF (UX-06)                                                                                                                                                                                                                                             |
 
 ## Criterios de aceptación
 
@@ -181,7 +181,7 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 - [ ] **Prueba de fidelidad:** un técnico reproduce íntegramente el informe **OT746** en la plataforma;
       en una comparación ciega, un supervisor no identifica cuál PDF salió del Word y cuál de la plataforma
 - [~] Lo mismo con el informe **OT898**, **sin cambiar código** — solo componiendo bloques distintos. **La parte de «sin cambiar código» está verificada** (6-ago-2026, `report-html.spec.ts`): los dos informes se componen desde la misma plantilla y salen distintos —el 746 con seguidores y varillas, el 898 con turbos, housing y tercerizados—, con su propia numeración de figuras y sin panel de ECU en ninguno. **Falta la comparación con el original**, que necesita el informe real y un supervisor
-- [x] **Un informe con 45 fotos genera su PDF en < 45 s (NFR-03)** — verificado 6-ago-2026: **4,99 s** con 45 fotografías *distintas* de 1600×1200 (14 MB de origen → PDF de 1,26 MB), medido contra Chromium real. Con la misma foto repetida el PDF la deduplica y la medida sale diez veces mejor de lo que es; el banco usa fotos diferentes a propósito. Queda fuera el tiempo de descarga desde S3
+- [x] **Un informe con 45 fotos genera su PDF en < 45 s (NFR-03)** — verificado 6-ago-2026: **4,99 s** con 45 fotografías _distintas_ de 1600×1200 (14 MB de origen → PDF de 1,26 MB), medido contra Chromium real. Con la misma foto repetida el PDF la deduplica y la medida sale diez veces mejor de lo que es; el banco usa fotos diferentes a propósito. Queda fuera el tiempo de descarga desde S3
 - [x] **Dos informes no pueden compartir número: el segundo intento recibe un error claro** (RN-01 adaptada a D3) — verificado 6-ago-2026 en `reports.e2e.spec.ts`. El número se normaliza antes de comparar, así que `its-t-e-26-003-0746` choca con `ITS-T-E-26-003-0746`; sin eso el índice único no vería el duplicado. El índice se crea al arrancar (`IndexesService`), porque con `autoIndex` apagado en producción no existía
 - [x] **Al reordenar bloques, la numeración de figuras se recalcula correctamente en pantalla y en el PDF** (RN-06) — verificado 6-ago-2026 en los tres sitios: dominio (`figures.spec.ts`), API (`reports.e2e.spec.ts`) y render del documento (`report-html.spec.ts`). El número no se guarda: se deriva del orden, así que no puede quedarse viejo
 - [x] **Un técnico crea una sede nueva desde el formulario sin perder el borrador en curso** (§13.3.1) — verificado 6-ago-2026 con Playwright: lo escrito en otros campos sigue ahí y no se navega a ninguna parte. El alta está dentro del propio desplegable y se alcanza solo con teclado
@@ -206,11 +206,11 @@ Plataforma en staging usable por 2–3 técnicos piloto · manual breve de usuar
 **Objetivo:** digitalizar la información que hoy no existe como dato, y con ello justificar toda la
 inversión posterior en analítica.
 
-|                |                                                                                                                                   |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Duración**   | 4–6 semanas                                                                                                                       |
+|                |                                                                                                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Duración**   | 4–6 semanas                                                                                                                                                                                           |
 | **Depende de** | F1 (11/13 criterios; los dos abiertos son DT-1 y DT-2) · ~~D1~~ **resuelta**: carga manual, con lo cargado desde informes marcado `provisional` · ~~D2~~ **resuelta**: modo `absoluto` / `desviacion` |
-| **Bloquea a**  | F5                                                                                                                                |
+| **Bloquea a**  | F5                                                                                                                                                                                                    |
 
 > **El hallazgo que gobierna la fase:** el número de columnas de cada grilla y sus tolerancias se
 > derivan del modelo de motor. Al seleccionar el motor por su número de serie, la plataforma ya sabe
@@ -229,26 +229,83 @@ inversión posterior en analítica.
 | **E2.7 Checklist de desarmado**             | Bloque `checklist` como **sección del propio informe** (D4): mismo PDF, mismo número y misma aprobación. No es un documento independiente   |
 | **E2.8 Hechos analíticos**                  | Escritura de `measurementFacts` al emitir, con sus tres índices                                                                             |
 
+> **Dónde vive cada cosa en el wizard (6-ago-2026).** Las tablas dimensionales cuelgan del trabajo
+> que evalúa el componente —que es donde las pone el Word original— y además hay una sección propia
+> para las que se miden del motor entero (juego axial, encajes de camisa). El inventario de
+> desarmado es la sección VII. Al integrarlo salieron dos defectos del mismo tipo: las secciones VI
+> y VII eran **inalcanzables**, porque su regla de visibilidad exigía que ya hubiera mediciones o
+> inventario, y un bloque solo se puede añadir desde una sección visible. Nunca se podía añadir el
+> primero.
+
 > El motor de tolerancias (`evaluateMeasurement`, `resolveColumns`, `proposeVerdict`) ya está
 > implementado y probado en `libs/shared/src/domain/measurements.ts`. E2.4 lo integra; no lo reescribe.
 
 ## Criterios de aceptación
 
-- [ ] Al seleccionar el motor `5282011236`, la grilla de muñón de bancada aparece con **11 columnas**
-      y la de biela A con **10**, sin configuración manual
-- [ ] Al seleccionar `5272012973` (16V), las mismas grillas aparecen con **9** y **8** columnas
-- [ ] La grilla de encaje de camisa inferior valida contra **193.000 mm** para el 20V4000C23 y contra
-      **189.000 mm** para el 16V4000C21
-- [ ] Un valor de +0.16 mm en encaje superior se marca 🔴 y bloquea la emisión sin justificación del
-      supervisor (RN-03)
-- [ ] La `Ovalidad` se calcula y no es editable
-- [ ] Un técnico captura las 11 columnas × 3 filas del túnel de bancada **usando solo el teclado, en < 60 s**
-- [ ] `Ctrl+V` pega un rango copiado desde Excel y lo distribuye correctamente
-- [ ] Las tablas del PDF generado son visualmente equivalentes a las del OT898
-- [ ] **El semáforo se distingue sin depender del color**: icono + `aria-label` textual (T2, WCAG 1.4.1)
-- [ ] Cada medición guarda `nominal`, `tolInf` y `tolSup` vigentes al momento de la captura
-- [ ] Las specs cargadas desde los informes están marcadas `provisional: true` mientras D1 siga abierta
-- [ ] **La grilla es usable en tablet y móvil** con scroll y encabezados fijos (T3)
+> **Estado (6-ago-2026):** las ocho épicas están implementadas **y llegan a la pantalla**. Hasta
+> este punto F2 tenía el motor de tolerancias probado, el backend validando y el PDF sacando las
+> tablas, pero un técnico **no podía capturar una medición dentro de un informe**: la grilla solo
+> existía en una página de pruebas que ni siquiera se despliega, y el inventario de desarmado no
+> tenía ni campo donde guardarse. Eso queda cerrado.
+>
+> **7 de los 12 criterios están verificados**; 4 tienen prueba escrita que **no se ha podido
+> ejecutar en este entorno** (ver la nota de abajo) y 1 necesita a una persona.
+>
+> ⚠️ **Sobre lo no ejecutado.** Los tests de la API (`mediciones.e2e.spec.ts`,
+> `engine-specs.e2e.spec.ts`, `checklist.e2e.spec.ts`) no se pudieron correr aquí: la política de
+> red del contenedor bloquea `fastdl.mongodb.org`, de donde `mongodb-memory-server` descarga el
+> binario, y no hay `mongod` ni Docker. **El CI sí los ejecuta**; hasta que se vea un pipeline
+> verde, esos cuatro criterios están escritos pero no comprobados, y se marcan `[~]`.
+
+- [x] Al seleccionar el motor `5282011236`, la grilla de muñón de bancada aparece con **11 columnas**
+      y la de biela A con **10**, sin configuración manual — verificado 6-ago-2026 en tres sitios:
+      dominio (`measurement-grid.spec.ts`), integración en el informe
+      (`mediciones-bloque.component.spec.ts`) y **navegador real** (Playwright: 12 `th` = 11 + la
+      esquina, y 33 celdas editables). El número no está escrito en ningún sitio: sale del modelo
+- [x] Al seleccionar `5272012973` (16V), las mismas grillas aparecen con **9** y **8** columnas —
+      verificado 6-ago-2026 en dominio y en el componente del informe. Es la misma plantilla: lo
+      único que cambia es el motor
+- [~] La grilla de encaje de camisa inferior valida contra **193.000 mm** para el 20V4000C23 y contra
+  **189.000 mm** para el 16V4000C21 — prueba escrita en `engine-specs.e2e.spec.ts` (incluido el
+  rango 193.000–193.080), **sin ejecutar aquí**
+- [~] Un valor de +0.16 mm en encaje superior se marca 🔴 y bloquea la emisión sin justificación del
+  supervisor (RN-03) — la parte del backend está en `mediciones.e2e.spec.ts`, **sin ejecutar
+  aquí**. **La parte de pantalla sí se verificó** (6-ago-2026): con un valor fuera aparece el
+  campo de justificación, marcado como error mientras esté vacío, y lo escrito viaja con cada
+  guardado para que seguir capturando no lo borre
+- [x] La `Ovalidad` se calcula y no es editable — verificado 6-ago-2026 en navegador real: es un
+      `<output>`, no un campo; no se alcanza con Tab, y las once salen calculadas al teclear `a` y `b`
+- [x] Un técnico captura las 11 columnas × 3 filas del túnel de bancada **usando solo el teclado, en
+      < 60 s** — verificado 6-ago-2026 con Chromium real: **1,6 s en escritorio y 1,7 s en un Pixel
+      7**. Lo que mide la prueba es que la herramienta no sea el cuello de botella: una persona tarda
+      más en leer el micrómetro que en teclear, y el margen dice que repintar la grilla a cada valor
+      no cuesta nada
+- [x] `Ctrl+V` pega un rango copiado desde Excel y lo distribuye correctamente — verificado
+      6-ago-2026 en navegador real y en el dominio, con tabuladores, punto y coma, coma decimal
+      española y saltos de Windows. Lo que se sale de la grilla se descarta en vez de escribir fuera
+- [ ] Las tablas del PDF generado son visualmente equivalentes a las del OT898 — **necesita el
+      informe real y una persona que compare**, como los dos criterios abiertos de F1. No hay
+      cantidad de tests verdes que lo sustituya
+- [x] **El semáforo se distingue sin depender del color**: icono + `aria-label` textual (T2, WCAG
+      1.4.1) — verificado 6-ago-2026 en navegador real: la celda fuera de tolerancia lleva su clase,
+      `aria-invalid="true"` y un `aria-label` que **dice en palabras** «fuera de tolerancia». Un
+      informe técnico se imprime, se fotocopia y lo leen personas con daltonismo
+- [~] Cada medición guarda `nominal`, `tolInf` y `tolSup` vigentes al momento de la captura — prueba
+  escrita en `mediciones.e2e.spec.ts` (se cambia la spec después de guardar y la grilla conserva
+  la anterior), **sin ejecutar aquí**
+- [~] Las specs cargadas desde los informes están marcadas `provisional: true` mientras D1 siga
+  abierta — prueba escrita en `engine-specs.e2e.spec.ts` sobre **todas** las sembradas, **sin
+  ejecutar aquí**
+- [x] **La grilla es usable en tablet y móvil** con scroll y encabezados fijos (T3) — verificado
+      6-ago-2026 en un Pixel 7 real: el desplazamiento va **dentro** de la grilla y no arrastra la
+      página, las cabeceras de columna y de fila quedan `sticky` en los dos ejes, y la celda mide
+      88 × 36 px
+
+### Lo que este entorno no ha podido comprobar y hay que comprobar antes de cerrar F2
+
+1. Ejecutar los tests de la API en CI (los cuatro `[~]` de arriba) y ver el pipeline verde.
+2. La comparación del PDF contra el OT898 con un supervisor delante.
+3. El `checklist.e2e.spec.ts` recién escrito, que nunca se ha ejecutado en ningún sitio.
 
 ---
 
@@ -500,13 +557,13 @@ asociados a su equipo y motor es barato y da valor inmediato. Extraer sus medici
 Lo que se deja pendiente a sabiendas, con la razón y lo que hace falta para
 saldarlo. No es una lista de deseos: cada línea bloquea algo concreto.
 
-| #   | Qué queda pendiente | Por qué se deja | Qué hace falta para saldarlo | Riesgo si no se salda |
-| --- | ------------------- | --------------- | ---------------------------- | --------------------- |
-| DT-1 | **Prueba de fidelidad del OT-746**: un técnico reproduce el informe en la plataforma y un supervisor no distingue, en una comparación ciega, cuál PDF salió del Word | No se puede automatizar. Necesita el informe original, un técnico que lo transcriba y un supervisor que no sepa cuál es cuál | Media jornada de un técnico y una hora de un supervisor, con el OT-746 impreso delante | **Alto.** Es el criterio que decide si los técnicos migran. Si el PDF no aguanta la comparación, F1 no vale para nada por muchos tests que pasen |
-| DT-2 | **Lo mismo con el OT-898** | Ídem. La mitad que sí dependía de nosotros —que no haga falta tocar código para el segundo informe— **está verificada** en `report-html.spec.ts` | Lo mismo que DT-1, con el OT-898 | **Medio.** El motor de plantillas ya está probado; lo que falta es el acabado del documento |
-| DT-3 | **NFR-02 medido contra Atlas**, no contra Mongo en memoria | La medida actual (p95 18 ms) excluye la latencia de red, que es donde se consume el margen de 500 ms | Repetir el banco de `reports.e2e.spec.ts` apuntando a la base de develop | **Medio.** Si el autoguardado se percibe lento, el técnico deja de fiarse y guarda a mano |
-| DT-4 | **S3 y Redis sin credenciales en Coolify** | Están fuera del repositorio a propósito (§20) | Cargar las variables en los dos recursos de Coolify | **Alto.** Sin ellas no hay fotografías ni PDF: dos de las diez épicas de F1 no se pueden usar |
-| DT-5 | **Contraseñas de producción sin rotar** tras la siembra inicial | Se generaron para verificar el despliegue | Rotarlas o purgar las cuentas de prueba antes de exponer la plataforma | **Alto** en cuanto la plataforma sea accesible desde fuera |
+| #    | Qué queda pendiente                                                                                                                                                  | Por qué se deja                                                                                                                                  | Qué hace falta para saldarlo                                                           | Riesgo si no se salda                                                                                                                            |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DT-1 | **Prueba de fidelidad del OT-746**: un técnico reproduce el informe en la plataforma y un supervisor no distingue, en una comparación ciega, cuál PDF salió del Word | No se puede automatizar. Necesita el informe original, un técnico que lo transcriba y un supervisor que no sepa cuál es cuál                     | Media jornada de un técnico y una hora de un supervisor, con el OT-746 impreso delante | **Alto.** Es el criterio que decide si los técnicos migran. Si el PDF no aguanta la comparación, F1 no vale para nada por muchos tests que pasen |
+| DT-2 | **Lo mismo con el OT-898**                                                                                                                                           | Ídem. La mitad que sí dependía de nosotros —que no haga falta tocar código para el segundo informe— **está verificada** en `report-html.spec.ts` | Lo mismo que DT-1, con el OT-898                                                       | **Medio.** El motor de plantillas ya está probado; lo que falta es el acabado del documento                                                      |
+| DT-3 | **NFR-02 medido contra Atlas**, no contra Mongo en memoria                                                                                                           | La medida actual (p95 18 ms) excluye la latencia de red, que es donde se consume el margen de 500 ms                                             | Repetir el banco de `reports.e2e.spec.ts` apuntando a la base de develop               | **Medio.** Si el autoguardado se percibe lento, el técnico deja de fiarse y guarda a mano                                                        |
+| DT-4 | **S3 y Redis sin credenciales en Coolify**                                                                                                                           | Están fuera del repositorio a propósito (§20)                                                                                                    | Cargar las variables en los dos recursos de Coolify                                    | **Alto.** Sin ellas no hay fotografías ni PDF: dos de las diez épicas de F1 no se pueden usar                                                    |
+| DT-5 | **Contraseñas de producción sin rotar** tras la siembra inicial                                                                                                      | Se generaron para verificar el despliegue                                                                                                        | Rotarlas o purgar las cuentas de prueba antes de exponer la plataforma                 | **Alto** en cuanto la plataforma sea accesible desde fuera                                                                                       |
 
 > DT-1 y DT-2 son las que mantienen F1 abierta. Las demás no impiden avanzar a
 > F2, pero sí impiden dar F1 por entregada.
