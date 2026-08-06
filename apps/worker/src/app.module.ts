@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
+import { BullModule } from '@nestjs/bullmq';
 import { HealthController } from './health.controller';
+import { DocumentsModule } from './documents/documents.module';
 
 /**
  * Worker de trabajo pesado: render de PDF con Chromium, export DOCX y derivados
@@ -27,8 +29,26 @@ import { HealthController } from './health.controller';
       }),
     }),
 
-    // Colas BullMQ y procesadores — se incorporan en F1 (E1.7 render de PDF)
-    // y F2 (E2.6 tablas de medición).
+    // La cola desacopla la emisión del render: el técnico no espera 40 s
+    // mirando una pantalla mientras Chromium trabaja.
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: { url: config.get<string>('REDIS_URL') ?? 'redis://localhost:6379' },
+        defaultJobOptions: {
+          // Tres intentos con espera creciente: los fallos de render suelen ser
+          // una imagen que tardó de más, y a la segunda ya está en caché.
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5_000 },
+          removeOnComplete: { age: 86_400, count: 500 },
+          removeOnFail: { age: 604_800 },
+        },
+      }),
+    }),
+
+    DocumentsModule,
+
+    // F2 (E2.6 tablas de medición) y derivados de imagen.
   ],
   controllers: [HealthController],
 })

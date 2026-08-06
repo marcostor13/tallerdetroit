@@ -4,6 +4,7 @@ import { Report, ReportSchema } from './schemas/report.schema';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { TemplatesModule } from '../templates/templates.module';
+import { DocumentsModule } from '../documents/documents.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { TemplatesModule } from '../templates/templates.module';
     // El informe se edita y se renderiza contra su plantilla: sin ella no sabe
     // qué bloques admite ni qué es obligatorio.
     TemplatesModule,
+    DocumentsModule,
   ],
   controllers: [ReportsController],
   providers: [ReportsService],

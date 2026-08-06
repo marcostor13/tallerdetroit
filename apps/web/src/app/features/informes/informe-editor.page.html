@@ -280,6 +280,19 @@
       <p class="text-body-md text-secondary">Este paso no tiene nada que capturar.</p>
     }
 
+    <!--
+      Paso final: el documento tal como saldrá. Usa el mismo render que el PDF,
+      no una maqueta parecida: si fueran dos, el tecnico veria las diferencias
+      cuando el informe ya esta entregado (UX-06).
+    -->
+    @if (esUltimo()) {
+      <section class="flex flex-col gap-3" aria-labelledby="dps-vista-previa">
+        <h2 id="dps-vista-previa" class="text-title-md">Vista previa</h2>
+        <p class="text-body-sm text-secondary">Es el mismo render con el que se genera el PDF.</p>
+        <dps-vista-previa class="block h-[70vh] w-full" [informe]="store.informe()" [plantilla]="store.plantilla()" />
+      </section>
+    }
+
     @if (faltanAqui().length) {
       <p class="flex items-start gap-2 text-body-sm text-secondary" role="status">
         <dps-icon name="info" [size]="16" class="mt-0.5 shrink-0" aria-hidden="true" />

@@ -15,6 +15,7 @@ import { FieldComponent } from '../../shared/ui/field/field.component';
 import { InformeStore } from './informe.store';
 import { IndicadorGuardadoComponent } from './ui/indicador-guardado.component';
 import { ListaTrabajosComponent } from './ui/lista-trabajos.component';
+import { VistaPreviaComponent } from './ui/vista-previa.component';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -56,6 +57,7 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     AutocompleteComponent,
     IndicadorGuardadoComponent,
     ListaTrabajosComponent,
+    VistaPreviaComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })

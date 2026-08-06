@@ -26,6 +26,7 @@ import {
 } from '@dps/shared';
 import { Report, type BloqueInforme, type ReportDocument } from './schemas/report.schema';
 import { TemplatesService } from '../templates/templates.service';
+import { DocumentsService } from '../documents/documents.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 export interface ListReportsOptions {
@@ -57,6 +58,7 @@ export class ReportsService {
   constructor(
     @InjectModel(Report.name) private readonly informes: Model<ReportDocument>,
     private readonly plantillas: TemplatesService,
+    private readonly documentos: DocumentsService,
   ) {}
 
   // ---------------------------------------------------------------- lectura
@@ -392,7 +394,19 @@ export class ReportsService {
     doc.updatedBy = new Types.ObjectId(actor.id);
     await doc.save();
 
-    return this.conFigurasNumeradas(doc.toObject());
+    const emitido = this.conFigurasNumeradas(doc.toObject());
+
+    if (destino === 'emitido') {
+      // Se encola con las figuras ya numeradas: el PDF tiene que llevar los
+      // mismos números que el técnico vio en la vista previa (RN-06).
+      await this.documentos.encolarPdf(
+        String(doc._id),
+        emitido,
+        doc.templateSnapshot as TemplateVersionDefinition,
+      );
+    }
+
+    return emitido;
   }
 
   async remove(id: string, actor: AuthUser) {

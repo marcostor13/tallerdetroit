@@ -12,6 +12,9 @@ import { MastersModule } from './masters/masters.module';
 import { TemplatesModule } from './templates/templates.module';
 import { WorkOrdersModule } from './work-orders/work-orders.module';
 import { ReportsModule } from './reports/reports.module';
+import { MediaModule } from './media/media.module';
+import { DocumentsModule } from './documents/documents.module';
+import { BullModule } from '@nestjs/bullmq';
 import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -63,6 +66,25 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
       }),
     }),
 
+    // Cola de render documental. El informe se emite al instante y el PDF se
+    // genera aparte: 45 fotos tardan decenas de segundos y el técnico no debe
+    // esperarlas mirando una pantalla.
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
+        connection: {
+          url: config.get('REDIS_URL', { infer: true }) ?? 'redis://localhost:6379',
+          // Con la cola offline activada —que es lo que trae por defecto— los
+          // comandos se acumulan en memoria mientras Redis no responde, y la
+          // petición que los lanzó se queda esperando indefinidamente. Aquí
+          // interesa lo contrario: que falle rápido y en voz alta.
+          maxRetriesPerRequest: 2,
+          enableOfflineQueue: false,
+          connectTimeout: 3_000,
+        },
+      }),
+    }),
+
     // Límite de peticiones por IP/usuario (§17).
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
 
@@ -73,9 +95,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     TemplatesModule,
     WorkOrdersModule,
     ReportsModule,
+    MediaModule,
+    DocumentsModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
-    // MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).

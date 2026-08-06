@@ -18,6 +18,9 @@
     "seed:templates": "ts-node -r tsconfig-paths/register src/seeds/templates.seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1104.0",
+    "@aws-sdk/s3-request-presigner": "^3.1104.0",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
@@ -29,6 +32,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@sentry/node": "^10.69.0",
     "argon2": "^0.41.1",
+    "bullmq": "^5.81.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",

@@ -7,4 +7,6 @@ export * from './domain/templates';
 export * from './domain/ser-for-002';
 export * from './domain/document-numbers';
 export * from './domain/figures';
+export * from './render/report-styles';
+export * from './render/report-html';
 export * from './design/tokens';

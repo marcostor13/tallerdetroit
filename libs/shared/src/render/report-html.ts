@@ -1,0 +1,376 @@
+/**
+ * Construye el HTML del informe emitido.
+ *
+ * Una sola función para dos consumidores: la vista previa del wizard (UX-06) y
+ * el render de PDF con Playwright (E1.7). Si cada uno construyera su propio
+ * HTML, la vista previa dejaría de parecerse al PDF al primer cambio, y el
+ * técnico descubriría las diferencias cuando el documento ya está entregado.
+ *
+ * Es una función pura: no lee de la red ni del disco. Las imágenes se resuelven
+ * por `resolverImagen`, porque la vista previa usa URLs firmadas temporales y
+ * el worker usa rutas locales ya descargadas.
+ */
+
+import { numberFigures, type FiguraNumerada } from '../domain/figures';
+import { isVisible } from '../domain/visibility';
+import type { TemplateSectionDefinition, TemplateVersionDefinition } from '../domain/templates';
+import { REPORT_STYLES } from './report-styles';
+
+export interface FotoRenderizable {
+  readonly id: string;
+  readonly s3Key: string;
+  readonly printKey?: string | null;
+  readonly caption?: string | null;
+}
+
+export interface BloqueRenderizable {
+  readonly id: string;
+  readonly clave: string;
+  readonly tipo: string;
+  readonly orden: number;
+  readonly titulo?: string | null;
+  readonly texto?: string | null;
+  readonly fechaTrabajo?: string | Date | null;
+  readonly veredicto?: string | null;
+  readonly accionRecomendada?: string | null;
+  readonly fotos?: readonly FotoRenderizable[];
+  readonly datos?: unknown;
+  readonly visible?: boolean;
+}
+
+export interface InformeRenderizable {
+  readonly numeroInforme: string;
+  readonly numeroOt?: string | null;
+  readonly estado: string;
+  readonly fechaEmision?: string | Date | null;
+  readonly cliente?: { nombre?: string | null };
+  readonly sede?: { nombre?: string | null };
+  readonly equipo?: Record<string, unknown>;
+  readonly motor?: Record<string, unknown>;
+  readonly datos?: Record<string, unknown>;
+  readonly bloques: readonly BloqueRenderizable[];
+}
+
+export interface OpcionesDeRender {
+  /** `s3Key` → URL o ruta que Chromium pueda cargar. */
+  readonly resolverImagen?: (clave: string) => string;
+  /** Logo de la cabecera, ya como URL o `data:`. */
+  readonly logo?: string;
+  readonly codigoFormato?: string;
+  readonly versionFormato?: string;
+  /** Documento completo con `<html>`, o solo el cuerpo para incrustar. */
+  readonly documentoCompleto?: boolean;
+}
+
+/** Escapa lo que venga del usuario. El texto del informe lo escribe una persona. */
+export function escapeHtml(valor: unknown): string {
+  if (valor === null || valor === undefined) return '';
+  return String(valor)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fecha(valor: unknown): string {
+  if (!valor) return '—';
+  const d = valor instanceof Date ? valor : new Date(String(valor));
+  if (Number.isNaN(d.getTime())) return String(valor);
+  return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function filas(pares: readonly [string, unknown][]): string {
+  return pares
+    .filter(([, valor]) => valor !== null && valor !== undefined && valor !== '')
+    .map(
+      ([etiqueta, valor]) =>
+        `<tr><th scope="row">${escapeHtml(etiqueta)}</th><td>${escapeHtml(valor)}</td></tr>`,
+    )
+    .join('');
+}
+
+/** Bloque de fotos, en pares y con su figura ya numerada. */
+function fotos(
+  bloque: BloqueRenderizable,
+  numeros: Map<string, FiguraNumerada>,
+  opciones: OpcionesDeRender,
+): string {
+  const lista = bloque.fotos ?? [];
+  if (!lista.length) return '';
+
+  const resolver = opciones.resolverImagen ?? ((clave: string) => clave);
+
+  const figuras = lista
+    .map((foto) => {
+      const numero = numeros.get(foto.id);
+      const src = resolver(foto.printKey || foto.s3Key);
+      const etiqueta = numero ? `<span class="foto__numero">${numero.etiqueta}</span> ` : '';
+      return `
+        <figure class="foto">
+          <img src="${escapeHtml(src)}" alt="${escapeHtml(foto.caption ?? 'Fotografía del informe')}" />
+          <figcaption>${etiqueta}${escapeHtml(foto.caption ?? '')}</figcaption>
+        </figure>`;
+    })
+    .join('');
+
+  return `<div class="fotos">${figuras}</div>`;
+}
+
+/** Convierte a viñetas un valor que puede llegar como lista o como texto. */
+function vinetas(datos: unknown): string {
+  const items = Array.isArray(datos)
+    ? datos.map((d) => (typeof d === 'string' ? d : ((d as { texto?: string }).texto ?? '')))
+    : String(datos ?? '')
+        .split('\n')
+        .map((l) => l.trim());
+
+  const limpios = items.filter(Boolean);
+  if (!limpios.length) return '';
+
+  return `<ul class="vinetas">${limpios.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+}
+
+function tablaDeItems(datos: unknown): string {
+  if (!Array.isArray(datos) || !datos.length) return '';
+
+  const registros = datos as Record<string, unknown>[];
+  const columnas = [...new Set(registros.flatMap((r) => Object.keys(r)))].filter(
+    (c) => !c.startsWith('_') && !c.endsWith('Id'),
+  );
+  if (!columnas.length) return '';
+
+  const cabecera = columnas.map((c) => `<th scope="col">${escapeHtml(c)}</th>`).join('');
+  const cuerpo = registros
+    .map((r) => `<tr>${columnas.map((c) => `<td>${escapeHtml(r[c] ?? '')}</td>`).join('')}</tr>`)
+    .join('');
+
+  return `<table class="tabla-datos"><thead><tr>${cabecera}</tr></thead><tbody>${cuerpo}</tbody></table>`;
+}
+
+/** Un bloque del informe, según su tipo. */
+function renderBloque(
+  bloque: BloqueRenderizable,
+  informe: InformeRenderizable,
+  numeros: Map<string, FiguraNumerada>,
+  opciones: OpcionesDeRender,
+): string {
+  const titulo = bloque.titulo
+    ? `<h3 class="bloque__titulo">${escapeHtml(bloque.titulo)}</h3>`
+    : '';
+
+  switch (bloque.tipo) {
+    case 'header_meta':
+      return `<div class="bloque">${titulo}<table class="tabla-datos"><tbody>${filas([
+        ['N° de informe', informe.numeroInforme],
+        ['N° de O/T', informe.numeroOt],
+        ['Fecha de emisión', informe.fechaEmision ? fecha(informe.fechaEmision) : null],
+        ['Cliente', informe.cliente?.nombre],
+        ['Ubicación', informe.sede?.nombre],
+        ['Motivo', informe.datos?.['motivo']],
+        ['Horas totales', informe.datos?.['horasTotales']],
+        ['Horas parciales', informe.datos?.['horasParciales']],
+      ])}</tbody></table></div>`;
+
+    case 'equipment_meta':
+      return `<div class="bloque">${titulo}<table class="tabla-datos"><tbody>${filas([
+        ['Equipo', informe.equipo?.['codigo']],
+        ['Marca del equipo', informe.equipo?.['marca']],
+        ['Modelo del equipo', informe.equipo?.['modelo']],
+        ['Motor (serie)', informe.motor?.['serie']],
+        ['Marca del motor', informe.motor?.['marca']],
+        ['Modelo del motor', informe.motor?.['modelo']],
+        ['Cilindros', informe.motor?.['cilindros']],
+        ['Apoyos de bancada', informe.motor?.['apoyosBancada']],
+        ['Potencia', informe.motor?.['potencia']],
+      ])}</tbody></table></div>`;
+
+    case 'rich_text':
+      return `<div class="bloque">${titulo}<p class="bloque__texto">${escapeHtml(
+        bloque.texto ?? informe.datos?.[bloque.clave] ?? '',
+      )}</p></div>`;
+
+    case 'bullet_list':
+      return `<div class="bloque">${titulo}${vinetas(
+        bloque.datos ?? informe.datos?.[bloque.clave],
+      )}</div>`;
+
+    case 'work_task': {
+      const cuando = bloque.fechaTrabajo
+        ? `<p class="bloque__texto"><strong>Fecha:</strong> ${fecha(bloque.fechaTrabajo)}</p>`
+        : '';
+      const veredicto = bloque.veredicto
+        ? `<p class="bloque__texto"><strong>Veredicto:</strong> ${escapeHtml(bloque.veredicto)}` +
+          (bloque.accionRecomendada ? ` — ${escapeHtml(bloque.accionRecomendada)}` : '') +
+          `</p>`
+        : '';
+
+      return `<div class="bloque">${titulo}${cuando}<p class="bloque__texto">${escapeHtml(
+        bloque.texto ?? '',
+      )}</p>${veredicto}${fotos(bloque, numeros, opciones)}</div>`;
+    }
+
+    case 'photo_grid':
+      return `<div class="bloque">${titulo}${fotos(bloque, numeros, opciones)}</div>`;
+
+    case 'items_table':
+      return `<div class="bloque">${titulo}${tablaDeItems(
+        bloque.datos ?? informe.datos?.[bloque.clave],
+      )}</div>`;
+
+    case 'signature_block': {
+      const participantes =
+        (informe.datos?.['participantes'] as { nombre?: string; cargo?: string; rol?: string }[]) ??
+        [];
+      const firma = (rol: string, titulo: string) => {
+        const quien = participantes.find((p) => p.rol === rol);
+        return `<div class="firma">
+          <div class="firma__linea"></div>
+          <div class="firma__nombre">${escapeHtml(quien?.nombre ?? '')}</div>
+          <div class="firma__cargo">${escapeHtml(quien?.cargo ?? titulo)}</div>
+        </div>`;
+      };
+      return `<div class="firmas">${firma('realizado_por', 'Realizado por')}${firma(
+        'revisado_por',
+        'Revisado por',
+      )}</div>`;
+    }
+
+    default:
+      // Un tipo que este render todavía no cubre se omite en silencio en vez de
+      // sacar una caja vacía: el documento va al cliente.
+      return '';
+  }
+}
+
+function renderSeccion(
+  seccion: TemplateSectionDefinition,
+  informe: InformeRenderizable,
+  numeros: Map<string, FiguraNumerada>,
+  opciones: OpcionesDeRender,
+): string {
+  const contexto = contextoDe(informe);
+
+  const cuerpo = seccion.bloques
+    .filter((definicion) => isVisible(definicion.visibleSi, contexto))
+    .sort((a, b) => a.orden - b.orden)
+    .flatMap((definicion) => {
+      // Un bloque repetible aparece tantas veces como instancias tenga el
+      // informe: catorce «DESMONTAJE DE …» con una sola definición.
+      const instancias = informe.bloques
+        .filter((b) => b.clave === definicion.clave && b.visible !== false)
+        .sort((a, b) => a.orden - b.orden);
+
+      if (instancias.length) {
+        return instancias.map((b) => renderBloque(b, informe, numeros, opciones));
+      }
+
+      // Sin instancias, algunos tipos se pintan igual porque leen del informe.
+      return ['header_meta', 'equipment_meta', 'signature_block'].includes(definicion.tipo)
+        ? [
+            renderBloque(
+              {
+                id: definicion.clave,
+                clave: definicion.clave,
+                tipo: definicion.tipo,
+                orden: definicion.orden,
+                titulo: null,
+              },
+              informe,
+              numeros,
+              opciones,
+            ),
+          ]
+        : [];
+    })
+    .join('');
+
+  if (!cuerpo.trim()) return '';
+
+  return `<section class="seccion">
+    <h2 class="seccion__titulo">${escapeHtml(seccion.numeral)}. ${escapeHtml(seccion.titulo)}</h2>
+    ${cuerpo}
+  </section>`;
+}
+
+function contextoDe(informe: InformeRenderizable): Record<string, unknown> {
+  return {
+    equipo: informe.equipo ?? {},
+    motor: informe.motor ?? {},
+    cliente: informe.cliente ?? {},
+    intervencion: (informe.datos?.['intervencion'] as Record<string, unknown>) ?? {},
+    informe: {
+      ...informe.datos,
+      tercerizados: (informe.datos?.['tercerizados'] as unknown[]) ?? [],
+      mediciones: informe.bloques.filter((b) => b.tipo === 'measurement_grid'),
+    },
+  };
+}
+
+function cabecera(informe: InformeRenderizable, opciones: OpcionesDeRender): string {
+  const logo = opciones.logo
+    ? `<img src="${escapeHtml(opciones.logo)}" alt="Detroit Power System" />`
+    : '';
+
+  return `<header class="cabecera">
+    <div class="cabecera__logo">${logo}</div>
+    <div class="cabecera__titulo">Informe técnico de evaluación</div>
+    <dl class="cabecera__meta">
+      <div><dt>Código</dt><dd>${escapeHtml(opciones.codigoFormato ?? 'SER-FOR-002')}</dd></div>
+      <div><dt>Versión</dt><dd>${escapeHtml(opciones.versionFormato ?? 'v01')}</dd></div>
+      <div><dt>Fecha</dt><dd>${fecha(informe.fechaEmision)}</dd></div>
+      <div><dt>N°</dt><dd>${escapeHtml(informe.numeroInforme)}</dd></div>
+    </dl>
+  </header>`;
+}
+
+/**
+ * Documento completo del informe.
+ *
+ * Las figuras se numeran aquí, desde el orden de los bloques, con la misma
+ * función que usa la API (RN-06). Es lo que garantiza que el número que el
+ * técnico ve en pantalla sea el que sale impreso.
+ */
+export function renderReportHtml(
+  informe: InformeRenderizable,
+  plantilla: TemplateVersionDefinition,
+  opciones: OpcionesDeRender = {},
+): string {
+  const numeros = new Map(
+    numberFigures(
+      informe.bloques.map((b) => ({
+        id: b.id,
+        orden: b.orden,
+        visible: b.visible,
+        fotos: (b.fotos ?? []).map((f) => ({ id: f.id })),
+      })),
+    ).map((f) => [f.fotoId, f]),
+  );
+
+  const contexto = contextoDe(informe);
+
+  const secciones = [...plantilla.secciones]
+    .filter((s) => isVisible(s.visibleSi, contexto))
+    .sort((a, b) => a.orden - b.orden)
+    .map((s) => renderSeccion(s, informe, numeros, opciones))
+    .join('');
+
+  const esBorrador = informe.estado !== 'emitido';
+
+  const cuerpo = `<div class="hoja${esBorrador ? ' borrador' : ''}">
+    ${cabecera(informe, opciones)}
+    ${secciones}
+  </div>`;
+
+  if (opciones.documentoCompleto === false) return cuerpo;
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(informe.numeroInforme)}</title>
+<style>${REPORT_STYLES}</style>
+</head>
+<body>${cuerpo}</body>
+</html>`;
+}
