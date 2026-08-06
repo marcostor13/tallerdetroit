@@ -21,6 +21,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@sentry/node": "^10.69.0",
     "bullmq": "^5.81.3",
+    "docx": "^9.7.1",
     "mongoose": "^8.24.2",
     "nestjs-pino": "^4.3.0",
     "pino-http": "^10.4.0",

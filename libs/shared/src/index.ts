@@ -17,4 +17,5 @@ export * from './domain/figures';
 export * from './domain/csv';
 export * from './render/report-styles';
 export * from './render/report-html';
+export * from './render/report-docx-model';
 export * from './design/tokens';

@@ -5,12 +5,14 @@ import type { Job } from 'bullmq';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import {
+  buildDocxModel,
   renderReportHtml,
   type InformeRenderizable,
   type TemplateVersionDefinition,
 } from '@dps/shared';
 import { toString as qrToString } from 'qrcode';
 import { PdfRenderer } from './pdf.renderer';
+import { DocxRenderer } from './docx.renderer';
 
 export const COLA_DOCUMENTOS = 'documentos';
 
@@ -27,15 +29,18 @@ export interface TrabajoDePdf {
   readonly urlVerificacion?: string;
 }
 
-export interface ResultadoDePdf {
+export interface ResultadoDeDocumento {
   /** Lo devuelve para que la API sepa a qué informe anotarlo (E3.4). */
   readonly informeId: string;
-  readonly tipo: 'pdf';
+  readonly tipo: 'pdf' | 'docx';
   readonly s3Key: string;
   readonly hash: string;
   readonly bytes: number;
   readonly milisegundos: number;
 }
+
+/** Nombre anterior, conservado para no romper a quien lo importe. */
+export type ResultadoDePdf = ResultadoDeDocumento;
 
 /**
  * Generación del PDF del informe (E1.7).
@@ -56,6 +61,7 @@ export class DocumentsProcessor extends WorkerHost {
 
   constructor(
     private readonly renderer: PdfRenderer,
+    private readonly docx: DocxRenderer,
     private readonly config: ConfigService,
   ) {
     super();
@@ -78,7 +84,81 @@ export class DocumentsProcessor extends WorkerHost {
         : null;
   }
 
-  async process(job: Job<TrabajoDePdf>): Promise<ResultadoDePdf> {
+  async process(job: Job<TrabajoDePdf>): Promise<ResultadoDeDocumento> {
+    // El nombre del trabajo decide el formato. Dos colas separadas competirían
+    // por el mismo Chromium sin necesidad: lo pesado es el PDF, y el DOCX que
+    // se genera después reutiliza el mismo proceso.
+    return job.name === 'docx' ? this.generarDocx(job) : this.generarPdf(job);
+  }
+
+  /**
+   * Export a Word (E3.5).
+   *
+   * Las fotos se descargan aquí, de las mismas URLs firmadas que usa el PDF: en
+   * un `.docx` las imágenes van **dentro** del archivo, no enlazadas, porque un
+   * Word cuyas fotos apuntan a una URL caducada se abre en blanco a los quince
+   * minutos.
+   */
+  private async generarDocx(job: Job<TrabajoDePdf>): Promise<ResultadoDeDocumento> {
+    const inicio = Date.now();
+    const { informeId, informe, plantilla, imagenes } = job.data;
+
+    const modelo = buildDocxModel(informe, plantilla);
+    const descargadas = await this.descargar(imagenes);
+    const archivo = await this.docx.generar(modelo, descargadas);
+
+    const hash = `sha256:${createHash('sha256').update(archivo).digest('hex')}`;
+    const s3Key =
+      job.data.s3Key ??
+      `informes/${new Date().getFullYear()}/${informeId}/${informe.numeroInforme}.docx`;
+
+    if (this.s3 && this.bucket) {
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: s3Key,
+          Body: archivo,
+          ContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          Metadata: { informeid: informeId, hash },
+        }),
+      );
+    } else {
+      this.logger.warn(`Sin S3 configurado: el DOCX de ${informe.numeroInforme} no se guardó.`);
+    }
+
+    const milisegundos = Date.now() - inicio;
+    this.logger.log(
+      `DOCX de ${informe.numeroInforme}: ${Math.round(archivo.length / 1024)} KB, ${milisegundos} ms.`,
+    );
+
+    return { informeId, tipo: 'docx', s3Key, hash, bytes: archivo.length, milisegundos };
+  }
+
+  /**
+   * Descarga las fotos para incrustarlas.
+   *
+   * Una que falle se omite: el informe sale sin esa imagen pero con su pie, que
+   * es mejor que no salir. Un `.docx` que no se genera porque una foto dio 403
+   * deja al técnico sin el documento que necesita entregar.
+   */
+  private async descargar(urls: Record<string, string>): Promise<Record<string, Buffer>> {
+    const entradas = await Promise.all(
+      Object.entries(urls).map(async ([clave, url]) => {
+        try {
+          const respuesta = await fetch(url);
+          if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+          return [clave, Buffer.from(await respuesta.arrayBuffer())] as const;
+        } catch (e: unknown) {
+          this.logger.warn(`No se pudo descargar ${clave}: ${String(e)}`);
+          return null;
+        }
+      }),
+    );
+
+    return Object.fromEntries(entradas.filter((e): e is [string, Buffer] => e !== null));
+  }
+
+  private async generarPdf(job: Job<TrabajoDePdf>): Promise<ResultadoDeDocumento> {
     const inicio = Date.now();
     const { informeId, informe, plantilla, imagenes, logo } = job.data;
 

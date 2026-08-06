@@ -207,8 +207,9 @@ export class ReportsController {
       'vuelve a renderizar: un render nuevo daría otro hash aunque el contenido ' +
       'fuese idéntico, y el PDF que tiene el cliente dejaría de validar (RN-02).',
   })
-  documento(@Param('id') id: string) {
-    return this.informes.documento(id);
+  @ApiQuery({ name: 'tipo', required: false, enum: ['pdf', 'docx'] })
+  documento(@Param('id') id: string, @Query('tipo') tipo?: string) {
+    return this.informes.documento(id, tipo === 'docx' ? 'docx' : 'pdf');
   }
 
   @Post(':id/comentarios')

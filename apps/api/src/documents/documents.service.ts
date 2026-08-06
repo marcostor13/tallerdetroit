@@ -45,9 +45,19 @@ export class DocumentsService {
     numeroInforme: string,
     fechaEmision?: Date | string | null,
   ): string {
+    return this.claveDeDocumento(informeId, numeroInforme, 'pdf', fechaEmision);
+  }
+
+  /** La misma regla para cualquier formato: solo cambia la extensión (E3.5). */
+  claveDeDocumento(
+    informeId: string,
+    numeroInforme: string,
+    tipo: 'pdf' | 'docx',
+    fechaEmision?: Date | string | null,
+  ): string {
     const fecha = fechaEmision ? new Date(fechaEmision) : new Date();
     const anio = isNaN(fecha.getTime()) ? new Date().getFullYear() : fecha.getFullYear();
-    return `informes/${anio}/${informeId}/${numeroInforme}.pdf`;
+    return `informes/${anio}/${informeId}/${numeroInforme}.${tipo}`;
   }
 
   /** Metadatos del PDF ya subido, o `null` si el worker no ha terminado. */
@@ -92,6 +102,24 @@ export class DocumentsService {
           'pdf',
           { informeId, informe, plantilla, imagenes, s3Key, urlVerificacion },
           { jobId: `pdf:${informeId}:${Date.now()}` },
+        ),
+        TIEMPO_MAXIMO_DE_ENCOLADO,
+      );
+
+      // El DOCX va detrás y en su propio trabajo (E3.5). Si se generara dentro
+      // del mismo, un fallo al descargar una foto para el Word se llevaría por
+      // delante el PDF, que es el documento que de verdad se entrega.
+      await this.conTope(
+        this.cola.add(
+          'docx',
+          {
+            informeId,
+            informe,
+            plantilla,
+            imagenes,
+            s3Key: s3Key?.replace(/\.pdf$/, '.docx'),
+          },
+          { jobId: `docx:${informeId}:${Date.now()}` },
         ),
         TIEMPO_MAXIMO_DE_ENCOLADO,
       );

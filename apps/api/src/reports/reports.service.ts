@@ -440,7 +440,12 @@ export class ReportsService {
       };
     }
 
-    const s3Key = this.documentos.claveDePdf(String(doc._id), doc.numeroInforme, doc.fechaEmision);
+    const s3Key = this.documentos.claveDeDocumento(
+      String(doc._id),
+      doc.numeroInforme,
+      tipo === 'docx' ? 'docx' : 'pdf',
+      doc.fechaEmision,
+    );
     const metadatos = await this.documentos.describir(s3Key);
 
     if (!metadatos?.hash) {
