@@ -10,6 +10,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MastersModule } from './masters/masters.module';
 import { TemplatesModule } from './templates/templates.module';
+import { WorkOrdersModule } from './work-orders/work-orders.module';
+import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -68,15 +70,20 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     AuthModule,
     MastersModule,
     TemplatesModule,
+    WorkOrdersModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
-    // WorkOrdersModule,
     // ReportsModule, MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).
   ],
   providers: [
+    // Los índices únicos se crean antes de atender la primera petición: con
+    // autoIndex apagado en producción no existían, y sin ellos dos informes
+    // pueden compartir número (RN-01).
+    IndexesService,
+
     // El orden importa: primero se limita, luego se autentica y por ultimo se
     // autoriza. Toda ruta queda protegida por defecto; las publicas lo declaran
     // con @Public(), que es mas seguro que tener que acordarse de proteger.
