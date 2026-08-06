@@ -16,7 +16,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | ---------------------------------------- | --------------------------------------- | ------- | ---------- |
 | **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle | 2–3     | 5-ago-2026 |
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
-| **F2** Mediciones dimensionales          | ⬜ Pendiente                            | 4–6     | —          |
+| **F2** Mediciones dimensionales          | 🟡 En curso — abierta 6-ago-2026        | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | ⬜ Pendiente                            | 5–7     | —          |
 | **F4** PWA, movilidad y offline          | ⬜ Pendiente                            | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                            | 4–6     | —          |
@@ -209,7 +209,7 @@ inversión posterior en analítica.
 |                |                                                                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Duración**   | 4–6 semanas                                                                                                                       |
-| **Depende de** | F1 · **especificaciones y tolerancias validadas contra el manual MTU (bloqueante, D1)** · **D2** (semántica del signo en muñones) |
+| **Depende de** | F1 (11/13 criterios; los dos abiertos son DT-1 y DT-2) · ~~D1~~ **resuelta**: carga manual, con lo cargado desde informes marcado `provisional` · ~~D2~~ **resuelta**: modo `absoluto` / `desviacion` |
 | **Bloquea a**  | F5                                                                                                                                |
 
 > **El hallazgo que gobierna la fase:** el número de columnas de cada grilla y sus tolerancias se
@@ -492,6 +492,24 @@ Bloquean fases concretas. Resolverlas es responsabilidad del negocio, no del equ
 asociados a su equipo y motor es barato y da valor inmediato. Extraer sus mediciones a
 `measurementFacts` es caro y solo se justifica si el negocio quiere curvas de desgaste retroactivas
 — decidirlo con datos reales de esfuerzo tras F5.
+
+---
+
+# Deuda técnica
+
+Lo que se deja pendiente a sabiendas, con la razón y lo que hace falta para
+saldarlo. No es una lista de deseos: cada línea bloquea algo concreto.
+
+| #   | Qué queda pendiente | Por qué se deja | Qué hace falta para saldarlo | Riesgo si no se salda |
+| --- | ------------------- | --------------- | ---------------------------- | --------------------- |
+| DT-1 | **Prueba de fidelidad del OT-746**: un técnico reproduce el informe en la plataforma y un supervisor no distingue, en una comparación ciega, cuál PDF salió del Word | No se puede automatizar. Necesita el informe original, un técnico que lo transcriba y un supervisor que no sepa cuál es cuál | Media jornada de un técnico y una hora de un supervisor, con el OT-746 impreso delante | **Alto.** Es el criterio que decide si los técnicos migran. Si el PDF no aguanta la comparación, F1 no vale para nada por muchos tests que pasen |
+| DT-2 | **Lo mismo con el OT-898** | Ídem. La mitad que sí dependía de nosotros —que no haga falta tocar código para el segundo informe— **está verificada** en `report-html.spec.ts` | Lo mismo que DT-1, con el OT-898 | **Medio.** El motor de plantillas ya está probado; lo que falta es el acabado del documento |
+| DT-3 | **NFR-02 medido contra Atlas**, no contra Mongo en memoria | La medida actual (p95 18 ms) excluye la latencia de red, que es donde se consume el margen de 500 ms | Repetir el banco de `reports.e2e.spec.ts` apuntando a la base de develop | **Medio.** Si el autoguardado se percibe lento, el técnico deja de fiarse y guarda a mano |
+| DT-4 | **S3 y Redis sin credenciales en Coolify** | Están fuera del repositorio a propósito (§20) | Cargar las variables en los dos recursos de Coolify | **Alto.** Sin ellas no hay fotografías ni PDF: dos de las diez épicas de F1 no se pueden usar |
+| DT-5 | **Contraseñas de producción sin rotar** tras la siembra inicial | Se generaron para verificar el despliegue | Rotarlas o purgar las cuentas de prueba antes de exponer la plataforma | **Alto** en cuanto la plataforma sea accesible desde fuera |
+
+> DT-1 y DT-2 son las que mantienen F1 abierta. Las demás no impiden avanzar a
+> F2, pero sí impiden dar F1 por entregada.
 
 ---
 

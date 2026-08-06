@@ -83,9 +83,8 @@ export const EngineModelSchema = SchemaFactory.createForClass(EngineModel);
 EngineModelSchema.index({ marcaId: 1, denominacion: 1 }, { unique: true });
 EngineModelSchema.index({ denominacion: 'text' });
 
-/** Cilindros por banco: es el número de columnas de las grillas de biela. */
-EngineModelSchema.virtual('cilindrosPorBanco').get(function (this: EngineModel) {
-  return Math.floor(this.cilindros / this.bancos);
-});
-EngineModelSchema.set('toJSON', { virtuals: true });
-EngineModelSchema.set('toObject', { virtuals: true });
+// Los cilindros por banco NO se exponen aquí. Como virtual desaparecían en
+// cuanto la consulta usaba `lean()` —que es lo que hace el servicio de
+// maestros—, así que existían en unas rutas y no en otras. Se derivan con
+// `cylindersPerBank` de `libs/shared`, que es la misma función que usa
+// `resolveColumns` para calcular las columnas de la grilla.

@@ -15,7 +15,8 @@
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "seed:users": "ts-node -r tsconfig-paths/register src/seeds/users.seed.ts",
-    "seed:templates": "ts-node -r tsconfig-paths/register src/seeds/templates.seed.ts"
+    "seed:templates": "ts-node -r tsconfig-paths/register src/seeds/templates.seed.ts",
+    "seed:measurements": "ts-node -r tsconfig-paths/register src/seeds/measurements.seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1104.0",

@@ -5,6 +5,12 @@ import { SiteSchema } from './schemas/site.schema';
 import { EquipmentSchema } from './schemas/equipment.schema';
 import { EngineSchema } from './schemas/engine.schema';
 import { EngineModelSchema } from './schemas/engine-model.schema';
+import { EngineSpecSchema } from './schemas/engine-spec.schema';
+import {
+  ComponentVerdictSchema,
+  EngineComponentSchema,
+  UnitSchema,
+} from './schemas/measurement-catalogs.schema';
 import { BusinessUnitSchema } from './schemas/business-unit.schema';
 import { OrganizationSchema } from './schemas/organization.schema';
 import {
@@ -103,6 +109,54 @@ export const MASTERS: readonly MasterDefinition[] = [
     // Sin creación inline: de estos campos dependen las grillas de medición
     // (§12.2), así que un alta al vuelo con datos a medias produciría grillas
     // incorrectas. Lo da de alta Administración.
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  // --- Maestros técnicos del módulo de mediciones (F2, §12) ---
+  {
+    key: 'engine-specs',
+    model: 'EngineSpec',
+    schema: EngineSpecSchema,
+    label: 'especificación de motor',
+    searchFields: ['parametro', 'denominacion'],
+    displayField: 'parametro',
+    filterFields: ['engineModelId', 'provisional'],
+    // Sin alta rápida: una tolerancia mal cargada no produce un aviso, produce
+    // un informe que da por bueno un motor que no lo está. La carga es manual
+    // y deliberada (decisión D1).
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  {
+    key: 'engine-components',
+    model: 'EngineComponent',
+    schema: EngineComponentSchema,
+    label: 'componente de motor',
+    searchFields: ['denominacion', 'clave'],
+    displayField: 'denominacion',
+    filterFields: ['grupo', 'padreId'],
+    inlineFields: ['clave', 'denominacion', 'grupo'],
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  {
+    key: 'units',
+    model: 'Unit',
+    schema: UnitSchema,
+    label: 'unidad de medida',
+    searchFields: ['simbolo', 'denominacion'],
+    displayField: 'simbolo',
+    filterFields: ['magnitud'],
+    readPermission: 'masters:read',
+    writePermission: 'masters:write',
+  },
+  {
+    key: 'component-verdicts',
+    model: 'ComponentVerdictMaster',
+    schema: ComponentVerdictSchema,
+    label: 'veredicto de componente',
+    searchFields: ['denominacion', 'clave'],
+    displayField: 'denominacion',
     readPermission: 'masters:read',
     writePermission: 'masters:write',
   },

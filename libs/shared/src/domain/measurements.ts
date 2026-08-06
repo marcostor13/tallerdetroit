@@ -128,6 +128,19 @@ export interface EngineGridDimensions {
 }
 
 /**
+ * Cilindros por banco: el número de columnas de las grillas de biela.
+ *
+ * Vive aquí y no como campo del modelo de motor, ni como *virtual* de Mongoose.
+ * Como campo, alguien acabaría guardando 20 cilindros con 8 por banco y la
+ * grilla saldría torcida sin que nada avisara. Como virtual, desaparece en
+ * cuanto una consulta usa `lean()` —que es la mayoría—, con lo que existiría en
+ * unas rutas y no en otras: peor aún, porque parece que está.
+ */
+export function cylindersPerBank(engine: EngineGridDimensions): number {
+  return Math.floor(engine.cilindros / engine.bancos);
+}
+
+/**
  * Resuelve las columnas de una grilla a partir del modelo de motor.
  *
  * Ejemplo real: el MTU 20V4000C23 (motor 5282011236) produce 11 columnas de
