@@ -15,7 +15,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | Fase                                     | Estado                                  | Semanas | Cierre     |
 | ---------------------------------------- | --------------------------------------- | ------- | ---------- |
 | **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle | 2–3     | 5-ago-2026 |
-| **F1** Núcleo de informes (MVP)          | 🟡 En curso — backend E1.1/E1.2/E1.3/E1.5/E1.9 | 7–9     | —          |
+| **F1** Núcleo de informes (MVP)          | 🟡 Épicas implementadas — criterios sin verificar | 7–9     | —          |
 | **F2** Mediciones dimensionales          | ⬜ Pendiente                            | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | ⬜ Pendiente                            | 5–7     | —          |
 | **F4** PWA, movilidad y offline          | ⬜ Pendiente                            | 4–6     | —          |
@@ -158,14 +158,19 @@ Esqueleto desplegado en develop · pipeline verde · `infra/COOLIFY.md` aplicado
 | ✅ **E1.2 Motor de plantillas (runtime)** | Modelo `templateVersions` con secciones y bloques embebidos · semilla de SER-FOR-002 v01 · renderizado del formulario desde la definición · visibilidad condicional declarativa                                                                                                           |
 | ✅ **E1.3 Órdenes de trabajo**         | CRUD mínimo de OT · relación OT ↔ informes (1..n)                                                                                                                                                                                                                                         |
 | ~~**E1.4 Correlativos**~~              | ❌ **Fuera de alcance (D3).** El número de informe y el de OT se escriben a mano. En su lugar: validación de formato y **unicidad** del número. `sequences` queda para cuando el negocio fije la convención                                                                               |
-| 🟡 **E1.5 Editor de informes**         | *(backend hecho; falta el wizard)* Wizard de 6 pasos · cascada Cliente→Sede→Equipo→Motor con autocompletado · **autoguardado cada 20–30 s** con indicador · bloques `work_task` ordenables por drag & drop **con alternativa por teclado** · `rich_text` · `bullet_list` · `items_table` · duplicar informe anterior (UX-05) |
-| **E1.6 Evidencia fotográfica**         | Subida directa a S3 con URL prefirmada · **compresión en cliente** (máx. 1600 px, JPEG q80) · caption obligatorio · numeración `Fig.NN` automática y recalculada al reordenar · derivados thumb/web/print en el worker                                                                    |
-| **E1.7 Generación de PDF**             | Render servidor con Playwright · réplica fiel de la cabecera SER-FOR-002 · tablas de datos generales y de equipo · bloques con fotos en pares · reglas de paginación (mantener juntos título+párrafo, foto+caption, tabla completa)                                                       |
-| **E1.8 Bandeja e historial**           | Listado con filtros (estado, cliente, equipo, motor, técnico, fecha) · búsqueda · descarga · vista móvil como lista de cards                                                                                                                                                              |
+| ✅ **E1.5 Editor de informes**         | Wizard de 6 pasos · cascada Cliente→Sede→Equipo→Motor con autocompletado · **autoguardado cada 20–30 s** con indicador · bloques `work_task` ordenables por drag & drop **con alternativa por teclado** · `rich_text` · `bullet_list` · `items_table` · duplicar informe anterior (UX-05) |
+| ✅ **E1.6 Evidencia fotográfica**      | Subida directa a S3 con URL prefirmada · **compresión en cliente** (máx. 1600 px, JPEG q80) · caption obligatorio · numeración `Fig.NN` automática y recalculada al reordenar · derivados thumb/web/print en el worker                                                                    |
+| ✅ **E1.7 Generación de PDF**          | Render servidor con Playwright · réplica fiel de la cabecera SER-FOR-002 · tablas de datos generales y de equipo · bloques con fotos en pares · reglas de paginación (mantener juntos título+párrafo, foto+caption, tabla completa)                                                       |
+| ✅ **E1.8 Bandeja e historial**        | Listado con filtros (estado, cliente, equipo, motor, técnico, fecha) · búsqueda · descarga · vista móvil como lista de cards                                                                                                                                                              |
 | ✅ **E1.9 Estados básicos**            | `borrador` → `emitido` (el flujo de revisión completo llega en F3)                                                                                                                                                                                                                        |
-| **E1.10 Vista previa**                 | Panel lateral WYSIWYG idéntico al PDF (UX-06)                                                                                                                                                                                                                                             |
+| ✅ **E1.10 Vista previa**              | Panel lateral WYSIWYG idéntico al PDF (UX-06)                                                                                                                                                                                                                                             |
 
 ## Criterios de aceptación
+
+> **Estado (6-ago-2026):** las diez épicas están implementadas y con tests, pero
+> **ningún criterio de esta lista está verificado todavía**. Verificarlos exige
+> datos reales, un entorno desplegado y un supervisor del negocio; sin eso la
+> fase no se cierra, por mucho código que haya.
 
 - [ ] **Prueba de fidelidad:** un técnico reproduce íntegramente el informe **OT746** en la plataforma;
       en una comparación ciega, un supervisor no identifica cuál PDF salió del Word y cuál de la plataforma
