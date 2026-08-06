@@ -1,5 +1,25 @@
 import type { Routes } from '@angular/router';
 import { authGuard, guestGuard, permissionGuard } from './core/auth/auth.guard';
+import { environment } from '../environments/environment';
+
+/**
+ * Bancos de prueba de componentes, para verificarlos en un navegador real
+ * antes de que la pantalla que los usa exista.
+ *
+ * **Fuera del artefacto de producción.** Con `production` en true el array
+ * queda vacío y el `loadComponent` nunca se evalúa, así que el componente ni
+ * siquiera entra en el bundle.
+ */
+const rutasDePrueba: Routes = environment.production
+  ? []
+  : [
+      {
+        path: 'pruebas/grilla',
+        title: 'Banco de pruebas — grilla de medición',
+        loadComponent: () =>
+          import('./features/mediciones/banco-grilla.page').then((m) => m.BancoGrillaPage),
+      },
+    ];
 
 /**
  * Rutas de la aplicación.
@@ -9,6 +29,7 @@ import { authGuard, guestGuard, permissionGuard } from './core/auth/auth.guard';
  * Las rutas de negocio se van habilitando por fase según `PLAN.md`.
  */
 export const routes: Routes = [
+  ...rutasDePrueba,
   {
     path: 'login',
     canActivate: [guestGuard],
