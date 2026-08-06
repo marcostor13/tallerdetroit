@@ -30,6 +30,19 @@ const rutasDePrueba: Routes = environment.production
  */
 export const routes: Routes = [
   ...rutasDePrueba,
+  /**
+   * Verificación pública (E3.6): el destino del QR del documento.
+   *
+   * Fuera del shell y sin `authGuard` a propósito. Un QR impreso que exige
+   * iniciar sesión no lo escanea nadie, y quien lo escanea suele ser el
+   * cliente o un auditor, que no tienen cuenta.
+   */
+  {
+    path: 'v/:numero',
+    title: 'Verificación de informe — Detroit Power System',
+    loadComponent: () =>
+      import('./features/verificacion/verificacion.page').then((m) => m.VerificacionPage),
+  },
   {
     path: 'login',
     canActivate: [guestGuard],

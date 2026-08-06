@@ -1,7 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -106,6 +111,34 @@ export class MediaService {
     return getSignedUrl(s3, new GetObjectCommand({ Bucket: this.bucket as string, Key: s3Key }), {
       expiresIn: this.ttl,
     });
+  }
+
+  /**
+   * Metadatos del objeto, o `null` si todavía no existe (E3.4).
+   *
+   * Lo usa la descarga del documento emitido: el worker sube el PDF con su
+   * hash en los metadatos, y la API lo lee de ahí en vez de volver a
+   * renderizar. Un render nuevo daría otro hash aunque el contenido fuera
+   * idéntico —basta con que cambie la fecha de creación del PDF— y el archivo
+   * que tiene el cliente dejaría de validar.
+   */
+  async describir(s3Key: string): Promise<{ hash: string | null; bytes: number | null } | null> {
+    if (!this.cliente) return null;
+
+    try {
+      const salida = await this.cliente.send(
+        new HeadObjectCommand({ Bucket: this.bucket as string, Key: s3Key }),
+      );
+      return {
+        // S3 devuelve los metadatos de usuario en minúsculas, siempre.
+        hash: salida.Metadata?.['hash'] ?? null,
+        bytes: salida.ContentLength ?? null,
+      };
+    } catch {
+      // Un 404 aquí es lo normal mientras el worker no ha terminado: no es un
+      // error, es «todavía no está».
+      return null;
+    }
   }
 
   private exigirCliente(): S3Client {

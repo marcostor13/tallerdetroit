@@ -1,4 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import type { TemplateVersionDefinition } from '@dps/shared';
@@ -24,12 +25,58 @@ export class DocumentsService {
   constructor(
     @InjectQueue(COLA_DOCUMENTOS) private readonly cola: Queue,
     private readonly media: MediaService,
+    private readonly config: ConfigService,
   ) {}
+
+  /**
+   * Dónde vive el PDF de un informe (E3.4).
+   *
+   * La calcula la API y viaja en el trabajo, en vez de derivarla dos veces por
+   * separado: si el worker la construyera por su cuenta, un cambio en una de
+   * las dos dejaría los documentos donde nadie los busca.
+   *
+   * El año sale de la fecha de emisión, no de `Date.now()`. Un informe emitido
+   * en diciembre cuyo PDF se pida en enero tiene que seguir estando donde
+   * estaba: con el año actual, la clave cambiaría sola al pasar de año y la
+   * reimpresión no encontraría nada.
+   */
+  claveDePdf(
+    informeId: string,
+    numeroInforme: string,
+    fechaEmision?: Date | string | null,
+  ): string {
+    const fecha = fechaEmision ? new Date(fechaEmision) : new Date();
+    const anio = isNaN(fecha.getTime()) ? new Date().getFullYear() : fecha.getFullYear();
+    return `informes/${anio}/${informeId}/${numeroInforme}.pdf`;
+  }
+
+  /** Metadatos del PDF ya subido, o `null` si el worker no ha terminado. */
+  describir(s3Key: string) {
+    return this.media.describir(s3Key);
+  }
+
+  firmarLectura(s3Key: string): Promise<string> {
+    return this.media.firmarLectura(s3Key);
+  }
+
+  /**
+   * A dónde lleva el QR del pie (E3.6).
+   *
+   * Sale de `PUBLIC_APP_URL` y no del primer origen de CORS: el QR va impreso
+   * en un documento que dura años, y no puede depender de cuál sea el primer
+   * elemento de una lista que alguien reordene un día.
+   */
+  urlDeVerificacion(numeroInforme: string): string {
+    const base = (this.config.get<string>('PUBLIC_APP_URL') ?? '').replace(/\/+$/, '');
+    return `${base}/v/${encodeURIComponent(numeroInforme)}`;
+  }
 
   async encolarPdf(
     informeId: string,
     informe: Record<string, unknown>,
     plantilla: TemplateVersionDefinition,
+    s3Key?: string,
+    urlVerificacion?: string,
   ): Promise<void> {
     try {
       // Las URLs firmadas se resuelven aquí y no en el worker: así el worker no
@@ -43,7 +90,7 @@ export class DocumentsService {
       await this.conTope(
         this.cola.add(
           'pdf',
-          { informeId, informe, plantilla, imagenes },
+          { informeId, informe, plantilla, imagenes, s3Key, urlVerificacion },
           { jobId: `pdf:${informeId}:${Date.now()}` },
         ),
         TIEMPO_MAXIMO_DE_ENCOLADO,

@@ -9,20 +9,28 @@ import {
   type InformeRenderizable,
   type TemplateVersionDefinition,
 } from '@dps/shared';
+import { toString as qrToString } from 'qrcode';
 import { PdfRenderer } from './pdf.renderer';
 
 export const COLA_DOCUMENTOS = 'documentos';
 
 export interface TrabajoDePdf {
   readonly informeId: string;
+  /** Clave de S3, calculada por la API para que las dos partes coincidan. */
+  readonly s3Key?: string;
   readonly informe: InformeRenderizable;
   readonly plantilla: TemplateVersionDefinition;
   /** `s3Key` → URL firmada de lectura, resueltas por la API antes de encolar. */
   readonly imagenes: Record<string, string>;
   readonly logo?: string;
+  /** A dónde lleva el QR del pie: la vista pública de verificación (E3.6). */
+  readonly urlVerificacion?: string;
 }
 
 export interface ResultadoDePdf {
+  /** Lo devuelve para que la API sepa a qué informe anotarlo (E3.4). */
+  readonly informeId: string;
+  readonly tipo: 'pdf';
   readonly s3Key: string;
   readonly hash: string;
   readonly bytes: number;
@@ -74,21 +82,51 @@ export class DocumentsProcessor extends WorkerHost {
     const inicio = Date.now();
     const { informeId, informe, plantilla, imagenes, logo } = job.data;
 
-    const html = renderReportHtml(informe, plantilla, {
-      // Las URLs firmadas las resuelve la API antes de encolar: el worker no
-      // tiene por qué conocer las credenciales de lectura del bucket.
-      resolverImagen: (clave) => imagenes[clave] ?? clave,
-      logo,
-      codigoFormato: plantilla.codigo,
-      versionFormato: plantilla.version,
-    });
+    const { urlVerificacion } = job.data;
+
+    const componer = (verificacion?: { url?: string; qr?: string; hash?: string }) =>
+      renderReportHtml(informe, plantilla, {
+        // Las URLs firmadas las resuelve la API antes de encolar: el worker no
+        // tiene por qué conocer las credenciales de lectura del bucket.
+        resolverImagen: (clave) => imagenes[clave] ?? clave,
+        logo,
+        codigoFormato: plantilla.codigo,
+        versionFormato: plantilla.version,
+        ...(verificacion ? { verificacion } : {}),
+      });
+
+    /**
+     * El hash impreso NO puede ser el del PDF.
+     *
+     * Meterlo dentro del propio archivo cambia el archivo, y con él el hash:
+     * es circular y no tiene solución. Lo que se imprime es el hash del
+     * **contenido** —el HTML del informe sin el pie—, que es reproducible:
+     * quien quiera comprobarlo vuelve a componer el mismo informe y le sale el
+     * mismo número. El hash de los bytes del PDF, que es el que demuestra que
+     * el archivo no se ha tocado, viaja en los metadatos de S3 y lo sirve la
+     * API en la verificación.
+     */
+    const hashContenido = `sha256:${createHash('sha256').update(componer()).digest('hex')}`;
+
+    const html = urlVerificacion
+      ? componer({
+          url: urlVerificacion,
+          qr: await this.qr(urlVerificacion),
+          hash: hashContenido,
+        })
+      : componer();
 
     const pdf = await this.renderer.generar(html);
 
     // El hash es lo que hace verificable un documento emitido: permite
     // demostrar que el PDF que tiene el cliente es el que salió de aquí.
     const hash = `sha256:${createHash('sha256').update(pdf).digest('hex')}`;
-    const s3Key = `informes/${new Date().getFullYear()}/${informeId}/${informe.numeroInforme}.pdf`;
+    // La clave la manda la API: tiene que ser la misma que ella use luego para
+    // encontrar el documento, y derivarla dos veces por separado es pedir que un
+    // día dejen de coincidir. La de aquí es solo el respaldo.
+    const s3Key =
+      job.data.s3Key ??
+      `informes/${new Date().getFullYear()}/${informeId}/${informe.numeroInforme}.pdf`;
 
     if (this.s3 && this.bucket) {
       await this.s3.send(
@@ -114,6 +152,30 @@ export class DocumentsProcessor extends WorkerHost {
       `PDF de ${informe.numeroInforme}: ${fotos} fotos, ${Math.round(pdf.length / 1024)} KB, ${milisegundos} ms.`,
     );
 
-    return { s3Key, hash, bytes: pdf.length, milisegundos };
+    return { informeId, tipo: 'pdf', s3Key, hash, bytes: pdf.length, milisegundos };
+  }
+
+  /**
+   * El QR del pie, como SVG en `data:`.
+   *
+   * SVG y no PNG porque el documento se imprime: un QR rasterizado a 22 mm sale
+   * con los módulos borrosos y hay escáneres que no lo leen. Corrección de
+   * errores media: el pie de un informe de taller acaba con manchas.
+   *
+   * Si falla, el documento sale sin QR en vez de no salir. El PDF es lo que el
+   * cliente espera; el código de verificación es una comodidad.
+   */
+  private async qr(url: string): Promise<string | undefined> {
+    try {
+      const svg = await qrToString(url, {
+        type: 'svg',
+        errorCorrectionLevel: 'M',
+        margin: 0,
+      });
+      return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+    } catch (e: unknown) {
+      this.logger.warn(`No se pudo generar el QR de verificación: ${String(e)}`);
+      return undefined;
+    }
   }
 }

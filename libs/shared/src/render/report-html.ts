@@ -103,6 +103,36 @@ export interface OpcionesDeRender {
    * taller la hoja se imprime suelta para llevarla al banco.
    */
   readonly conAnexoDeMediciones?: boolean;
+
+  /**
+   * Verificación del documento emitido (E3.6).
+   *
+   * El QR llega ya generado —como `data:` o URL— en vez de generarlo aquí: la
+   * vista previa corre en el navegador y `libs/shared` no puede arrastrar una
+   * librería de códigos de barras al bundle de la PWA por un pie de página que
+   * en el borrador ni siquiera sale.
+   */
+  readonly verificacion?: {
+    /** A dónde lleva el QR. */
+    readonly url?: string;
+    /** Imagen del QR, ya resuelta por quien renderiza. */
+    readonly qr?: string;
+    /** `sha256:…` del PDF. En el pie sale abreviado. */
+    readonly hash?: string | null;
+  };
+}
+
+/**
+ * Hash abreviado para el pie.
+ *
+ * Doce caracteres bastan para comprobar a ojo que dos documentos son el mismo y
+ * caben en una línea impresa; los sesenta y cuatro completos no caben y nadie
+ * los compara carácter a carácter.
+ */
+export function hashAbreviado(hash: string | null | undefined): string {
+  if (!hash) return '';
+  const limpio = hash.replace(/^sha256:/, '');
+  return limpio.slice(0, 12).toUpperCase();
 }
 
 /** Escapa lo que venga del usuario. El texto del informe lo escribe una persona. */
@@ -501,6 +531,38 @@ function contextoDe(informe: InformeRenderizable): Record<string, unknown> {
   };
 }
 
+/**
+ * Pie de verificación (E3.6).
+ *
+ * Solo en el documento emitido. Un borrador no tiene hash —todavía no existe el
+ * archivo— y poner un QR que lleva a «este informe no está emitido» invita a
+ * escanearlo para nada.
+ *
+ * Lleva el hash **además** del QR: el código se escanea con un teléfono, pero el
+ * informe también se archiva impreso y se coteja a mano, y para eso hace falta
+ * algo legible.
+ */
+function pieDeVerificacion(informe: InformeRenderizable, opciones: OpcionesDeRender): string {
+  const verificacion = opciones.verificacion;
+  if (!verificacion || informe.estado !== 'emitido') return '';
+
+  const hash = hashAbreviado(verificacion.hash);
+  if (!hash && !verificacion.url) return '';
+
+  const qr = verificacion.qr
+    ? `<img class="verificacion__qr" src="${escapeHtml(verificacion.qr)}" alt="Código QR de verificación de ${escapeHtml(informe.numeroInforme)}" />`
+    : '';
+
+  return `<footer class="verificacion">
+    ${qr}
+    <div class="verificacion__texto">
+      <p class="verificacion__titulo">Verificación del documento</p>
+      ${verificacion.url ? `<p class="verificacion__url">${escapeHtml(verificacion.url)}</p>` : ''}
+      ${hash ? `<p class="verificacion__hash">SHA-256 · ${escapeHtml(hash)}</p>` : ''}
+    </div>
+  </footer>`;
+}
+
 function cabecera(informe: InformeRenderizable, opciones: OpcionesDeRender): string {
   const logo = opciones.logo
     ? `<img src="${escapeHtml(opciones.logo)}" alt="Detroit Power System" />`
@@ -587,6 +649,7 @@ export function renderReportHtml(
     ${cabecera(informe, opciones)}
     ${secciones}
     ${opciones.conAnexoDeMediciones === false ? '' : renderMeasurementSheet(informe)}
+    ${pieDeVerificacion(informe, opciones)}
   </div>`;
 
   if (opciones.documentoCompleto === false) return cuerpo;

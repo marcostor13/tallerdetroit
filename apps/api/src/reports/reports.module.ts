@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Report, ReportSchema } from './schemas/report.schema';
 import { MeasurementFact, MeasurementFactSchema } from './schemas/measurement-fact.schema';
 import { ReportsController } from './reports.controller';
+import { VerificacionController } from './verificacion.controller';
 import { ReportsService } from './reports.service';
 import { MeasurementsService } from './measurements.service';
 import { ChecklistService } from './checklist.service';
@@ -22,7 +23,7 @@ import { DocumentsModule } from '../documents/documents.module';
     TemplatesModule,
     DocumentsModule,
   ],
-  controllers: [ReportsController],
+  controllers: [ReportsController, VerificacionController],
   providers: [
     ReportsService,
     MeasurementsService,

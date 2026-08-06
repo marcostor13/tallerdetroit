@@ -181,6 +181,19 @@ export class ReportsController {
     return this.informes.guardarMedicion(id, bloqueId, body, actor);
   }
 
+  @Get(':id/documento')
+  @Permissions('reports:read')
+  @ApiOperation({
+    summary: 'Descarga el documento emitido (E3.4)',
+    description:
+      'Devuelve SIEMPRE el archivo que se generó al emitir, con su hash. No se ' +
+      'vuelve a renderizar: un render nuevo daría otro hash aunque el contenido ' +
+      'fuese idéntico, y el PDF que tiene el cliente dejaría de validar (RN-02).',
+  })
+  documento(@Param('id') id: string) {
+    return this.informes.documento(id);
+  }
+
   @Post(':id/comentarios')
   @Permissions('reports:read')
   @ApiOperation({

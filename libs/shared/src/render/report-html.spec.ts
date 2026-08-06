@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SER_FOR_002_V01 } from '../domain/ser-for-002';
 import {
   escapeHtml,
+  hashAbreviado,
   renderMeasurementSheet,
   renderReportHtml,
   type InformeRenderizable,
@@ -635,5 +636,77 @@ describe('Inventario de desarmado', () => {
 
   it('la tabla no se parte entre páginas', () => {
     expect(REPORT_STYLES).toMatch(/\.tabla-checklist\s*\{[\s\S]*?break-inside:\s*avoid/);
+  });
+});
+
+/**
+ * Pie de verificación del documento emitido (E3.6).
+ *
+ * Es lo que permite que alguien con el papel delante —el cliente, una
+ * auditoría— compruebe que el documento salió de la plataforma.
+ */
+describe('Pie de verificación', () => {
+  const conVerificacion = (extra: Partial<InformeRenderizable> = {}, verificacion = {}) =>
+    renderReportHtml({ ...informe, ...extra }, SER_FOR_002_V01, {
+      resolverImagen: (clave) => `https://cdn.ejemplo/${clave}`,
+      verificacion: {
+        url: 'https://tallerdetroit.tecdidata.com/v/ITS-T-E-26-003-0746',
+        hash: 'sha256:9f2b1c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9',
+        ...verificacion,
+      },
+    });
+
+  it('un informe emitido lleva su URL y su hash abreviado', () => {
+    const html = conVerificacion({ estado: 'emitido' });
+
+    expect(html).toContain('Verificación del documento');
+    expect(html).toContain('/v/ITS-T-E-26-003-0746');
+    // Doce caracteres: los sesenta y cuatro no caben en una línea impresa y
+    // nadie los compara carácter a carácter.
+    expect(html).toContain('SHA-256 · 9F2B1C3D4E5F');
+    expect(html).not.toContain('9f2b1c3d4e5f60718293a4b5c6d7e8f90a1b2c3d');
+  });
+
+  it('un borrador no lo lleva: todavía no hay archivo del que sacar el hash', () => {
+    expect(conVerificacion({ estado: 'borrador' })).not.toContain('Verificación del documento');
+    expect(conVerificacion({ estado: 'en_revision' })).not.toContain('Verificación del documento');
+    expect(conVerificacion({ estado: 'aprobado' })).not.toContain('Verificación del documento');
+  });
+
+  it('sin datos de verificación no aparece el pie, en vez de uno vacío', () => {
+    const html = renderReportHtml({ ...informe, estado: 'emitido' }, SER_FOR_002_V01, {
+      resolverImagen: (c) => c,
+    });
+    expect(html).not.toContain('Verificación del documento');
+  });
+
+  it('el QR lleva texto alternativo: el documento también se lee con lector', () => {
+    const html = conVerificacion(
+      { estado: 'emitido' },
+      { qr: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' },
+    );
+
+    expect(html).toContain('class="verificacion__qr"');
+    expect(html).toContain('alt="Código QR de verificación de ITS-T-E-26-003-0746"');
+  });
+
+  it('sin QR sale igual, con la URL escrita: se puede teclear', () => {
+    const html = conVerificacion({ estado: 'emitido' });
+    // La clase existe siempre en la hoja de estilos embebida; lo que no puede
+    // haber es la imagen.
+    expect(html).not.toContain('<img class="verificacion__qr"');
+    expect(html).toContain('/v/ITS-T-E-26-003-0746');
+  });
+});
+
+describe('hashAbreviado', () => {
+  it('quita el prefijo del algoritmo y deja doce en mayúsculas', () => {
+    expect(hashAbreviado('sha256:9f2b1c3d4e5f6071')).toBe('9F2B1C3D4E5F');
+  });
+
+  it('sin hash devuelve cadena vacía, no «undefined» impreso en el pie', () => {
+    expect(hashAbreviado(null)).toBe('');
+    expect(hashAbreviado(undefined)).toBe('');
+    expect(hashAbreviado('')).toBe('');
   });
 });

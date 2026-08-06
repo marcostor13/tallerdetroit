@@ -186,6 +186,40 @@ html, body {
 .firma__nombre { font-weight: 600; font-size: 9pt; }
 .firma__cargo { font-size: 8pt; color: var(--tinta-suave); text-transform: uppercase; }
 
+/* --- Pie de verificación (E3.6) -----------------------------------------
+   Empieza en la última página, no en una propia: es un pie, no un anexo. */
+.verificacion {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-top: 10mm;
+  padding-top: 3mm;
+  border-top: 0.5pt solid var(--tinta-suave);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.verificacion__qr {
+  width: 22mm;
+  height: 22mm;
+  flex: 0 0 auto;
+}
+.verificacion__titulo {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1mm;
+}
+.verificacion__url,
+.verificacion__hash {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 7.5pt;
+  color: var(--tinta-suave);
+  margin: 0;
+  word-break: break-all;
+}
+
 /* --- Marca de borrador ---------------------------------------------------
    Un borrador impreso sin distintivo se confunde con el documento emitido, y
    en un formato controlado eso es un problema de verdad. */

@@ -129,7 +129,7 @@ export class ReportsService {
   }
 
   async findById(id: string) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     return this.conFigurasNumeradas(doc.toObject());
   }
 
@@ -196,7 +196,7 @@ export class ReportsService {
    * este cliente ni siquiera tocó.
    */
   async patch(id: string, cambios: Record<string, unknown>, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const set: Record<string, unknown> = { updatedBy: new Types.ObjectId(actor.id) };
@@ -236,7 +236,7 @@ export class ReportsService {
   // --------------------------------------------------------------- bloques
 
   async addBlock(id: string, datos: Record<string, unknown>, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const plantilla = await this.plantillaDe(doc);
@@ -279,7 +279,7 @@ export class ReportsService {
     cambios: Record<string, unknown>,
     actor: AuthUser,
   ) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const bloque = doc.bloques.find((b) => b.id === bloqueId);
@@ -307,7 +307,7 @@ export class ReportsService {
    * bastaría para que un motor fuera de tolerancia quedara como correcto.
    */
   async guardarMedicion(id: string, bloqueId: string, captura: CapturaDeGrilla, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const bloque = doc.bloques.find((b) => b.id === bloqueId);
@@ -342,7 +342,7 @@ export class ReportsService {
     captura: CapturaDeChecklist,
     actor: AuthUser,
   ) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const bloque = doc.bloques.find((b) => b.id === bloqueId);
@@ -362,11 +362,111 @@ export class ReportsService {
     return this.conFigurasNumeradas(doc.toObject());
   }
 
+  // ------------------------------------------------ documento emitido (E3.4)
+
+  /**
+   * El PDF del informe emitido, con su hash.
+   *
+   * **No se vuelve a renderizar.** Reimprimir devuelve el mismo archivo que se
+   * generó al emitir, y por tanto el mismo hash: un render nuevo daría otro
+   * aunque el contenido fuera idéntico —basta con que cambie la fecha de
+   * creación que el propio PDF lleva dentro— y el documento que el cliente
+   * tiene en la mano dejaría de validar contra la plataforma (RN-02).
+   *
+   * La primera vez que se pide, el hash se lee de los metadatos que el worker
+   * dejó en S3 y se anota en el informe. A partir de ahí ya no hace falta ni
+   * preguntar al almacén.
+   */
+  async documento(id: string, tipo = 'pdf') {
+    const doc = await this.documentoDeInforme(id);
+
+    if (!isImmutable(doc.estado)) {
+      throw new ConflictException(
+        `El informe está «${doc.estado}»: el documento controlado solo existe una vez emitido.`,
+      );
+    }
+
+    const anotado = (doc.documentos ?? []).find((d) => d.tipo === tipo);
+    if (anotado) {
+      return {
+        tipo,
+        hash: anotado.hash,
+        bytes: anotado.bytes,
+        generadoEn: anotado.generadoEn,
+        url: await this.documentos.firmarLectura(anotado.s3Key),
+      };
+    }
+
+    const s3Key = this.documentos.claveDePdf(String(doc._id), doc.numeroInforme, doc.fechaEmision);
+    const metadatos = await this.documentos.describir(s3Key);
+
+    if (!metadatos?.hash) {
+      throw new NotFoundException(
+        'El documento todavía se está generando. Vuelve a intentarlo en unos segundos.',
+      );
+    }
+
+    // Se anota la primera vez que aparece. `$ne` sobre el tipo para que dos
+    // peticiones a la vez no dejen dos registros del mismo documento.
+    const generadoEn = new Date();
+    await this.informes.updateOne(
+      { _id: doc._id, 'documentos.tipo': { $ne: tipo } },
+      {
+        $push: {
+          documentos: { tipo, s3Key, hash: metadatos.hash, bytes: metadatos.bytes, generadoEn },
+        },
+      },
+    );
+
+    return {
+      tipo,
+      hash: metadatos.hash,
+      bytes: metadatos.bytes,
+      generadoEn,
+      url: await this.documentos.firmarLectura(s3Key),
+    };
+  }
+
+  /**
+   * Vista pública de verificación (E3.6).
+   *
+   * Es lo que abre el QR del pie del PDF. Devuelve **lo justo para saber que el
+   * documento es auténtico** —número, cliente, equipo, fecha, estado y hash— y
+   * nada del contenido técnico: cualquiera con el papel delante puede llegar
+   * aquí, incluido quien no debería leer las mediciones del motor de un cliente.
+   */
+  async verificar(numeroInforme: string) {
+    const doc = await this.informes
+      .findOne({ numeroInforme: numeroInforme.trim().toUpperCase(), deletedAt: null })
+      .select('numeroInforme numeroOt estado fechaEmision cliente equipo motor documentos')
+      .lean()
+      .exec();
+
+    if (!doc) throw new NotFoundException('No existe ningún informe con ese número.');
+
+    const pdf = (doc.documentos ?? []).find((d) => d.tipo === 'pdf');
+
+    return {
+      numeroInforme: doc.numeroInforme,
+      numeroOt: doc.numeroOt ?? null,
+      estado: doc.estado,
+      // Un informe anulado se verifica igual, y decirlo es justamente el
+      // objetivo: quien tenga el papel en la mano tiene que enterarse de que ya
+      // no vale.
+      vigente: doc.estado === 'emitido',
+      fechaEmision: doc.fechaEmision ?? null,
+      cliente: doc.cliente?.nombre ?? null,
+      equipo: (doc.equipo as Record<string, unknown> | undefined)?.['codigo'] ?? null,
+      motor: (doc.motor as Record<string, unknown> | undefined)?.['serie'] ?? null,
+      hash: pdf?.hash ?? null,
+    };
+  }
+
   // ------------------------------------------------------- revisión (E3.2)
 
   /** Añade un comentario de revisión anclado a un bloque (UX-08). */
   async comentar(id: string, entrada: NuevoComentario, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
 
     // A diferencia del resto de escrituras, comentar SÍ vale sobre un informe
     // emitido: es la vía para dejar constancia de un defecto detectado después,
@@ -388,7 +488,7 @@ export class ReportsService {
 
   /** Marca resuelto (o lo reabre): el supervisor comprueba, no da por hecho. */
   async resolverComentario(id: string, comentarioId: string, resuelto: boolean, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
 
     this.revision.resolver(doc, comentarioId, resuelto, actor);
     doc.updatedBy = new Types.ObjectId(actor.id);
@@ -414,7 +514,7 @@ export class ReportsService {
    * medias en vez de un componente que no se midió.
    */
   async quitarMedicion(id: string, bloqueId: string, plantilla: string, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const bloque = doc.bloques.find((b) => b.id === bloqueId);
@@ -435,7 +535,7 @@ export class ReportsService {
   }
 
   async removeBlock(id: string, bloqueId: string, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     const antes = doc.bloques.length;
@@ -460,7 +560,7 @@ export class ReportsService {
    * que el wizard se complete sin ratón (T2).
    */
   async reorderBlocks(id: string, desde: number, hasta: number, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     this.exigirEditable(doc);
 
     doc.bloques = moveBlock(doc.bloques, desde, hasta) as unknown as BloqueInforme[];
@@ -480,7 +580,7 @@ export class ReportsService {
    * clic, en lugar de descubrirlos de uno en uno.
    */
   async validate(id: string): Promise<{ emitible: boolean; faltan: MissingBlock[] }> {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     const plantilla = await this.plantillaDe(doc);
 
     const conDatos = new Set(doc.bloques.filter((b) => this.tieneContenido(b)).map((b) => b.clave));
@@ -561,7 +661,7 @@ export class ReportsService {
     propuestas: ConclusionPropuesta[];
     frecuentes: { texto: string; usos: number }[];
   }> {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
 
     const acciones = await this.accionesPorVeredicto();
     const propuestas = proposeConclusions(
@@ -637,7 +737,7 @@ export class ReportsService {
   // -------------------------------------------------------------- estados
 
   async transition(id: string, destino: ReportStatus, comentario: string | null, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     const origen = doc.estado;
 
     const transicion = REPORT_TRANSITIONS.find((t) => t.from === origen && t.to === destino);
@@ -691,7 +791,6 @@ export class ReportsService {
     }
 
     if (destino === 'emitido') {
-
       // Se congela la plantilla (§11.1): a partir de aquí el informe se
       // renderiza igual para siempre, publique Calidad lo que publique.
       doc.templateSnapshot = await this.plantillaDe(doc);
@@ -736,6 +835,8 @@ export class ReportsService {
         String(doc._id),
         emitido,
         doc.templateSnapshot as TemplateVersionDefinition,
+        this.documentos.claveDePdf(String(doc._id), doc.numeroInforme, doc.fechaEmision),
+        this.documentos.urlDeVerificacion(doc.numeroInforme),
       );
     }
 
@@ -743,7 +844,7 @@ export class ReportsService {
   }
 
   async remove(id: string, actor: AuthUser) {
-    const doc = await this.documento(id);
+    const doc = await this.documentoDeInforme(id);
     if (isImmutable(doc.estado)) {
       throw new ConflictException(
         `Un informe «${doc.estado}» no se borra: anúlalo para dejar constancia.`,
@@ -767,7 +868,7 @@ export class ReportsService {
 
   // ---------------------------------------------------------------- apoyo
 
-  private async documento(id: string): Promise<ReportDocument> {
+  private async documentoDeInforme(id: string): Promise<ReportDocument> {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('No existe ese informe.');
     const doc = await this.informes.findOne({ _id: id, deletedAt: null }).exec();
     if (!doc) throw new NotFoundException('No existe ese informe.');

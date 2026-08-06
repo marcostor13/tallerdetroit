@@ -69,6 +69,16 @@ export class EnvironmentVariables {
   @IsString()
   CORS_ORIGINS = 'http://localhost:4200';
 
+  /**
+   * Dónde vive la app pública. De aquí sale la URL del QR de verificación.
+   *
+   * Se declara aparte de `CORS_ORIGINS` aunque hoy coincidan: el QR va impreso
+   * en un documento que dura años, y no puede depender de cuál sea el primer
+   * origen de una lista que alguien reordene un día.
+   */
+  @IsString()
+  PUBLIC_APP_URL = 'http://localhost:4200';
+
   @IsOptional()
   @IsString()
   S3_ENDPOINT?: string;

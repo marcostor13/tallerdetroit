@@ -233,6 +233,36 @@ export class BloqueInforme {
 const BloqueInformeSchema = SchemaFactory.createForClass(BloqueInforme);
 
 /**
+ * Documento generado del informe (E3.4).
+ *
+ * El hash es lo que lo hace verificable: permite demostrar que el PDF que tiene
+ * el cliente es el que salió de aquí. Por eso se guarda **el primero que se
+ * generó** y no se vuelve a renderizar: reimprimir un informe emitido tiene que
+ * devolver byte a byte el mismo archivo, y un render nuevo cambiaría el hash
+ * aunque el contenido fuera idéntico —basta con que la fecha de creación del
+ * PDF sea otra— y el documento del cliente dejaría de validar (RN-02).
+ */
+@Schema({ _id: false })
+export class DocumentoGenerado {
+  @Prop({ type: String, required: true })
+  tipo!: string;
+
+  @Prop({ type: String, required: true })
+  s3Key!: string;
+
+  /** `sha256:…` del archivo tal como se subió. */
+  @Prop({ type: String, required: true })
+  hash!: string;
+
+  @Prop({ type: Number, default: null })
+  bytes!: number | null;
+
+  @Prop({ type: Date, required: true })
+  generadoEn!: Date;
+}
+const DocumentoGeneradoSchema = SchemaFactory.createForClass(DocumentoGenerado);
+
+/**
  * Comentario de revisión anclado a un bloque (E3.2, UX-08).
  *
  * Va embebido en el informe y no en una colección aparte porque siempre se lee
@@ -356,6 +386,14 @@ export class Report {
   /** Comentarios de la revisión, anclados a bloque (E3.2). */
   @Prop({ type: [ComentarioDeRevisionSchema], default: [] })
   comentarios!: ComentarioDeRevision[];
+
+  /**
+   * Documentos emitidos, con su hash (E3.4).
+   *
+   * El primero de cada tipo es el bueno: reimprimir devuelve ese, no uno nuevo.
+   */
+  @Prop({ type: [DocumentoGeneradoSchema], default: [] })
+  documentos!: DocumentoGenerado[];
 
   @Prop({ type: Date, default: null })
   fechaEmision!: Date | null;
