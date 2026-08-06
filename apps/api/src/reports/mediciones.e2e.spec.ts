@@ -469,6 +469,99 @@ describe('Mediciones del informe', () => {
     }, 120_000);
   });
 
+  describe('conclusiones asistidas (E2.5, §12.4.4)', () => {
+    it('propone una conclusión por bloque evaluado, redactada', async () => {
+      const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1050');
+      await guardarGrilla(id, bloqueId, {
+        plantilla: 'tunel_bancada',
+        valores: { [claveDeCelda('a', '1')]: 171.04 },
+      }).expect(201);
+
+      const r = await request(http)
+        .get(`/api/v1/reports/${id}/conclusiones-sugeridas`)
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      const propuesta = (r.body.propuestas as { texto: string; veredicto: string }[])[0];
+      expect(propuesta?.veredicto).toBe('cambiar');
+      // Redactada, no la clave pegada: «se encuentra cambiar» no es español y
+      // esto acaba impreso en un documento que lee el cliente.
+      expect(propuesta?.texto).toMatch(/se encuentra fuera de servicio/);
+      expect(propuesta?.texto).not.toMatch(/se encuentra cambiar/);
+    }, 90_000);
+
+    it('la acción sugerida sale del maestro de veredictos', async () => {
+      const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1051');
+      await guardarGrilla(id, bloqueId, {
+        plantilla: 'tunel_bancada',
+        valores: { [claveDeCelda('a', '1')]: 171.04 },
+      }).expect(201);
+
+      const r = await request(http)
+        .get(`/api/v1/reports/${id}/conclusiones-sugeridas`)
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      expect((r.body.propuestas as { texto: string }[])[0]?.texto).toContain(
+        'Se reemplaza por componente nuevo',
+      );
+    }, 90_000);
+
+    it('lo más grave va primero', async () => {
+      const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1052');
+      await guardarGrilla(id, bloqueId, {
+        plantilla: 'tunel_bancada',
+        valores: { [claveDeCelda('a', '1')]: 171.01 },
+      }).expect(201);
+
+      const otro = await request(http)
+        .post(`/api/v1/reports/${id}/bloques`)
+        .set(conToken(tokenTecnico))
+        .send({ clave: 'trabajos', titulo: 'CAMISAS', texto: 'Se miden las camisas.' })
+        .expect(201);
+      const otroId = (otro.body.bloques as { id: string }[]).at(-1)?.id as string;
+
+      await guardarGrilla(id, otroId, {
+        plantilla: 'encaje_camisa_inferior',
+        valores: { [claveDeCelda('L', 'A1')]: 193.2 },
+      }).expect(201);
+
+      const r = await request(http)
+        .get(`/api/v1/reports/${id}/conclusiones-sugeridas`)
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      // Lo que está fuera de tolerancia es lo que el supervisor tiene que leer.
+      expect((r.body.propuestas as { veredicto: string }[])[0]?.veredicto).toBe('cambiar');
+    }, 120_000);
+
+    it('un bloque sin mediciones no genera conclusión inventada', async () => {
+      const { id } = await informeConBloque('ITS-T-E-26-003-1053');
+
+      const r = await request(http)
+        .get(`/api/v1/reports/${id}/conclusiones-sugeridas`)
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      expect(r.body.propuestas).toEqual([]);
+    }, 60_000);
+
+    it('ofrece las frases ya escritas en informes emitidos (UX-09)', async () => {
+      // Las recomendaciones se repiten literalmente entre informes: la mejor
+      // biblioteca es la que el propio taller ya escribió.
+      const r = await request(http)
+        .get('/api/v1/reports/frases/conclusiones')
+        .set(conToken(tokenTecnico))
+        .expect(200);
+
+      expect(Array.isArray(r.body)).toBe(true);
+      for (const frase of r.body as { texto: string; usos: number }[]) {
+        expect(frase.texto.length).toBeGreaterThanOrEqual(12);
+        expect(frase.usos).toBeGreaterThanOrEqual(1);
+      }
+    }, 60_000);
+  });
+
   it('un informe emitido no admite más mediciones', async () => {
     const { id, bloqueId } = await informeConBloque('ITS-T-E-26-003-1040');
     await guardarGrilla(id, bloqueId, {

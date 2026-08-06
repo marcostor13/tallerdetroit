@@ -17,8 +17,10 @@ import {
   isImmutable,
   isRepeatable,
   moveBlock,
+  proposeConclusions,
   resolveBlocks,
   type BlockType,
+  type ConclusionPropuesta,
   type MissingBlock,
   type Permission,
   type ReportStatus,
@@ -395,6 +397,92 @@ export class ReportsService {
     }
 
     return { emitible: faltan.length === 0, faltan };
+  }
+
+  // --------------------------------------------------- conclusiones (E2.5)
+
+  /**
+   * Conclusiones propuestas a partir de las mediciones (§12.4.4).
+   *
+   * Es una propuesta, no una conclusión: el técnico la edita o la descarta. Lo
+   * que ahorra es redactar catorce frases iguales a mano, que es de donde salen
+   * las erratas y las omisiones del formato actual.
+   */
+  async conclusionesSugeridas(id: string): Promise<{
+    propuestas: ConclusionPropuesta[];
+    frecuentes: { texto: string; usos: number }[];
+  }> {
+    const doc = await this.documento(id);
+
+    const acciones = await this.accionesPorVeredicto();
+    const propuestas = proposeConclusions(
+      doc.bloques.map((b) => ({
+        id: b.id,
+        titulo: b.titulo,
+        componente: (b as unknown as { componenteNombre?: string }).componenteNombre ?? null,
+        veredicto: b.veredicto,
+        accionRecomendada: b.accionRecomendada,
+        mediciones: (b.mediciones ?? []) as never,
+      })),
+      acciones,
+    );
+
+    return { propuestas, frecuentes: await this.frasesFrecuentes('conclusiones') };
+  }
+
+  /**
+   * Frases que ya se han escrito en informes emitidos, por frecuencia (UX-09).
+   *
+   * Las recomendaciones se repiten literalmente entre informes, así que la
+   * mejor biblioteca es la que ya existe: lo que el propio taller ha escrito.
+   * El maestro curado `phraseLibrary` llega con E3.10; esto no lo sustituye,
+   * pero da valor desde el primer informe en vez de desde una lista vacía.
+   */
+  async frasesFrecuentes(clave: 'conclusiones' | 'recomendaciones', q = '') {
+    const emitidos = await this.informes
+      .find({ estado: 'emitido', deletedAt: null })
+      .select(`datos.${clave}`)
+      .sort({ fechaEmision: -1 })
+      .limit(200)
+      .lean()
+      .exec();
+
+    const cuenta = new Map<string, number>();
+
+    for (const informe of emitidos) {
+      const valor = (informe as unknown as { datos?: Record<string, unknown> }).datos?.[clave];
+      const lineas = Array.isArray(valor)
+        ? valor.map((v) =>
+            typeof v === 'string' ? v : String((v as { texto?: string }).texto ?? ''),
+          )
+        : String(valor ?? '').split('\n');
+
+      for (const linea of lineas) {
+        const texto = linea.trim();
+        // Las frases muy cortas no son reutilizables y ensucian la lista.
+        if (texto.length < 12) continue;
+        if (q && !texto.toLowerCase().includes(q.toLowerCase())) continue;
+        cuenta.set(texto, (cuenta.get(texto) ?? 0) + 1);
+      }
+    }
+
+    return [...cuenta.entries()]
+      .map(([texto, usos]) => ({ texto, usos }))
+      .sort((a, b) => b.usos - a.usos || a.texto.localeCompare(b.texto, 'es'))
+      .slice(0, 20);
+  }
+
+  /** Acción sugerida de cada veredicto, desde el maestro. */
+  private async accionesPorVeredicto(): Promise<Record<string, string>> {
+    const modelo = this.informes.db.models['ComponentVerdictMaster'];
+    if (!modelo) return {};
+
+    const veredictos = await modelo.find({ activo: true, deletedAt: null }).lean().exec();
+    return Object.fromEntries(
+      (veredictos as unknown as { clave: string; accionSugerida?: string }[])
+        .filter((v) => v.accionSugerida)
+        .map((v) => [v.clave, v.accionSugerida as string]),
+    );
   }
 
   // -------------------------------------------------------------- estados

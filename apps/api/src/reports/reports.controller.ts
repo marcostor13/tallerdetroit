@@ -74,6 +74,26 @@ export class ReportsController {
     return this.informes.validate(id);
   }
 
+  @Get(':id/conclusiones-sugeridas')
+  @Permissions('reports:read')
+  @ApiOperation({
+    summary: 'Conclusiones propuestas desde las mediciones (§12.4.4)',
+    description:
+      'Una propuesta por bloque evaluado, ordenadas de más grave a menos, mas las ' +
+      'frases mas usadas en informes ya emitidos (UX-09).',
+  })
+  conclusionesSugeridas(@Param('id') id: string) {
+    return this.informes.conclusionesSugeridas(id);
+  }
+
+  @Get('frases/:clave')
+  @Permissions('reports:read')
+  @ApiQuery({ name: 'q', required: false })
+  @ApiOperation({ summary: 'Frases ya escritas en informes emitidos, por frecuencia' })
+  frases(@Param('clave') clave: 'conclusiones' | 'recomendaciones', @Query('q') q?: string) {
+    return this.informes.frasesFrecuentes(clave, q ?? '');
+  }
+
   @Post()
   @Permissions('reports:create')
   @ApiOperation({ summary: 'Crea un informe desde la versión vigente de la plantilla' })
