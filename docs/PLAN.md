@@ -18,7 +18,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | 🟡 10 de 11 épicas · 5 de 10 criterios verificados                              | 5–7     | —          |
-| **F4** PWA, movilidad y offline          | ⬜ Pendiente                                                                    | 4–6     | —          |
+| **F4** PWA, movilidad y offline          | 🟡 El núcleo offline en pie · falta cablearlo al wizard                         | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
 
@@ -453,17 +453,55 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 | **E4.7 Responsive completo**          | Editor usable en tablet · captura de fotos y mediciones optimizada para móvil · gestos y áreas seguras                                  |
 | **E4.8 Límites y avisos**             | Advertir si hay > 500 MB en IndexedDB o > 5 informes sin sincronizar                                                                    |
 
+## Estado de las épicas (6-ago-2026)
+
+| Épica                                 | Estado                                                                                              |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **E4.1** Service worker e instalación | 🟡 `ngsw-config.json` y el manifest venían de F0. Falta comprobar la instalación en dispositivos    |
+| **E4.2** Caché de maestros            | ⬜ Pendiente — el `dataGroup` de `/masters/**` existe; falta la sincronización delta cada 4 h       |
+| **E4.3** Edición offline              | 🟡 Base local en IndexedDB (informes, fotos como `Blob`, cola). **Falta que el wizard escriba ahí** |
+| **E4.4** Cola y sincronización        | 🟢 `clientOpId` idempotente, orden de envío, reintentos con backoff, `POST /sync/push` y `/pull`    |
+| **E4.5** Conflictos                   | 🟡 La detección por bloque está y probada. Falta la pantalla de comparación                         |
+| **E4.6** Captura móvil                | ⬜ Pendiente — cámara nativa y vinculación por QR (UX-03)                                           |
+| **E4.7** Responsive completo          | 🟢 Heredado de F1–F3: cada pantalla se verifica a 360 px en su propio e2e                           |
+| **E4.8** Límites y avisos             | 🟢 Aviso por > 500 MB o > 5 informes sin sincronizar, antes de chocar con el límite                 |
+
 ## Criterios de aceptación
 
-- [ ] Con el modo avión activado, un técnico crea un informe completo con 20 fotos y 3 grillas de medición
-- [ ] Al recuperar conexión, todo se sincroniza **sin duplicados y sin pérdida de captions**
-- [ ] Reenviar la misma operación dos veces (doble tap, reintento) **no crea dos informes**
-- [ ] Dos usuarios editan bloques distintos del mismo informe offline; al sincronizar, ambos cambios se conservan
-- [ ] La app instalada abre en < 3 s sin conexión (NFR-01)
-- [ ] La app se instala en Android, iOS y escritorio con el icono correcto (maskable incluido)
-- [ ] **El tema oscuro funciona también en la app instalada, incluida la barra de estado** (T1)
-- [ ] **La captura de fotos y mediciones en móvil es cómoda con una sola mano** (T3)
-- [ ] El chip de conexión indica el número exacto de cambios pendientes
+> **Estado (6-ago-2026):** el núcleo está en pie y probado, pero **el wizard todavía escribe
+> directo contra la API**, no contra la cola. Hasta que se cablee, la app no funciona sin red por
+> mucho que la cola exista: por eso el primer criterio sigue abierto y no marcado a medias.
+
+- [ ] Con el modo avión activado, un técnico crea un informe completo con 20 fotos y 3 grillas de
+      medición — **falta cablear el wizard a la cola.** Es el trabajo que queda de E4.3
+- [~] Al recuperar conexión, todo se sincroniza **sin duplicados y sin pérdida de captions** — la
+  cola se vacía sola al volver la red y está probado (`sync.service.spec.ts`); falta el recorrido
+  completo con datos reales
+- [x] Reenviar la misma operación dos veces (doble tap, reintento) **no crea dos informes** —
+      verificado 6-ago-2026: el `clientOpId` viaja con cada operación, el servidor recuerda las
+      aplicadas 30 días y contesta `repetida` con el id de la primera. En el cliente, `repetida`
+      cuenta como confirmada
+- [x] Dos usuarios editan bloques distintos del mismo informe offline; al sincronizar, ambos cambios
+      se conservan — verificado 6-ago-2026 en `sync.spec.ts`: se encola **una operación por cambio**
+      y `chocan()` solo da conflicto cuando tocan el mismo bloque del mismo informe
+- [ ] La app instalada abre en < 3 s sin conexión (NFR-01) — necesita medirla instalada
+- [ ] La app se instala en Android, iOS y escritorio con el icono correcto (maskable incluido) —
+      necesita los dispositivos
+- [ ] **El tema oscuro funciona también en la app instalada, incluida la barra de estado** (T1) — el
+      `theme-color` ya cambia con el tema y está verificado en el navegador; falta en la instalada
+- [ ] **La captura de fotos y mediciones en móvil es cómoda con una sola mano** (T3) — la grilla sí
+      está verificada a 360 px (F2); la cámara nativa es E4.6, sin empezar
+- [x] El chip de conexión indica el número exacto de cambios pendientes — verificado 6-ago-2026:
+      cuenta pendientes y fallidas, no lo que está en vuelo. El número es lo que el técnico mira
+      para decidir si puede irse del sitio con cobertura
+
+### Lo que queda para cerrar F4
+
+1. **Cablear el wizard a la cola** (E4.3). Hoy el editor llama a la API directamente; tiene que
+   escribir en IndexedDB y encolar. Es lo que hace falta para el primer criterio.
+2. Sincronización delta de maestros (E4.2) y cámara nativa con vinculación por QR (E4.6).
+3. Pantalla de comparación cuando hay conflicto real (E4.5).
+4. Lo que necesita dispositivos: instalación, arranque offline y barra de estado.
 
 ---
 
