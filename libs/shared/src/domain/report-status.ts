@@ -70,6 +70,18 @@ export const REPORT_TRANSITIONS: readonly StatusTransition[] = [
     description: 'Congela el snapshot, genera PDF + DOCX y calcula el hash',
   },
   {
+    // Atajo de F1 (E1.9). El flujo de revisión completo llega en F3; hasta
+    // entonces el supervisor emite directamente desde el borrador, porque la
+    // alternativa sería dejar los informes atascados en un estado sin salida.
+    // Cuando F3 incorpore la revisión, esta transición debe retirarse: si se
+    // queda, convive con el flujo formal y permite emitir sin que nadie revise.
+    from: 'borrador',
+    to: 'emitido',
+    permission: 'reports:issue',
+    requiresComment: false,
+    description: 'Atajo de F1: congela el snapshot y genera el PDF sin pasar por revisión',
+  },
+  {
     from: 'borrador',
     to: 'anulado',
     permission: 'reports:void',

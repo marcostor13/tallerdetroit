@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { MastersModule } from './masters/masters.module';
 import { TemplatesModule } from './templates/templates.module';
 import { WorkOrdersModule } from './work-orders/work-orders.module';
+import { ReportsModule } from './reports/reports.module';
 import { IndexesService } from './common/indexes.service';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -71,9 +72,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
     MastersModule,
     TemplatesModule,
     WorkOrdersModule,
+    ReportsModule,
 
     // Módulos de dominio de §15.3 — se incorporan por fase según docs/PLAN.md:
-    // ReportsModule, MediaModule,
+    // MediaModule,
     // DocumentsModule (F1) · MeasurementsModule (F2) · AuditModule,
     // NotificationsModule (F3) · SyncModule (F4) · AnalyticsModule (F5) ·
     // IntegrationsModule (F6).

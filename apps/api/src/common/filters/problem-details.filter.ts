@@ -15,7 +15,12 @@ interface ProblemDetails {
   detail?: string;
   instance?: string;
   errors?: Record<string, string[]>;
+  /** Miembros de extensión: RFC 7807 §3.2 los admite explícitamente. */
+  [extension: string]: unknown;
 }
+
+/** Claves que ya tienen su sitio en el problema y no se copian como extensión. */
+const CLAVES_PROPIAS = new Set(['message', 'error', 'statusCode']);
 
 const TITLES: Record<number, string> = {
   400: 'Solicitud inválida',
@@ -72,6 +77,15 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         }
         if (typeof record['error'] === 'string' && !problem.detail) {
           problem.detail = record['error'];
+        }
+
+        // Todo lo demás pasa tal cual. Sin esto, un error que además del texto
+        // trae datos estructurados —la lista de campos que faltan para emitir,
+        // por ejemplo— llegaría al frontend convertido en una frase suelta, y
+        // el aviso navegable por clic de UX-07 sería imposible de pintar.
+        for (const [clave, valor] of Object.entries(record)) {
+          if (CLAVES_PROPIAS.has(clave) || clave in problem) continue;
+          problem[clave] = valor;
         }
       }
     } else {
