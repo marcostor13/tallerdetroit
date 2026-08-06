@@ -122,6 +122,13 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'auditoria',
+        canActivate: [permissionGuard(['audit:read'])],
+        title: 'Auditoría — DPS',
+        loadComponent: () =>
+          import('./features/auditoria/auditoria.page').then((m) => m.AuditoriaPage),
+      },
+      {
         path: 'administracion',
         canActivate: [permissionGuard(['users:read', 'settings:write'])],
         title: 'Administración — DPS',
