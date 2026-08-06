@@ -17,7 +17,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F0** Fundaciones                       | 🟢 Criterios cumplidos — ver el detalle                                         | 2–3     | 5-ago-2026 |
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
-| **F3** Aprobación y gobierno del formato | ⬜ Pendiente                                                                    | 5–7     | —          |
+| **F3** Aprobación y gobierno del formato | 🟡 6 de 11 épicas · 4 de 10 criterios verificados                               | 5–7     | —          |
 | **F4** PWA, movilidad y offline          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
@@ -337,20 +337,77 @@ trazabilidad corporativa"_).
 | **E3.10 Maestros restantes**            | `instruments` con control de calibración (RN-04) · `testTypes` · `phraseLibrary` · `outputLayouts` · `settings` · `serviceReasons` · `checklists` |
 | **E3.11 Roles adicionales**             | `calidad` y `planificacion` como roles opcionales                                                                                                 |
 
+## Estado de las épicas (6-ago-2026)
+
+| Épica                                     | Estado                                                                                                      |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **E3.1** Máquina de estados               | 🟢 Las acciones del wizard salen de §14.2 cruzada con los permisos. Enviar a revisión ahora **sí** valida   |
+| **E3.2** Revisión colaborativa            | 🟢 Comentarios anclados a bloque, resolver/reabrir, y no se aprueba con observaciones abiertas              |
+| **E3.3** Firmas                           | ⬜ Pendiente — depende de **D6** (tipo de firma), que sigue abierta                                         |
+| **E3.4** Inmutabilidad y hash             | 🟢 Documento con hash estable; reimprimir devuelve el mismo archivo. **S3 Object Lock, sin configurar**     |
+| **E3.5** Export DOCX                      | ⬜ Pendiente                                                                                                |
+| **E3.6** Marca de agua, QR y verificación | 🟢 QR en el pie, hash de contenido impreso y vista pública `/v/:numero`. La marca de agua ya venía de F1    |
+| **E3.7** Editor de plantillas (Calidad)   | ⬜ Pendiente                                                                                                |
+| **E3.8** Auditoría                        | 🟢 `auditLogs` append-only con TTL de 7 años, y consola de consulta                                         |
+| **E3.9** Notificaciones                   | ⬜ Pendiente                                                                                                |
+| **E3.10** Maestros restantes              | 🟡 `instruments` con RN-04 completo. Faltan `testTypes`, `phraseLibrary`, `outputLayouts`, `settings`       |
+| **E3.11** Roles adicionales               | 🟢 `calidad` y `planificacion` ya estaban en la matriz; se añade `reports:override` para el escape de RN-04 |
+
 ## Criterios de aceptación
 
-- [ ] Un informe recorre `borrador → en_revision → observado → en_revision → aprobado → emitido`
-      con los roles correctos y queda registrado en auditoría
-- [ ] Un supervisor no puede aprobar sin resolver los comentarios abiertos
-- [ ] Reimprimir un informe emitido devuelve un archivo con **el mismo hash** que la primera generación
-- [ ] El `.docx` exportado abre en Word sin advertencias y es editable con estilos correctos
+> **Estado (6-ago-2026):** 4 de los 10 verificados, 3 implementados sin poder ejecutar su prueba y
+> 3 dependen de épicas que no están hechas.
+>
+> ⚠️ La limitación de siempre: los tests de la API no corren en este entorno porque la política de
+> red bloquea `fastdl.mongodb.org`, de donde `mongodb-memory-server` descarga el binario. Lo que sí
+> se ejecuta es `libs/shared` y los e2e de Playwright con Chromium real, y ahí es donde está la
+> evidencia de abajo.
+
+- [~] Un informe recorre `borrador → en_revision → observado → en_revision → aprobado → emitido`
+  con los roles correctos y queda registrado en auditoría — **la parte de pantalla está
+  verificada** (6-ago-2026, `revision.e2e.ts`): las acciones salen de la tabla de §14.2 cruzada
+  con los permisos, de modo que un técnico ve «Enviar a revisión» y un supervisor «Aprobar» y
+  «Devolver con observaciones». El recorrido completo contra la base **no se ha ejecutado**
+- [x] Un supervisor no puede aprobar sin resolver los comentarios abiertos — verificado 6-ago-2026
+      en dominio (`review.spec.ts`) y en navegador real: con una observación abierta sale el aviso,
+      «Aprobar» devuelve el error del servidor, y al resolverla el aviso desaparece. La regla vive
+      en `libs/shared` para que la pantalla y el servidor no puedan discrepar
+- [~] Reimprimir un informe emitido devuelve un archivo con **el mismo hash** que la primera
+  generación — implementado: el documento se sirve desde la clave de S3 donde lo dejó el worker
+  y **nunca se vuelve a renderizar**. Falta ejecutarlo contra S3 y Mongo de verdad
+- [ ] El `.docx` exportado abre en Word sin advertencias y es editable con estilos correctos —
+      **E3.5 sin empezar**
 - [ ] Calidad publica SER-FOR-002 **v02** agregando una sección, y los informes emitidos con v01 se
-      siguen renderizando idénticos (RN-08)
-- [ ] Un informe que usa un instrumento con calibración vencida muestra advertencia bloqueante (RN-04)
-- [ ] Escanear el QR de un PDF abre la vista de verificación con los datos del informe
-- [ ] La consulta de auditoría filtra por actor, entidad, acción y rango de fechas
-- [ ] **Los comentarios de revisión son navegables por teclado y anunciados por lector de pantalla** (T2)
-- [ ] **El flujo de revisión completo es operable desde móvil** (T3)
+      siguen renderizando idénticos (RN-08) — el congelado de `templateSnapshot` ya existe desde F1;
+      falta el editor de plantillas (**E3.7**) para que Calidad pueda publicar la v02
+- [~] Un informe que usa un instrumento con calibración vencida muestra advertencia bloqueante
+  (RN-04) — **la regla está verificada** (6-ago-2026, `instruments.spec.ts`, 14 casos incluidos
+  los bordes: el día del vencimiento vale, el siguiente no, y una fecha ilegible no bloquea).
+  Falta comprobar de punta a punta que aparece en la lista de lo que impide emitir
+- [~] Escanear el QR de un PDF abre la vista de verificación con los datos del informe — el pie con
+  QR y hash está verificado en el render (`report-html.spec.ts`), y la vista `/v/:numero` existe.
+  **Falta escanear un PDF de verdad**, que necesita el worker con Chromium y S3
+- [x] La consulta de auditoría filtra por actor, entidad, acción y rango de fechas — verificado
+      6-ago-2026 en navegador real (`auditoria.e2e.ts`): lo que se comprueba es que los filtros
+      **llegan al query string**, no que la pantalla los pinte, y que «Limpiar» los quita de la
+      petición y no solo del desplegable
+- [x] **Los comentarios de revisión son navegables por teclado y anunciados por lector de pantalla**
+      (T2) — verificado 6-ago-2026: se comenta y se resuelve solo con Tab y Enter, y el contador de
+      abiertos vive en un `role="status"` con `aria-live` que anuncia el cambio
+- [x] **El flujo de revisión completo es operable desde móvil** (T3) — verificado 6-ago-2026 en un
+      Pixel 7: comentar, resolver y reabrir sin desplazamiento horizontal, con los controles a 44 px
+
+### Deuda anotada de F3
+
+1. **Retirar el atajo `borrador → emitido`.** Lo dejó F1 (E1.9) con una nota que decía que había que
+   quitarlo al llegar F3, y tiene razón: mientras siga ahí, cualquiera con `reports:issue` emite sin
+   que nadie revise. No se retira en esta pasada porque ocho llamadas de los e2e de la API lo usan y
+   **no puedo ejecutarlos aquí** para adaptarlos con garantías; hacerlo a ciegas dejaría el CI rojo
+   de una forma que no puedo comprobar.
+2. **S3 Object Lock** (E3.4) no está configurado: hoy la inmutabilidad la sostiene la aplicación, no
+   el almacén.
+3. Los tests de la API de F3 están **sin escribir** además de sin ejecutar: la revisión, la
+   calibración y la auditoría solo tienen cobertura de dominio y de pantalla.
 
 ---
 
