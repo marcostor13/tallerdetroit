@@ -23,6 +23,7 @@ import { ListaTrabajosComponent } from './ui/lista-trabajos.component';
 import { VistaPreviaComponent } from './ui/vista-previa.component';
 import { FotosBloqueComponent } from './ui/fotos-bloque.component';
 import { ChecklistBloqueComponent } from './ui/checklist-bloque.component';
+import { SugerenciasConclusionesComponent } from './ui/sugerencias-conclusiones.component';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -68,6 +69,7 @@ const NOMBRES_DE_PASO: Record<number, string> = {
     FotosBloqueComponent,
     MedicionesBloqueComponent,
     ChecklistBloqueComponent,
+    SugerenciasConclusionesComponent,
   ],
   templateUrl: './informe-editor.page.html',
 })
@@ -180,6 +182,25 @@ export class InformeEditorPage implements OnDestroy {
       actual = (actual as Record<string, unknown>)[tramo];
     }
     return actual === null || actual === undefined ? '' : String(actual);
+  }
+
+  /** ¿Este bloque se pre-puebla desde los veredictos? (E2.5) */
+  protected prepobla(bloque: { config?: Record<string, unknown> }): boolean {
+    return bloque.config?.['prepoblarDesdeVeredictos'] === true;
+  }
+
+  /**
+   * Añade una línea a una lista sin pisar lo escrito.
+   *
+   * Duplicarla no aporta nada, así que una propuesta que ya está no se repite:
+   * el técnico pulsa dos veces sin querer más a menudo de lo que parece.
+   */
+  protected anadirLinea(ruta: string, texto: string): void {
+    const actual = this.valorDe(ruta);
+    const lineas = actual.split('\n').map((l) => l.trim());
+    if (lineas.includes(texto.trim())) return;
+
+    this.cambiar(ruta, actual.trim() ? `${actual.trimEnd()}\n${texto}` : texto);
   }
 
   // --------------------------------------------------------------- bloques

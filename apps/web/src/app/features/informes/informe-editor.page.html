@@ -394,6 +394,19 @@
                     (change)="cambiar('datos.' + bloque.clave, desdeEvento($event))"
                   ></textarea>
                 </dps-field>
+
+                <!--
+                  Propuestas desde las mediciones (E2.5). Se añaden a lo escrito,
+                  nunca lo sustituyen: quien ha visto la pieza es el técnico y la
+                  grilla solo mide una cosa de ella.
+                -->
+                @if (prepobla(bloque) && store.informe(); as informe) {
+                  <dps-sugerencias-conclusiones
+                    [informeId]="informe._id"
+                    [soloLectura]="store.soloLectura()"
+                    (anadir)="anadirLinea('datos.' + bloque.clave, $event)"
+                  />
+                }
               }
 
               @default {
