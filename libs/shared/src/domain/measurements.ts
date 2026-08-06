@@ -102,10 +102,32 @@ export function calcOvalidad(a: number, b: number): number {
 export type MeasurementShape = 'escalar' | 'vector' | 'matriz';
 
 export type ColumnSource =
+  /** Columnas escritas a mano: piñones intermedios, eje de levas. */
   | { readonly tipo: 'fija'; readonly columnas: readonly string[] }
   | {
       readonly tipo: 'modelo';
       readonly campo: 'apoyosBancada' | 'cilindros' | 'cilindrosPorBanco';
+      /**
+       * Rótulo de la primera y la última columna, cuando no son un número.
+       *
+       * La coaxialidad del cigüeñal se mide entre apoyos, y en el informe los
+       * dos extremos van rotulados `APOYO` en vez de numerados: son la
+       * referencia contra la que se compara el resto (§12.3).
+       */
+      readonly etiquetaExtremos?: string;
+    }
+  | {
+      /**
+       * Una columna por cilindro **y por banco**: `A1…A10`, `B1…B10`.
+       *
+       * Los encajes de camisa se miden en los dos bancos dentro de la misma
+       * tabla. Partirlo en dos plantillas obligaría al técnico a saltar entre
+       * grillas para capturar lo que en el informe es una sola.
+       */
+      readonly tipo: 'modelo_por_banco';
+      readonly campo: 'cilindrosPorBanco';
+      /** Rótulo de cada banco. Por omisión, `A` y `B`. */
+      readonly bancos?: readonly string[];
     };
 
 export interface MeasurementTemplate {
@@ -153,14 +175,31 @@ export function resolveColumns(
 ): readonly string[] {
   if (source.tipo === 'fija') return source.columnas;
 
+  if (source.tipo === 'modelo_por_banco') {
+    const porBanco = cylindersPerBank(engine);
+    const bancos = source.bancos ?? ['A', 'B'].slice(0, engine.bancos);
+    return bancos.flatMap((banco) =>
+      Array.from({ length: porBanco }, (_, i) => `${banco}${i + 1}`),
+    );
+  }
+
   const count =
     source.campo === 'apoyosBancada'
       ? engine.apoyosBancada
       : source.campo === 'cilindros'
         ? engine.cilindros
-        : Math.floor(engine.cilindros / engine.bancos);
+        : cylindersPerBank(engine);
 
-  return Array.from({ length: count }, (_, i) => String(i + 1));
+  const columnas = Array.from({ length: count }, (_, i) => String(i + 1));
+
+  // Los extremos rotulados sustituyen al número, no se añaden: la grilla tiene
+  // tantas columnas como apoyos, ni una más.
+  if (source.etiquetaExtremos && columnas.length >= 2) {
+    columnas[0] = source.etiquetaExtremos;
+    columnas[columnas.length - 1] = source.etiquetaExtremos;
+  }
+
+  return columnas;
 }
 
 /**
