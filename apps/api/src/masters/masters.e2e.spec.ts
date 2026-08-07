@@ -408,6 +408,101 @@ describe('Maestros', () => {
     expect(r.body.detail).toMatch(/consigo mismo/i);
   }, 30_000);
 
+  /**
+   * Delta para la caché del dispositivo (E4.2).
+   *
+   * Es lo que permite que un teléfono lleve los catálogos encima sin volver a
+   * bajarlos enteros cada cuatro horas. Lo que más importa aquí no son las
+   * altas: son las **bajas**. Un cliente que solo recibiera registros activos
+   * seguiría ofreciendo para siempre una sede desactivada.
+   */
+  describe('sincronización delta', () => {
+    it('sin corte manda el catálogo entero y con corte solo lo que cambió', async () => {
+      const completo = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      expect(completo.body.items.length).toBeGreaterThan(0);
+      expect(completo.body.hasta).toBeTruthy();
+      expect(completo.body.hayMas).toBe(false);
+
+      // Desde el corte que devolvió el servidor no ha cambiado nada.
+      const vacio = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .query({ desde: completo.body.hasta })
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      expect(vacio.body.items).toHaveLength(0);
+    }, 30_000);
+
+    it('una baja viaja en el delta, para que el dispositivo la pueda quitar', async () => {
+      const antes = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      const creado = await request(http)
+        .post('/api/v1/masters/clients')
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .send({ razonSocial: 'MINERA EFIMERA S.A.', nombreCorto: 'EFIMERA', ruc: '20999999991' })
+        .expect(201);
+
+      await request(http)
+        .delete(`/api/v1/masters/clients/${creado.body._id}`)
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      const despues = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .query({ desde: antes.body.hasta })
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      const dadoDeBaja = (despues.body.items as { _id: string; deletedAt?: string }[]).find(
+        (i) => i._id === creado.body._id,
+      );
+
+      // El listado normal ya no lo devuelve; el delta sí, con su marca de baja.
+      expect(dadoDeBaja).toBeTruthy();
+      expect(dadoDeBaja?.deletedAt).toBeTruthy();
+    }, 30_000);
+
+    it('un lote lleno avisa de que quedan más y no miente con el corte', async () => {
+      // Decir «ya estás al día» cuando quedan cambios sin mandar los perdería
+      // para siempre: el cliente guardaría un `hasta` posterior a lo que tiene.
+      const r = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .query({ limit: 1 })
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+
+      expect(r.body.items).toHaveLength(1);
+      expect(r.body.hayMas).toBe(true);
+      expect(r.body.hasta).toBe(new Date(r.body.items[0].updatedAt).toISOString());
+    }, 30_000);
+
+    it('una fecha inválida se rechaza en vez de mandar el catálogo entero', async () => {
+      const r = await request(http)
+        .get('/api/v1/masters/clients/delta')
+        .query({ desde: 'ayer por la tarde' })
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(400);
+
+      expect(r.body.detail).toMatch(/no es una fecha válida/i);
+    }, 30_000);
+
+    it('«delta» no se confunde con el id de un registro', async () => {
+      // La ruta va declarada antes que `:collection/:id`; con el orden al revés
+      // Nest resolvería esto como «el cliente con id delta» y daría 404.
+      await request(http)
+        .get('/api/v1/masters/sites/delta')
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .expect(200);
+    }, 30_000);
+  });
+
   it('un maestro inexistente devuelve 404, no 500', async () => {
     const r = await request(http)
       .get('/api/v1/masters/inventado')

@@ -1,5 +1,12 @@
 import type { OperacionOffline } from '@dps/shared';
-import type { BaseLocal, FotoLocal, InformeLocal, PlantillaLocal } from '../sync.db';
+import type {
+  BaseLocal,
+  EstadoDeMaestroLocal,
+  FotoLocal,
+  InformeLocal,
+  MaestroLocal,
+  PlantillaLocal,
+} from '../sync.db';
 
 /**
  * Base local en memoria, solo para las pruebas.
@@ -40,6 +47,18 @@ class TablaFalsa<T> {
 
   toArray = async (): Promise<T[]> => [...this.filas.values()];
 
+  /** Solo `equals`, que es lo único que el proyecto usa de `where`. */
+  where(campo: string) {
+    return {
+      equals: (valor: unknown) =>
+        new ConsultaFalsa(
+          [...this.filas.values()].filter(
+            (fila) => (fila as Record<string, unknown>)[campo] === valor,
+          ),
+        ),
+    };
+  }
+
   orderBy(campo: string): ConsultaFalsa<T> {
     return new ConsultaFalsa(
       [...this.filas.values()].sort((a, b) =>
@@ -64,6 +83,8 @@ export interface BaseLocalFalsa {
   readonly fotos: TablaFalsa<FotoLocal>;
   readonly operaciones: TablaFalsa<OperacionOffline>;
   readonly plantillas: TablaFalsa<PlantillaLocal>;
+  readonly maestros: TablaFalsa<MaestroLocal>;
+  readonly maestrosEstado: TablaFalsa<EstadoDeMaestroLocal>;
   transaction<T>(modo: string, tabla: unknown, cuerpo: () => Promise<T>): Promise<T>;
   vaciar(): void;
 }
@@ -74,6 +95,8 @@ export function baseLocalFalsa(): BaseLocalFalsa {
     fotos: new TablaFalsa<FotoLocal>('id'),
     operaciones: new TablaFalsa<OperacionOffline>('clientOpId'),
     plantillas: new TablaFalsa<PlantillaLocal>('clave'),
+    maestros: new TablaFalsa<MaestroLocal>('clave'),
+    maestrosEstado: new TablaFalsa<EstadoDeMaestroLocal>('coleccion'),
 
     /** Dexie ejecuta el cuerpo de la transacción; aquí basta con eso. */
     transaction: async (_modo, _tabla, cuerpo) => cuerpo(),
@@ -83,6 +106,8 @@ export function baseLocalFalsa(): BaseLocalFalsa {
       base.fotos.filas.clear();
       base.operaciones.filas.clear();
       base.plantillas.filas.clear();
+      base.maestros.filas.clear();
+      base.maestrosEstado.filas.clear();
     },
   };
 

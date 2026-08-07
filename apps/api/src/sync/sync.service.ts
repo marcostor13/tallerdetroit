@@ -134,7 +134,12 @@ export class SyncService {
       case 'agregar-foto':
         // Añadir una foto es editar el bloque que la contiene: el servidor
         // recalcula la numeración de figuras desde el orden (RN-06).
-        await this.informes.updateBlock(operacion.informeId, operacion.bloqueId ?? '', datos, actor);
+        await this.informes.updateBlock(
+          operacion.informeId,
+          operacion.bloqueId ?? '',
+          datos,
+          actor,
+        );
         return null;
 
       case 'quitar-bloque':

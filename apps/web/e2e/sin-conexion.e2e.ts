@@ -44,6 +44,9 @@ const PLANTILLA = {
   ],
 };
 
+/** Corte que devuelve el servidor en cada delta. */
+const HASTA = '2026-06-20T12:00:00.000Z';
+
 const USUARIO = {
   id: 'u1',
   email: 'rcaceres@detroitpower.pe',
@@ -62,6 +65,17 @@ const USUARIO = {
   tecnicoId: null,
   mfaHabilitado: false,
 };
+
+/** Lo que el servidor manda en el delta de clientes (E4.2). */
+const CLIENTES = [
+  { _id: 'c1', nombreCorto: 'SPCC. TOQUEPALA', razonSocial: 'SOUTHERN PERU COPPER', activo: true },
+  {
+    _id: 'c2',
+    nombreCorto: 'KOMATSU MITSUI',
+    razonSocial: 'KOMATSU MITSUI MAQUINARIAS',
+    activo: true,
+  },
+];
 
 const informeDeServidor = (id: string, numero: string) => ({
   _id: id,
@@ -117,6 +131,15 @@ async function conApiSimulada(page: Page): Promise<Simulacion> {
     '**/api/v1/masters/**',
     responder((r) => json(r, { total: 0, items: [] })),
   );
+
+  // La genérica va primero: en Playwright gana la ruta registrada más tarde, y
+  // el delta tiene que responder con datos de verdad para que la caché sirva.
+  await page.route('**/api/v1/masters/*/delta**', (route) => {
+    if (route.request().method() === 'OPTIONS') return json(route, {}, 204);
+
+    const items = route.request().url().includes('/clients/') ? CLIENTES : [];
+    return json(route, { total: items.length, items, hasta: HASTA, hayMas: false });
+  });
 
   // La cola de sincronización: contesta con el id definitivo del informe que se
   // creó sin red, que es lo que dispara el cambio de URL en el editor.
@@ -262,5 +285,26 @@ test.describe('Trabajar sin conexión (E4.3)', () => {
     const sinSincronizar = page.getByRole('region', { name: /sin sincronizar/i });
     await expect(sinSincronizar).toBeVisible();
     await expect(sinSincronizar.getByText('ITS-EN-EL-SOCAVON')).toBeVisible();
+  });
+
+  /**
+   * Caché de maestros (E4.2).
+   *
+   * Sin ella el informe empezado en la mina se queda a medias: se puede escribir
+   * el texto, pero el desplegable de cliente no tiene nada que ofrecer, y ese es
+   * justo el campo que enlaza el informe con el resto del sistema.
+   */
+  test('los desplegables de maestros siguen funcionando sin red', async ({ page, context }) => {
+    await conApiSimulada(page);
+    await page.goto('/informes');
+    await enSocavon(page, context);
+
+    const cliente = page.getByRole('combobox', { name: /cliente/i });
+    await cliente.click();
+    // La errata se perdona igual que con red: es el mismo `fuzzySearch` de
+    // `libs/shared`. Con dos algoritmos distintos, la caché no sería fiable.
+    await cliente.fill('KOMATZU');
+
+    await expect(page.getByRole('option', { name: /KOMATSU MITSUI/ })).toBeVisible();
   });
 });

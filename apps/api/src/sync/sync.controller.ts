@@ -23,10 +23,7 @@ export class SyncController {
       'veces. Se aplican una a una, así que una que falle no se lleva por delante ' +
       'las demás — vuelve sola a la cola del dispositivo.',
   })
-  push(
-    @Body() body: { operaciones?: OperacionEntrante[] },
-    @CurrentUser() actor: AuthUser,
-  ) {
+  push(@Body() body: { operaciones?: OperacionEntrante[] }, @CurrentUser() actor: AuthUser) {
     return this.sync.push(body.operaciones ?? [], actor);
   }
 

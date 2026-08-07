@@ -18,7 +18,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | 🟡 10 de 11 épicas · 5 de 10 criterios verificados                              | 5–7     | —          |
-| **F4** PWA, movilidad y offline          | 🟡 Crear y editar sin red, verificado de punta a punta · 4 de 9 criterios       | 4–6     | —          |
+| **F4** PWA, movilidad y offline          | 🟡 Crear, editar y buscar maestros sin red, verificado · 5 de 10 criterios      | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
 
@@ -458,7 +458,7 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 | Épica                                 | Estado                                                                                           |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **E4.1** Service worker e instalación | 🟡 `ngsw-config.json` y el manifest venían de F0. Falta comprobar la instalación en dispositivos |
-| **E4.2** Caché de maestros            | ⬜ Pendiente — el `dataGroup` de `/masters/**` existe; falta la sincronización delta cada 4 h    |
+| **E4.2** Caché de maestros            | 🟢 Delta cada 4 h de los 12 catálogos del wizard · los desplegables funcionan sin red            |
 | **E4.3** Edición offline              | 🟢 Crear, editar y añadir bloques sin red, con id local y reasignación al subir. Faltan las fotos |
 | **E4.4** Cola y sincronización        | 🟢 `clientOpId` idempotente, orden de envío, reintentos con backoff, `POST /sync/push` y `/pull` |
 | **E4.5** Conflictos                   | 🟡 La detección por bloque está y probada. Falta la pantalla de comparación                      |
@@ -498,6 +498,13 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
       `theme-color` ya cambia con el tema y está verificado en el navegador; falta en la instalada
 - [ ] **La captura de fotos y mediciones en móvil es cómoda con una sola mano** (T3) — la grilla sí
       está verificada a 360 px (F2); la cámara nativa es E4.6, sin empezar
+- [x] **Los maestros están en el dispositivo y los desplegables funcionan sin red** (E4.2) —
+      verificado 7-ago-2026 en `e2e/sin-conexion.e2e.ts`: con el modo avión activado, escribir
+      «KOMATZU» en el buscador de cliente encuentra KOMATSU MITSUI. La búsqueda local usa el
+      **mismo `fuzzySearch` de `libs/shared` que el servidor**, así que el orden de resultados es
+      el mismo con red y sin ella. La descarga es delta —solo lo que cambió desde el último corte,
+      que lo pone el servidor— y arrastra las bajas, de forma que una sede desactivada deja de
+      ofrecerse en el dispositivo
 - [x] El chip de conexión indica el número exacto de cambios pendientes — verificado 6-ago-2026:
       cuenta pendientes y fallidas, no lo que está en vuelo. El número es lo que el técnico mira
       para decidir si puede irse del sitio con cobertura
@@ -507,7 +514,7 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 1. **Fotos sin red**: capturarlas como `Blob` en IndexedDB y subirlas con la cola. La tabla
    `fotos` existe desde el principio y nadie escribe en ella todavía; va junto con la cámara
    nativa (E4.6), porque son el mismo flujo visto desde dos sitios.
-2. Sincronización delta de maestros (E4.2) y vinculación desktop↔móvil por QR (E4.6).
+2. Vinculación desktop↔móvil por QR (E4.6).
 3. Pantalla de comparación cuando hay conflicto real (E4.5).
 4. Lo que necesita dispositivos: instalación, arranque offline y barra de estado.
 

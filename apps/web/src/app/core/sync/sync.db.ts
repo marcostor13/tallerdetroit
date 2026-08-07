@@ -28,6 +28,29 @@ export interface PlantillaLocal {
   guardadaEn: string;
 }
 
+/**
+ * Un registro de maestro guardado en el dispositivo (E4.2).
+ *
+ * La clave lleva la colección delante porque el id de un cliente y el de una
+ * sede pueden coincidir sin que eso signifique nada: son colecciones distintas
+ * de Mongo. Con una tabla por maestro habría que migrar el esquema cada vez que
+ * se cachea uno nuevo.
+ */
+export interface MaestroLocal {
+  /** `clients:64f…`. */
+  clave: string;
+  coleccion: string;
+  registroId: string;
+  datos: Record<string, unknown>;
+}
+
+/** Hasta dónde está sincronizado cada maestro. */
+export interface EstadoDeMaestroLocal {
+  coleccion: string;
+  /** `hasta` de la última respuesta correcta del servidor. */
+  sincronizadoHasta: string;
+}
+
 /** Una foto capturada sin red, todavía sin subir a S3. */
 export interface FotoLocal {
   id: string;
@@ -55,6 +78,8 @@ export class BaseLocal extends Dexie {
   fotos!: Table<FotoLocal, string>;
   operaciones!: Table<OperacionOffline, string>;
   plantillas!: Table<PlantillaLocal, string>;
+  maestros!: Table<MaestroLocal, string>;
+  maestrosEstado!: Table<EstadoDeMaestroLocal, string>;
 
   constructor() {
     super('dps-informes');
@@ -72,6 +97,14 @@ export class BaseLocal extends Dexie {
     // actualizar la app.
     this.version(2).stores({
       plantillas: 'clave, codigo, guardadaEn',
+    });
+
+    // La 3 añade la caché de maestros (E4.2). `coleccion` va indexado porque
+    // toda consulta es «dame los de este catálogo»: sin índice, buscar un
+    // cliente recorrería también los ocho mil repuestos.
+    this.version(3).stores({
+      maestros: 'clave, coleccion, registroId',
+      maestrosEstado: 'coleccion',
     });
   }
 }

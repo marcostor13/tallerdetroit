@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
+import { ConnectionService } from '../../core/connection/connection.service';
+import { MastersCacheService } from '../../core/sync/masters-cache.service';
 import { ThemeService, type ThemeMode } from '../../core/theme/theme.service';
 import { ConnectionChipComponent } from '../../shared/ui/connection-chip/connection-chip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
@@ -32,10 +34,17 @@ const DESCRIPCION_ROL: Record<string, string> = {
 export class PerfilPage {
   private readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  protected readonly maestros = inject(MastersCacheService);
+  protected readonly conexion = inject(ConnectionService);
 
   protected readonly user = this.auth.user;
   protected readonly saliendo = signal(false);
   protected readonly permisosVisibles = signal(false);
+
+  /** Fuerza la descarga aunque no haya vencido el plazo (E4.2). */
+  protected actualizarMaestros(): void {
+    void this.maestros.sincronizar(true);
+  }
 
   protected readonly iniciales = computed(() => {
     const nombre = this.user()?.nombre ?? '';

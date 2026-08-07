@@ -9,6 +9,7 @@ export * from './domain/review';
 export * from './domain/instruments';
 export * from './domain/notifications';
 export * from './domain/sync';
+export * from './domain/masters-cache';
 export * from './domain/fuzzy-search';
 export * from './domain/visibility';
 export * from './domain/templates';

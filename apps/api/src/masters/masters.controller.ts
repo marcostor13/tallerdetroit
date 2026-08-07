@@ -52,6 +52,33 @@ export class MastersController {
     });
   }
 
+  /**
+   * Va antes que `:collection/:id` a propósito: con el orden al revés, Nest
+   * resolvería `/clients/delta` como «el cliente con id `delta`».
+   */
+  @Get(':collection/delta')
+  @Permissions('masters:read')
+  @ApiParam({ name: 'collection', enum: MASTER_KEYS })
+  @ApiQuery({
+    name: 'desde',
+    required: false,
+    description: 'ISO de la última sincronización. Sin él, se manda el catálogo entero',
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiOperation({
+    summary: 'Cambios desde una fecha, para la caché del dispositivo (E4.2)',
+    description:
+      'Incluye las bajas y las desactivaciones: el dispositivo tiene que poder quitar de su ' +
+      'caché lo que ya no se puede elegir.',
+  })
+  delta(
+    @Param('collection') collection: string,
+    @Query('desde') desde?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.masters.delta(collection, desde, limit ? Number(limit) : undefined);
+  }
+
   @Get(':collection/:id')
   @Permissions('masters:read')
   @ApiOperation({ summary: 'Devuelve un registro' })

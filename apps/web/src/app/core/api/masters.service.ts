@@ -2,6 +2,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ConnectionService } from '../connection/connection.service';
+import { esFalloDeRed } from '../http/network-error';
+import { MastersCacheService } from '../sync/masters-cache.service';
 
 export interface MasterItem {
   readonly _id: string;
@@ -24,9 +27,19 @@ export interface MasterList {
 @Injectable({ providedIn: 'root' })
 export class MastersService {
   private readonly http = inject(HttpClient);
+  private readonly conexion = inject(ConnectionService);
+  private readonly cache = inject(MastersCacheService);
   private readonly base = `${environment.apiUrl}/masters`;
 
-  search(
+  /**
+   * Busca en el maestro.
+   *
+   * Con red pregunta al servidor; sin red —o si la petición muere en el
+   * intento— responde la caché del dispositivo (E4.2). La pantalla no se entera
+   * de la diferencia, que es la única forma de que el desplegable de cliente
+   * siga funcionando en el socavón sin escribir dos veces cada formulario.
+   */
+  async search(
     coleccion: string,
     opciones: {
       q?: string;
@@ -34,6 +47,8 @@ export class MastersService {
       filtros?: Record<string, string | null | undefined>;
     } = {},
   ): Promise<MasterList> {
+    if (!this.conexion.online()) return this.cache.buscar(coleccion, opciones);
+
     let params = new HttpParams();
     if (opciones.q?.trim()) params = params.set('q', opciones.q.trim());
     if (opciones.limit) params = params.set('limit', String(opciones.limit));
@@ -42,11 +57,28 @@ export class MastersService {
       if (valor) params = params.set(campo, valor);
     }
 
-    return firstValueFrom(this.http.get<MasterList>(`${this.base}/${coleccion}`, { params }));
+    try {
+      return await firstValueFrom(
+        this.http.get<MasterList>(`${this.base}/${coleccion}`, { params }),
+      );
+    } catch (error: unknown) {
+      if (!esFalloDeRed(error)) throw error;
+      return this.cache.buscar(coleccion, opciones);
+    }
   }
 
-  findById(coleccion: string, id: string): Promise<MasterItem> {
-    return firstValueFrom(this.http.get<MasterItem>(`${this.base}/${coleccion}/${id}`));
+  async findById(coleccion: string, id: string): Promise<MasterItem> {
+    if (this.conexion.online()) {
+      try {
+        return await firstValueFrom(this.http.get<MasterItem>(`${this.base}/${coleccion}/${id}`));
+      } catch (error: unknown) {
+        if (!esFalloDeRed(error)) throw error;
+      }
+    }
+
+    const guardado = await this.cache.porId(coleccion, id);
+    if (!guardado) throw new Error('Ese registro no está guardado en este dispositivo.');
+    return guardado;
   }
 
   /**

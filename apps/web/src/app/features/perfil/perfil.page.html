@@ -129,6 +129,34 @@
         <dps-connection-chip />
       </div>
 
+      <!--
+        Los catálogos que lleva el dispositivo. Se dice cuántos y de cuándo, no
+        solo «sincronizado»: el técnico mira esto antes de bajar a la mina para
+        saber si puede fiarse de los desplegables cuando se quede sin señal.
+      -->
+      <div class="flex flex-col gap-2 border-t border-subtle pt-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-body-md text-secondary">Catálogos en este dispositivo</span>
+          <button
+            type="button"
+            class="dps-btn dps-btn--secondary"
+            [disabled]="maestros.sincronizando() || !conexion.online()"
+            (click)="actualizarMaestros()"
+          >
+            @if (maestros.sincronizando()) {
+              <dps-icon name="progress_activity" [size]="20" class="animate-spin" />
+              Actualizando…
+            } @else {
+              <dps-icon name="cloud_download" [size]="20" />
+              Actualizar ahora
+            }
+          </button>
+        </div>
+        <p class="text-body-sm text-secondary" aria-live="polite">
+          {{ maestros.resumen() ?? 'Todavía no hay catálogos guardados en este dispositivo.' }}
+        </p>
+      </div>
+
       <button
         type="button"
         class="dps-btn dps-btn--danger w-full sm:w-auto sm:self-start"

@@ -111,6 +111,58 @@ export class MastersService {
     };
   }
 
+  /**
+   * Lo que cambió desde la última vez (E4.2).
+   *
+   * Es lo que permite que un teléfono lleve los catálogos encima sin volver a
+   * bajarlos enteros cada cuatro horas: la diferencia entre 40 registros y
+   * 8.000 es la diferencia entre que la caché sirva y que el técnico la apague.
+   *
+   * **Van también las bajas.** Un cliente que solo recibiera registros activos
+   * nunca se enteraría de que una sede se desactivó y seguiría ofreciéndola
+   * para siempre. Por eso este listado no filtra por `activo` ni por
+   * `deletedAt`: manda el registro tal cual y el dispositivo decide si lo
+   * guarda o lo quita.
+   *
+   * El `hasta` lo pone el servidor y no el dispositivo, y se lee **antes** de
+   * consultar: el reloj de un teléfono se desvía, y una marca adelantada unos
+   * minutos perdería para siempre los cambios de esa ventana.
+   */
+  async delta(key: string, desde?: string, limit = 500) {
+    const def = this.definition(key);
+    const hasta = new Date();
+
+    const filtro: FilterQuery<unknown> = {};
+    if (desde) {
+      const corte = new Date(desde);
+      if (Number.isNaN(corte.getTime())) {
+        throw new BadRequestException('El parámetro «desde» no es una fecha válida.');
+      }
+      filtro['updatedAt'] = { $gt: corte };
+    }
+
+    const items = await this.model(def)
+      .find(filtro)
+      .sort({ updatedAt: 1 })
+      .limit(Math.min(limit, 2000))
+      .lean()
+      .exec();
+
+    // Si el lote se llenó, el `hasta` es el del último registro y no el reloj:
+    // decir «ya estás al día» cuando quedan cambios sin mandar los perdería.
+    const completo = items.length < Math.min(limit, 2000);
+    const ultimo = items[items.length - 1] as { updatedAt?: Date } | undefined;
+
+    return {
+      coleccion: key,
+      total: items.length,
+      items,
+      hasta: (completo ? hasta : (ultimo?.updatedAt ?? hasta)).toISOString(),
+      /** Quedan más: el cliente vuelve a pedir de inmediato con el nuevo corte. */
+      hayMas: !completo,
+    };
+  }
+
   async findById(key: string, id: string) {
     const def = this.definition(key);
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException(`No existe ese ${def.label}.`);
@@ -233,7 +285,14 @@ export class MastersService {
    */
   private etiquetaDe(doc: Record<string, unknown> | null): string | null {
     if (!doc) return null;
-    for (const campo of ['nombre', 'denominacion', 'razonSocial', 'nombreCorto', 'clave', 'codigo']) {
+    for (const campo of [
+      'nombre',
+      'denominacion',
+      'razonSocial',
+      'nombreCorto',
+      'clave',
+      'codigo',
+    ]) {
       const valor = doc[campo];
       if (typeof valor === 'string' && valor.trim()) return valor;
     }

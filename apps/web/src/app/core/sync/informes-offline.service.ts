@@ -1,9 +1,9 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { esIdLocal, type TipoDeOperacion } from '@dps/shared';
 import { BASE_LOCAL } from './sync.db';
 import { SyncService } from './sync.service';
 import { ConnectionService } from '../connection/connection.service';
+import { esFalloDeRed } from '../http/network-error';
 import type { Informe } from '../api/reports.service';
 import type { TemplateVersionDefinition } from '@dps/shared';
 
@@ -52,7 +52,7 @@ export class InformesOfflineService {
     try {
       return await enLinea();
     } catch (error: unknown) {
-      if (!this.esFalloDeRed(error)) throw error;
+      if (!esFalloDeRed(error)) throw error;
 
       await this.cola.encolar(tipo, informeId, datos, bloqueId);
       return null;
@@ -128,7 +128,7 @@ export class InformesOfflineService {
     try {
       return await enLinea();
     } catch (error: unknown) {
-      if (!this.esFalloDeRed(error)) throw error;
+      if (!esFalloDeRed(error)) throw error;
       return this.crearLocal(numeroInforme);
     }
   }
@@ -231,18 +231,5 @@ export class InformesOfflineService {
     } catch {
       return null;
     }
-  }
-
-  /**
-   * ¿Falló por la red?
-   *
-   * `status === 0` es lo que da el navegador cuando la petición ni salió: sin
-   * conexión, DNS caído, CORS que ni llegó. Un 5xx también cuenta —el servidor
-   * está, pero no puede— y reintentarlo tiene sentido. Un 4xx no: eso es que la
-   * petición está mal y volverá a estarlo.
-   */
-  private esFalloDeRed(error: unknown): boolean {
-    if (!(error instanceof HttpErrorResponse)) return false;
-    return error.status === 0 || error.status >= 500;
   }
 }
