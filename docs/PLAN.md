@@ -18,7 +18,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | 🟡 10 de 11 épicas · 5 de 10 criterios verificados                              | 5–7     | —          |
-| **F4** PWA, movilidad y offline          | 🟡 El núcleo offline en pie · falta cablearlo al wizard                         | 4–6     | —          |
+| **F4** PWA, movilidad y offline          | 🟡 El editor ya trabaja sin red · 3 de 9 criterios verificados                  | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
 
@@ -455,25 +455,28 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 
 ## Estado de las épicas (6-ago-2026)
 
-| Épica                                 | Estado                                                                                              |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| **E4.1** Service worker e instalación | 🟡 `ngsw-config.json` y el manifest venían de F0. Falta comprobar la instalación en dispositivos    |
-| **E4.2** Caché de maestros            | ⬜ Pendiente — el `dataGroup` de `/masters/**` existe; falta la sincronización delta cada 4 h       |
-| **E4.3** Edición offline              | 🟡 Base local en IndexedDB (informes, fotos como `Blob`, cola). **Falta que el wizard escriba ahí** |
-| **E4.4** Cola y sincronización        | 🟢 `clientOpId` idempotente, orden de envío, reintentos con backoff, `POST /sync/push` y `/pull`    |
-| **E4.5** Conflictos                   | 🟡 La detección por bloque está y probada. Falta la pantalla de comparación                         |
-| **E4.6** Captura móvil                | ⬜ Pendiente — cámara nativa y vinculación por QR (UX-03)                                           |
-| **E4.7** Responsive completo          | 🟢 Heredado de F1–F3: cada pantalla se verifica a 360 px en su propio e2e                           |
-| **E4.8** Límites y avisos             | 🟢 Aviso por > 500 MB o > 5 informes sin sincronizar, antes de chocar con el límite                 |
+| Épica                                 | Estado                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **E4.1** Service worker e instalación | 🟡 `ngsw-config.json` y el manifest venían de F0. Falta comprobar la instalación en dispositivos |
+| **E4.2** Caché de maestros            | ⬜ Pendiente — el `dataGroup` de `/masters/**` existe; falta la sincronización delta cada 4 h    |
+| **E4.3** Edición offline              | 🟢 El wizard escribe contra la cola. Falta **crear** un informe sin red                          |
+| **E4.4** Cola y sincronización        | 🟢 `clientOpId` idempotente, orden de envío, reintentos con backoff, `POST /sync/push` y `/pull` |
+| **E4.5** Conflictos                   | 🟡 La detección por bloque está y probada. Falta la pantalla de comparación                      |
+| **E4.6** Captura móvil                | ⬜ Pendiente — cámara nativa y vinculación por QR (UX-03)                                        |
+| **E4.7** Responsive completo          | 🟢 Heredado de F1–F3: cada pantalla se verifica a 360 px en su propio e2e                        |
+| **E4.8** Límites y avisos             | 🟢 Aviso por > 500 MB o > 5 informes sin sincronizar, antes de chocar con el límite              |
 
 ## Criterios de aceptación
 
-> **Estado (6-ago-2026):** el núcleo está en pie y probado, pero **el wizard todavía escribe
-> directo contra la API**, no contra la cola. Hasta que se cablee, la app no funciona sin red por
-> mucho que la cola exista: por eso el primer criterio sigue abierto y no marcado a medias.
+> **Estado (7-ago-2026):** el editor ya trabaja sin red — lo que se escribe, se mide y se
+> inventaría se encola y se sigue viendo en pantalla. Lo que falta del primer criterio es **crear**
+> el informe sin conexión, que toca la bandeja y el enrutado.
 
-- [ ] Con el modo avión activado, un técnico crea un informe completo con 20 fotos y 3 grillas de
-      medición — **falta cablear el wizard a la cola.** Es el trabajo que queda de E4.3
+- [~] Con el modo avión activado, un técnico crea un informe completo con 20 fotos y 3 grillas de
+  medición — **editar sí, crear todavía no.** Verificado 7-ago-2026 que sin respuesta del
+  servidor el cambio se aplica en la copia local y la operación queda encolada
+  (`informe.store.spec.ts`). Crear un informe con id local está resuelto en la cola pero no
+  cableado a la bandeja
 - [~] Al recuperar conexión, todo se sincroniza **sin duplicados y sin pérdida de captions** — la
   cola se vacía sola al volver la red y está probado (`sync.service.spec.ts`); falta el recorrido
   completo con datos reales
@@ -497,8 +500,8 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 
 ### Lo que queda para cerrar F4
 
-1. **Cablear el wizard a la cola** (E4.3). Hoy el editor llama a la API directamente; tiene que
-   escribir en IndexedDB y encolar. Es lo que hace falta para el primer criterio.
+1. **Crear un informe sin red** desde la bandeja, con id local (E4.3). La cola ya lo soporta y está
+   probado; falta el enrutado, porque la URL del editor lleva el id.
 2. Sincronización delta de maestros (E4.2) y cámara nativa con vinculación por QR (E4.6).
 3. Pantalla de comparación cuando hay conflicto real (E4.5).
 4. Lo que necesita dispositivos: instalación, arranque offline y barra de estado.
