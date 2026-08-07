@@ -14,6 +14,8 @@ import {
   type Informe,
   type Validacion,
 } from '../../core/api/reports.service';
+import { InformesOfflineService } from '../../core/sync/informes-offline.service';
+import { ConnectionService } from '../../core/connection/connection.service';
 
 export type EstadoGuardado = 'limpio' | 'pendiente' | 'guardando' | 'guardado' | 'error';
 
@@ -34,6 +36,8 @@ const ESPERA_TRAS_ESCRIBIR = 1_500;
 export class InformeStore {
   private readonly api = inject(ReportsService);
   private readonly plantillasApi = inject(TemplatesService);
+  private readonly offline = inject(InformesOfflineService);
+  private readonly conexion = inject(ConnectionService);
 
   readonly informe = signal<Informe | null>(null);
   readonly plantilla = signal<TemplateVersionDefinition | null>(null);
@@ -67,8 +71,11 @@ export class InformeStore {
   private periodico: ReturnType<typeof setInterval> | null = null;
 
   async cargar(id: string): Promise<void> {
-    const informe = await this.api.findById(id);
+    // Con red manda el servidor; sin ella, la copia del dispositivo. Es lo que
+    // permite abrir el informe en el socavón, donde no hay a quién pedírselo.
+    const informe = await this.traer(id);
     this.informe.set(informe);
+    void this.offline.guardarLocal(informe);
 
     // Un informe emitido se pinta con su copia congelada: si se usara la
     // versión vigente, un documento ya firmado cambiaría de forma al publicar
@@ -80,6 +87,30 @@ export class InformeStore {
 
     await this.revalidar();
     this.arrancarAutoguardado();
+  }
+
+  /**
+   * El informe, de donde se pueda.
+   *
+   * Si el servidor no contesta se usa lo guardado en el dispositivo. Solo se
+   * rinde cuando no hay ninguna de las dos: sin red y sin copia local no hay
+   * nada que enseñar, y fingir un informe vacío sería peor.
+   */
+  private async traer(id: string): Promise<Informe> {
+    if (this.conexion.online()) {
+      try {
+        return await this.api.findById(id);
+      } catch (e: unknown) {
+        const local = await this.offline.leerLocal(id);
+        if (!local) throw e;
+        this.error.set('Sin conexión: se muestra la última copia guardada en este dispositivo.');
+        return local;
+      }
+    }
+
+    const local = await this.offline.leerLocal(id);
+    if (!local) throw new Error('Este informe no está descargado en el dispositivo.');
+    return local;
   }
 
   /**
@@ -116,18 +147,28 @@ export class InformeStore {
     this.estadoGuardado.set('guardando');
 
     try {
-      const { guardadoEn, informe } = await this.api.patch(id, cambios);
+      const respuesta = await this.offline.ejecutar('editar-informe', id, cambios, null, () =>
+        this.api.patch(id, cambios),
+      );
 
-      // El informe del servidor no conoce lo que el técnico haya escrito
-      // mientras la petición estaba en vuelo. Sustituirlo a secas hace que esos
-      // cambios desaparezcan de la pantalla —aunque sigan en la cola y se
-      // guarden después—, y lo que el técnico ve es que lo suyo se ha perdido.
-      this.informe.set(informe);
-      for (const [campo, valor] of Object.entries(this.pendientes)) {
-        this.aplicarEnLocal(campo, valor);
+      if (respuesta) {
+        // El informe del servidor no conoce lo que el técnico haya escrito
+        // mientras la petición estaba en vuelo. Sustituirlo a secas hace que esos
+        // cambios desaparezcan de la pantalla —aunque sigan en la cola y se
+        // guarden después—, y lo que el técnico ve es que lo suyo se ha perdido.
+        this.informe.set(respuesta.informe);
+        for (const [campo, valor] of Object.entries(this.pendientes)) {
+          this.aplicarEnLocal(campo, valor);
+        }
+        this.guardadoEn.set(new Date(respuesta.guardadoEn));
+      } else {
+        // Quedó en la cola: lo escrito ya está aplicado en la copia local desde
+        // `cambiar()`, así que aquí solo se marca la hora. Para el técnico está
+        // guardado —en su dispositivo—, y el chip dice cuánto falta por subir.
+        this.guardadoEn.set(new Date());
       }
 
-      this.guardadoEn.set(new Date(guardadoEn));
+      void this.offline.guardarLocal(this.informe() as Informe);
       this.estadoGuardado.set('guardado');
       this.error.set(null);
     } catch (e: unknown) {
@@ -152,7 +193,15 @@ export class InformeStore {
   async editarBloque(bloqueId: string, cambios: Record<string, unknown>): Promise<void> {
     const id = this.informe()?._id;
     if (!id) return;
-    this.informe.set(await this.api.updateBlock(id, bloqueId, cambios));
+
+    const respuesta = await this.offline.ejecutar('editar-bloque', id, cambios, bloqueId, () =>
+      this.api.updateBlock(id, bloqueId, cambios),
+    );
+
+    if (respuesta) this.informe.set(respuesta);
+    else this.aplicarEnBloque(bloqueId, cambios);
+
+    void this.offline.guardarLocal(this.informe() as Informe);
     await this.revalidar();
   }
 
@@ -209,7 +258,20 @@ export class InformeStore {
     if (!id || this.soloLectura()) return;
 
     try {
-      this.informe.set(await this.api.guardarMedicion(id, bloqueId, captura));
+      const respuesta = await this.offline.ejecutar(
+        'guardar-medicion',
+        id,
+        captura as unknown as Record<string, unknown>,
+        bloqueId,
+        () => this.api.guardarMedicion(id, bloqueId, captura),
+      );
+
+      // Sin respuesta, la grilla se queda con lo que el técnico tecleó: el
+      // semáforo del espejo ya lo evaluó contra la tolerancia congelada, y el
+      // servidor lo recalculará cuando la operación suba.
+      if (respuesta) this.informe.set(respuesta);
+
+      void this.offline.guardarLocal(this.informe() as Informe);
       this.error.set(null);
       await this.revalidar();
     } catch (e: unknown) {
@@ -235,7 +297,20 @@ export class InformeStore {
     if (!id || this.soloLectura()) return;
 
     try {
-      this.informe.set(await this.api.guardarChecklist(id, bloqueId, { capturado }));
+      const respuesta = await this.offline.ejecutar(
+        'guardar-checklist',
+        id,
+        { capturado },
+        bloqueId,
+        () => this.api.guardarChecklist(id, bloqueId, { capturado }),
+      );
+
+      // Sin respuesta se aplica en local sobre el catálogo que ya estaba: lo
+      // que el servidor añade es el catálogo, y ese no cambia por inventariar.
+      if (respuesta) this.informe.set(respuesta);
+      else this.aplicarEnChecklist(bloqueId, capturado);
+
+      void this.offline.guardarLocal(this.informe() as Informe);
       this.error.set(null);
       await this.revalidar();
     } catch (e: unknown) {
@@ -372,6 +447,37 @@ export class InformeStore {
     actual[tramos[tramos.length - 1] as string] = valor;
 
     this.informe.set(copia as unknown as Informe);
+  }
+
+  /**
+   * Aplica en la copia local un cambio de bloque que quedó encolado.
+   *
+   * Hace falta porque sin red no llega ninguna respuesta que traiga el informe
+   * actualizado, y el técnico tiene que seguir viendo lo que acaba de escribir.
+   */
+  private aplicarEnBloque(bloqueId: string, cambios: Record<string, unknown>): void {
+    const informe = this.informe();
+    if (!informe) return;
+
+    this.informe.set({
+      ...informe,
+      bloques: informe.bloques.map((b) =>
+        b.id === bloqueId ? ({ ...b, ...cambios } as BloqueInforme) : b,
+      ),
+    });
+  }
+
+  /** Lo mismo para el inventario: se sustituye lo capturado, no el catálogo. */
+  private aplicarEnChecklist(bloqueId: string, capturado: ChecklistCapturado[]): void {
+    const informe = this.informe();
+    if (!informe) return;
+
+    this.informe.set({
+      ...informe,
+      bloques: informe.bloques.map((b) =>
+        b.id === bloqueId ? { ...b, checklist: { ...(b.checklist ?? {}), capturado } } : b,
+      ),
+    });
   }
 
   /** Contexto para las reglas de visibilidad de §11.3. */

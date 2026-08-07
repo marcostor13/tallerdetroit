@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReportsService, TemplatesService, type Informe } from '../../core/api/reports.service';
 import { InformeStore } from './informe.store';
+import { InformesOfflineService } from '../../core/sync/informes-offline.service';
 
 /**
  * Comportamiento del autoguardado.
@@ -242,5 +243,142 @@ describe('InformeStore', () => {
     api.reorder.mockClear();
     expect(await store.moverBloque(0, 9)).toBe(0);
     expect(api.reorder).toHaveBeenCalledTimes(0);
+  });
+});
+
+/**
+ * El editor sin conexión (E4.3).
+ *
+ * Lo que se prueba es que el técnico siga viendo lo que acaba de escribir
+ * aunque no haya nadie al otro lado: sin respuesta del servidor, el cambio se
+ * aplica en la copia local y la operación queda encolada.
+ */
+describe('InformeStore sin conexión', () => {
+  const informe = (extra: Partial<Informe> = {}): Informe =>
+    ({
+      _id: 'r1',
+      numeroInforme: 'ITS-T-E-26-003-0746',
+      templateCodigo: 'SER-FOR-002',
+      templateVersion: 'v01',
+      estado: 'borrador',
+      bloques: [{ id: 'b1', clave: 'trabajos', tipo: 'work_task', orden: 1, titulo: 'ANTES' }],
+      datos: {},
+      ...extra,
+    }) as Informe;
+
+  let store: InformeStore;
+  let api: Record<string, ReturnType<typeof vi.fn>>;
+  let offline: {
+    ejecutar: ReturnType<typeof vi.fn>;
+    guardarLocal: ReturnType<typeof vi.fn>;
+    leerLocal: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+
+    api = {
+      findById: vi.fn().mockResolvedValue(informe()),
+      patch: vi.fn(),
+      updateBlock: vi.fn(),
+      guardarChecklist: vi.fn(),
+      validate: vi.fn().mockResolvedValue({ emitible: false, faltan: [] }),
+    };
+
+    offline = {
+      // `null` es la respuesta del servicio cuando la operación se encola.
+      ejecutar: vi.fn().mockResolvedValue(null),
+      guardarLocal: vi.fn().mockResolvedValue(undefined),
+      leerLocal: vi.fn().mockResolvedValue(null),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        InformeStore,
+        { provide: ReportsService, useValue: api },
+        { provide: InformesOfflineService, useValue: offline },
+        {
+          provide: TemplatesService,
+          useValue: {
+            version: vi.fn().mockResolvedValue({
+              codigo: 'SER-FOR-002',
+              version: 'v01',
+              nombre: 'x',
+              estado: 'publicada',
+              secciones: [],
+            }),
+          },
+        },
+      ],
+    });
+
+    store = TestBed.inject(InformeStore);
+    await store.cargar('r1');
+  });
+
+  it('lo escrito se queda en pantalla aunque no haya respuesta del servidor', async () => {
+    store.cambiar('datos.horasTotales', 12_500);
+    await store.guardar();
+
+    expect(store.informe()?.datos?.['horasTotales']).toBe(12_500);
+    // Para el técnico está guardado: en su dispositivo. El chip dice lo que
+    // falta por subir.
+    expect(store.estadoGuardado()).toBe('guardado');
+    expect(store.guardadoEn()).not.toBeNull();
+  });
+
+  it('el cambio va a la cola con su tipo de operación', async () => {
+    store.cambiar('datos.horasTotales', 12_500);
+    await store.guardar();
+
+    expect(offline.ejecutar).toHaveBeenCalledWith(
+      'editar-informe',
+      'r1',
+      { 'datos.horasTotales': 12_500 },
+      null,
+      expect.any(Function),
+    );
+  });
+
+  it('editar un bloque sin red lo actualiza en la copia local', async () => {
+    await store.editarBloque('b1', { titulo: 'DESPUÉS' });
+
+    expect(store.bloquesOrdenados()[0]?.titulo).toBe('DESPUÉS');
+    expect(offline.ejecutar).toHaveBeenCalledWith(
+      'editar-bloque',
+      'r1',
+      { titulo: 'DESPUÉS' },
+      'b1',
+      expect.any(Function),
+    );
+  });
+
+  it('el inventario capturado se aplica sin perder el catálogo', async () => {
+    // El catálogo lo pone el servidor y no cambia por inventariar; lo que se
+    // sustituye es lo encontrado.
+    store.informe.set(
+      informe({
+        bloques: [
+          {
+            id: 'b9',
+            clave: 'inventario-desarmado',
+            tipo: 'checklist',
+            orden: 1,
+            checklist: { items: [{ clave: 'piston', denominacion: 'Pistones' }], capturado: [] },
+          },
+        ],
+      } as Partial<Informe>),
+    );
+
+    await store.guardarChecklist('b9', [{ clave: 'piston', estado: 'ok', cantidad: 20 }]);
+
+    const bloque = store.bloquesOrdenados()[0];
+    expect(bloque?.checklist?.items).toHaveLength(1);
+    expect(bloque?.checklist?.capturado).toEqual([{ clave: 'piston', estado: 'ok', cantidad: 20 }]);
+  });
+
+  it('cada cambio deja copia en el dispositivo', async () => {
+    await store.editarBloque('b1', { titulo: 'DESPUÉS' });
+    expect(offline.guardarLocal).toHaveBeenCalled();
   });
 });
