@@ -183,6 +183,63 @@ describe('Informes', () => {
     expect(r.body.bloques.map((b: { orden: number }) => b.orden)).toEqual([1, 2]);
   }, 30_000);
 
+  /**
+   * El dispositivo trae el id del bloque (E4.3).
+   *
+   * Un bloque añadido sin red ya tiene nombre en el dispositivo, y las
+   * ediciones y las fotos que el técnico hace a continuación viajan etiquetadas
+   * con él. Si el servidor lo cambiara al recibirlo, todo eso quedaría apuntando
+   * a un bloque que no existe y se perdería al sincronizar.
+   */
+  it('respeta el id de bloque que trae el dispositivo, y no lo duplica al reenviarlo', async () => {
+    const id = '2f4a1c8e-9b30-4d21-8f77-51c0a9e6b3d4';
+
+    const primera = await request(http)
+      .post(`/api/v1/reports/${informeId}/bloques`)
+      .set(conToken(tokenTecnico))
+      .send({ id, clave: 'trabajos', titulo: 'CAMBIO DE RETENES' })
+      .expect(201);
+
+    expect(primera.body.bloques.some((b: { id: string }) => b.id === id)).toBe(true);
+    const cuantos = primera.body.bloques.length as number;
+
+    // El mismo envío otra vez —un reintento tras un timeout— no añade otro.
+    const segunda = await request(http)
+      .post(`/api/v1/reports/${informeId}/bloques`)
+      .set(conToken(tokenTecnico))
+      .send({ id, clave: 'trabajos', titulo: 'CAMBIO DE RETENES' })
+      .expect(201);
+
+    expect(segunda.body.bloques).toHaveLength(cuantos);
+
+    // Se deshace: los tests que siguen cuentan los bloques del informe.
+    await request(http)
+      .delete(`/api/v1/reports/${informeId}/bloques/${id}`)
+      .set(conToken(tokenTecnico))
+      .expect(200);
+  }, 30_000);
+
+  it('un id de bloque que no es un UUID se ignora: el servidor pone el suyo', async () => {
+    // Sin este filtro, un cliente podría fijar el id a cualquier cosa, y el
+    // resto del sistema referencia los bloques por ese campo.
+    const r = await request(http)
+      .post(`/api/v1/reports/${informeId}/bloques`)
+      .set(conToken(tokenTecnico))
+      .send({ id: '../../otro', clave: 'trabajos', titulo: 'AJUSTE DE VÁLVULAS' })
+      .expect(201);
+
+    const bloques = r.body.bloques as { id: string; titulo: string }[];
+    expect(bloques.some((b) => b.id === '../../otro')).toBe(false);
+
+    const puesto = bloques.find((b) => b.titulo === 'AJUSTE DE VÁLVULAS');
+    if (!puesto) throw new Error('No se creó el bloque.');
+
+    await request(http)
+      .delete(`/api/v1/reports/${informeId}/bloques/${puesto.id}`)
+      .set(conToken(tokenTecnico))
+      .expect(200);
+  }, 30_000);
+
   it('un bloque que no admite repetición no se duplica', async () => {
     await request(http)
       .post(`/api/v1/reports/${informeId}/bloques`)

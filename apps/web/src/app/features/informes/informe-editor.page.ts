@@ -7,7 +7,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChecklistCapturado, MissingBlock, Permission, ReportStatus } from '@dps/shared';
 import type { FotoInforme, GrillaGuardada } from '../../core/api/reports.service';
 import {
@@ -26,6 +26,7 @@ import { ChecklistBloqueComponent } from './ui/checklist-bloque.component';
 import { SugerenciasConclusionesComponent } from './ui/sugerencias-conclusiones.component';
 import { RevisionPanelComponent } from './ui/revision-panel.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { SyncService } from '../../core/sync/sync.service';
 
 /** Campo simple declarado en la configuración de un bloque de la plantilla. */
 interface CampoDeBloque {
@@ -94,6 +95,8 @@ const NOMBRES_DE_PASO: Record<number, string> = {
 export class InformeEditorPage implements OnDestroy {
   protected readonly store = inject(InformeStore);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly cola = inject(SyncService);
   private readonly auth = inject(AuthService);
   private readonly trabajos = viewChild(ListaTrabajosComponent);
 
@@ -125,6 +128,15 @@ export class InformeEditorPage implements OnDestroy {
   constructor() {
     const id = this.ruta.snapshot.paramMap.get('id');
     if (id) void this.iniciar(id);
+
+    // Un informe creado sin red cambia de identidad al subir: la URL lleva el id
+    // local y a partir de ese momento apunta a algo que ya no existe con ese
+    // nombre. Se sustituye sin recargar —`replaceUrl` para que el botón atrás no
+    // vuelva al id muerto— y el editor sigue donde estaba.
+    this.cola.alReasignarId((local, definitivo) => {
+      if (this.store.informe()?._id !== local) return;
+      void this.router.navigate(['/informes', definitivo], { replaceUrl: true });
+    });
   }
 
   ngOnDestroy(): void {

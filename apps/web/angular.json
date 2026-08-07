@@ -106,7 +106,11 @@
             "tsConfig": "tsconfig.spec.json",
             "buildTarget": "web:build:development",
             "coverageInclude": ["src/app/**/*.ts"],
-            "coverageExclude": ["src/app/**/*.spec.ts", "src/app/core/observability/**"],
+            "coverageExclude": [
+              "src/app/**/*.spec.ts",
+              "src/app/**/testing/**",
+              "src/app/core/observability/**"
+            ],
             "coverageThresholds": {
               "statements": 50,
               "lines": 50

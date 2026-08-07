@@ -161,4 +161,57 @@ describe('SyncService', () => {
     const id = servicio.nuevoIdLocal();
     expect(id.startsWith('local:')).toBe(true);
   });
+
+  /**
+   * El aviso de que un informe local ya tiene su id del servidor (E4.3).
+   *
+   * Sin él, la copia del dispositivo se quedaría con el nombre viejo y el
+   * editor abierto mirando un informe que ya no existe con ese id.
+   */
+  it('avisa del id definitivo en cuanto el servidor confirma la creación', async () => {
+    const avisos: [string, string][] = [];
+    servicio.alReasignarId((local, definitivo) => avisos.push([local, definitivo]));
+
+    const local = servicio.nuevoIdLocal();
+    const operacion = await servicio.encolar('crear-informe', local, { numeroInforme: 'ITS-1' });
+
+    empujar().flush({
+      resultados: [{ clientOpId: operacion.clientOpId, estado: 'aplicada', informeId: 'r7' }],
+    });
+    await asentar();
+
+    expect(avisos).toEqual([[local, 'r7']]);
+  });
+
+  it('no avisa de nada cuando el informe ya tenía su id del servidor', async () => {
+    const avisos: string[] = [];
+    servicio.alReasignarId((local) => avisos.push(local));
+
+    const operacion = await servicio.encolar('editar-bloque', 'r1', {}, 'b1');
+    empujar().flush({
+      resultados: [{ clientOpId: operacion.clientOpId, estado: 'aplicada', informeId: 'r1' }],
+    });
+    await asentar();
+
+    expect(avisos).toEqual([]);
+  });
+
+  it('un oyente que falla no impide que la cola siga vaciándose', async () => {
+    // Lo que importa es que el trabajo ya está en el servidor; que la pantalla
+    // no se entere es molesto, perder la confirmación sería peor.
+    servicio.alReasignarId(() => {
+      throw new Error('la pantalla ya no está');
+    });
+
+    const local = servicio.nuevoIdLocal();
+    const operacion = await servicio.encolar('crear-informe', local, { numeroInforme: 'ITS-1' });
+
+    empujar().flush({
+      resultados: [{ clientOpId: operacion.clientOpId, estado: 'aplicada', informeId: 'r7' }],
+    });
+    await asentar();
+
+    expect(servicio.pendientesDe('r7')).toHaveLength(0);
+    expect(conexion.pendingOperations()).toBe(0);
+  });
 });

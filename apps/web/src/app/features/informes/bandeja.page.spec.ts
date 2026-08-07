@@ -3,7 +3,13 @@ import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MastersService } from '../../core/api/masters.service';
 import { ReportsService, type ResumenInforme } from '../../core/api/reports.service';
+import { ConnectionService } from '../../core/connection/connection.service';
+import { BASE_LOCAL } from '../../core/sync/sync.db';
+import { baseLocalFalsa, comoBaseLocal } from '../../core/sync/testing/base-local.fake';
 import { BandejaPage } from './bandeja.page';
+
+/** Sin esto la base real se cuelga esperando un IndexedDB que jsdom no tiene. */
+const base = baseLocalFalsa();
 
 const informe = (numero: string, estado: string): ResumenInforme =>
   ({
@@ -29,15 +35,39 @@ describe('BandejaPage', () => {
 
   const texto = () => fixture.nativeElement.textContent ?? '';
 
+  const servicioDeConexion = () => TestBed.inject(ConnectionService);
+
+  /** Abre el formulario de alta, escribe el número y lo envía. */
+  const enviarAlta = async (numero: string) => {
+    fixture.nativeElement.querySelector('header button').dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('#dps-nuevo-informe input');
+    input.value = numero;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('#dps-nuevo-informe').dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    for (let vuelta = 0; vuelta < 10; vuelta++) await Promise.resolve();
+    fixture.detectChanges();
+  };
+
   const crear = async () => {
     await TestBed.compileComponents();
     fixture = TestBed.createComponent(BandejaPage);
     fixture.detectChanges();
+
+    // La bandeja consulta primero el dispositivo y después el servidor: son
+    // varios saltos de microtarea encadenados y `whenStable` solo garantiza el
+    // primero. Se vacía la cola antes de mirar el DOM.
     await fixture.whenStable();
+    for (let vuelta = 0; vuelta < 10; vuelta++) await Promise.resolve();
     fixture.detectChanges();
   };
 
   beforeEach(() => {
+    base.vaciar();
     api = {
       list: vi.fn().mockResolvedValue({
         total: 2,
@@ -54,6 +84,7 @@ describe('BandejaPage', () => {
         provideRouter([]),
         { provide: ReportsService, useValue: api },
         { provide: MastersService, useValue: { search: vi.fn().mockResolvedValue({ items: [] }) } },
+        { provide: BASE_LOCAL, useValue: comoBaseLocal(base) },
       ],
     });
 
@@ -155,6 +186,41 @@ describe('BandejaPage', () => {
       // Un cuadro de diálogo del navegador no tendría dónde poner esto.
       expect(texto()).toContain('Ya existe un informe con ese número.');
       expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(navegar).toHaveBeenCalledTimes(0);
+    });
+
+    /**
+     * Crear sin red (E4.3).
+     *
+     * El técnico baja al socavón y empieza el informe allí. Que la bandeja no
+     * pueda hablar con el servidor no puede ser motivo para no empezar: el
+     * informe nace en el dispositivo y sube cuando vuelva la señal.
+     */
+    it('sin conexión el informe nace en el dispositivo y se entra a editarlo', async () => {
+      servicioDeConexion().online.set(false);
+      await base.plantillas.put({
+        clave: 'SER-FOR-002:v01',
+        codigo: 'SER-FOR-002',
+        version: 'v01',
+        definicion: { codigo: 'SER-FOR-002', version: 'v01', secciones: [] },
+        guardadaEn: '2026-06-20T10:00:00.000Z',
+      });
+      await crear();
+
+      await enviarAlta('ITS-SIN-RED');
+
+      expect(api.create).not.toHaveBeenCalled();
+      const destino = navegar.mock.calls[0]?.[0] as [string, string];
+      expect(destino[1]).toMatch(/^local:/);
+    });
+
+    it('sin plantilla guardada lo dice, en vez de abrir un editor en blanco', async () => {
+      servicioDeConexion().online.set(false);
+      await crear();
+
+      await enviarAlta('ITS-SIN-PLANTILLA');
+
+      expect(texto()).toContain('abre uno con red al menos una vez');
       expect(navegar).toHaveBeenCalledTimes(0);
     });
 

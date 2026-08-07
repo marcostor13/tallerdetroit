@@ -18,7 +18,7 @@ en `.claude/DESIGN-SYSTEM.md`.
 | **F1** Núcleo de informes (MVP)          | 🟡 11 de 13 criterios verificados — faltan las dos comparaciones contra el Word | 7–9     | —          |
 | **F2** Mediciones dimensionales          | 🟡 8 épicas implementadas y en pantalla · 7 de 12 criterios verificados         | 4–6     | —          |
 | **F3** Aprobación y gobierno del formato | 🟡 10 de 11 épicas · 5 de 10 criterios verificados                              | 5–7     | —          |
-| **F4** PWA, movilidad y offline          | 🟡 El editor ya trabaja sin red · 3 de 9 criterios verificados                  | 4–6     | —          |
+| **F4** PWA, movilidad y offline          | 🟡 Crear y editar sin red, verificado de punta a punta · 4 de 9 criterios       | 4–6     | —          |
 | **F5** Analítica y conocimiento          | ⬜ Pendiente                                                                    | 4–6     | —          |
 | **F6** Integración corporativa           | ⬜ Pendiente                                                                    | 4–6     | —          |
 
@@ -459,7 +459,7 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **E4.1** Service worker e instalación | 🟡 `ngsw-config.json` y el manifest venían de F0. Falta comprobar la instalación en dispositivos |
 | **E4.2** Caché de maestros            | ⬜ Pendiente — el `dataGroup` de `/masters/**` existe; falta la sincronización delta cada 4 h    |
-| **E4.3** Edición offline              | 🟢 El wizard escribe contra la cola. Falta **crear** un informe sin red                          |
+| **E4.3** Edición offline              | 🟢 Crear, editar y añadir bloques sin red, con id local y reasignación al subir. Faltan las fotos |
 | **E4.4** Cola y sincronización        | 🟢 `clientOpId` idempotente, orden de envío, reintentos con backoff, `POST /sync/push` y `/pull` |
 | **E4.5** Conflictos                   | 🟡 La detección por bloque está y probada. Falta la pantalla de comparación                      |
 | **E4.6** Captura móvil                | ⬜ Pendiente — cámara nativa y vinculación por QR (UX-03)                                        |
@@ -468,18 +468,22 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 
 ## Criterios de aceptación
 
-> **Estado (7-ago-2026):** el editor ya trabaja sin red — lo que se escribe, se mide y se
-> inventaría se encola y se sigue viendo en pantalla. Lo que falta del primer criterio es **crear**
-> el informe sin conexión, que toca la bandeja y el enrutado.
+> **Estado (7-ago-2026):** el ciclo de trabajo sin red está cerrado de punta a punta — crear,
+> editar, añadir bloques y subir al recuperar la señal — y verificado en un navegador de verdad,
+> con su IndexedDB, en escritorio y en móvil (`e2e/sin-conexion.e2e.ts`). Lo que queda de F4 son
+> las fotos, los maestros y lo que necesita dispositivos.
 
 - [~] Con el modo avión activado, un técnico crea un informe completo con 20 fotos y 3 grillas de
-  medición — **editar sí, crear todavía no.** Verificado 7-ago-2026 que sin respuesta del
-  servidor el cambio se aplica en la copia local y la operación queda encolada
-  (`informe.store.spec.ts`). Crear un informe con id local está resuelto en la cola pero no
-  cableado a la bandeja
-- [~] Al recuperar conexión, todo se sincroniza **sin duplicados y sin pérdida de captions** — la
-  cola se vacía sola al volver la red y está probado (`sync.service.spec.ts`); falta el recorrido
-  completo con datos reales
+  medición — **crear, editar y añadir bloques sí; las 20 fotos no.** Verificado 7-ago-2026 en
+  `e2e/sin-conexion.e2e.ts`: sin red la bandeja crea el informe con id local, el editor lo abre y
+  acepta trabajo. El identificador de cada bloque lo genera el cliente y el servidor lo respeta
+  (`reports.service.ts`), que es lo que evita que las ediciones posteriores queden huérfanas.
+  Falta la captura de fotos sin red, que depende de E4.6
+- [x] Al recuperar conexión, todo se sincroniza **sin duplicados y sin pérdida de captions** — la
+  cola se vacía sola al volver la red (`sync.service.spec.ts`) y el recorrido completo está
+  verificado 7-ago-2026 en `e2e/sin-conexion.e2e.ts`: el informe creado sin red sube solo y la URL
+  del editor pasa del id local al del servidor **sin que el técnico recargue ni pulse nada**.
+  Con captions reales todavía no, por lo mismo que el punto anterior
 - [x] Reenviar la misma operación dos veces (doble tap, reintento) **no crea dos informes** —
       verificado 6-ago-2026: el `clientOpId` viaja con cada operación, el servidor recuerda las
       aplicadas 30 días y contesta `repetida` con el id de la primera. En el cliente, `repetida`
@@ -500,11 +504,18 @@ esta fase esté lista, la PWA actual sigue siendo el respaldo operativo.
 
 ### Lo que queda para cerrar F4
 
-1. **Crear un informe sin red** desde la bandeja, con id local (E4.3). La cola ya lo soporta y está
-   probado; falta el enrutado, porque la URL del editor lleva el id.
-2. Sincronización delta de maestros (E4.2) y cámara nativa con vinculación por QR (E4.6).
+1. **Fotos sin red**: capturarlas como `Blob` en IndexedDB y subirlas con la cola. La tabla
+   `fotos` existe desde el principio y nadie escribe en ella todavía; va junto con la cámara
+   nativa (E4.6), porque son el mismo flujo visto desde dos sitios.
+2. Sincronización delta de maestros (E4.2) y vinculación desktop↔móvil por QR (E4.6).
 3. Pantalla de comparación cuando hay conflicto real (E4.5).
 4. Lo que necesita dispositivos: instalación, arranque offline y barra de estado.
+
+> **Deuda anotada al implementar E4.3.** Reordenar bloques **no se encola**: la operación va por
+> posiciones y aplicarla más tarde, sobre un informe donde entretanto se añadieron o quitaron
+> bloques, movería uno distinto del que el técnico arrastró. Sin red la pantalla lo dice y no lo
+> intenta. Encolarlo de verdad exige reescribir la operación en términos de identificadores
+> («pon este bloque después de aquel»), que es un cambio de contrato con el backend.
 
 ---
 

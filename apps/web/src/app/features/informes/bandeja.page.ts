@@ -1,7 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { REPORT_STATUSES } from '@dps/shared';
-import { ReportsService, type ResumenInforme } from '../../core/api/reports.service';
+import { ReportsService, type Informe, type ResumenInforme } from '../../core/api/reports.service';
+import { ConnectionService } from '../../core/connection/connection.service';
+import { InformesOfflineService } from '../../core/sync/informes-offline.service';
 import { AutocompleteComponent } from '../../shared/ui/autocomplete/autocomplete.component';
 import { FieldComponent } from '../../shared/ui/field/field.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
@@ -110,8 +113,44 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
         </dps-field>
       </form>
 
+      <!--
+        Lo que solo existe en el dispositivo va arriba y con su propio rótulo.
+        Mezclarlo con el resto lo haría indistinguible de lo que ya está a salvo
+        en el servidor, y son dos cosas muy distintas para el técnico.
+      -->
+      @if (locales().length) {
+        <section
+          class="flex flex-col gap-3 rounded border border-subtle bg-warning-container p-4 text-on-warning-container"
+          aria-labelledby="dps-sin-sincronizar"
+        >
+          <h2 id="dps-sin-sincronizar" class="text-title-sm">
+            Sin sincronizar ({{ locales().length }})
+          </h2>
+          <p class="text-body-sm">
+            Estos informes solo están en este dispositivo. Se subirán solos en cuanto haya conexión.
+          </p>
+          <ul class="flex flex-col gap-2" role="list">
+            @for (informe of locales(); track informe._id) {
+              <li>
+                <a
+                  [routerLink]="['/informes', informe._id]"
+                  class="flex min-h-11 flex-wrap items-center gap-2 underline"
+                >
+                  <span class="font-mono">{{ informe.numeroInforme }}</span>
+                  <span class="text-body-sm">Continuar la captura</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
       @if (cargando()) {
         <p class="text-body-md text-secondary" role="status">Buscando…</p>
+      } @else if (!conexion.online()) {
+        <p class="dps-card p-6 text-center text-body-md text-secondary">
+          Sin conexión: aquí solo se ve lo que está guardado en este dispositivo.
+        </p>
       } @else if (!informes().length) {
         <p class="dps-card p-6 text-center text-body-md text-secondary">
           No hay informes que coincidan.
@@ -179,6 +218,8 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
 export class BandejaPage {
   private readonly api = inject(ReportsService);
   private readonly router = inject(Router);
+  private readonly offline = inject(InformesOfflineService);
+  protected readonly conexion = inject(ConnectionService);
 
   protected readonly estados = REPORT_STATUSES;
 
@@ -186,6 +227,8 @@ export class BandejaPage {
   protected readonly estado = signal<string | null>(null);
   protected readonly clienteId = signal<string | null>(null);
   protected readonly informes = signal<ResumenInforme[]>([]);
+  /** Los que solo existen en este dispositivo. Se listan aparte y arriba. */
+  protected readonly locales = signal<ResumenInforme[]>([]);
   protected readonly cargando = signal(true);
 
   protected readonly formularioNuevo = signal(false);
@@ -201,18 +244,48 @@ export class BandejaPage {
     return (evento.target as HTMLInputElement | HTMLSelectElement).value;
   }
 
+  /**
+   * Trae la bandeja.
+   *
+   * Lo que está sin sincronizar va **primero y siempre**, sin pasar por los
+   * filtros: es lo único que existe en un solo sitio, y esconderlo tras un
+   * filtro de cliente —que un informe recién creado todavía no tiene— haría que
+   * el técnico creyera que su trabajo se perdió.
+   */
   protected async buscar(): Promise<void> {
     this.cargando.set(true);
     try {
+      const locales = await this.offline.informesLocales();
+      this.locales.set(locales.map((i) => this.aResumen(i)));
+
+      if (!this.conexion.online()) {
+        this.informes.set([]);
+        return;
+      }
+
       const { items } = await this.api.list({
         q: this.q(),
         estado: this.estado(),
         clienteId: this.clienteId(),
       });
       this.informes.set(items);
+    } catch {
+      // Sin servidor queda lo del dispositivo, que ya está puesto.
+      this.informes.set([]);
     } finally {
       this.cargando.set(false);
     }
+  }
+
+  private aResumen(informe: Informe): ResumenInforme {
+    return {
+      _id: informe._id,
+      numeroInforme: informe.numeroInforme,
+      numeroOt: informe.numeroOt ?? null,
+      estado: informe.estado,
+      cliente: informe.cliente,
+      updatedAt: informe.updatedAt,
+    };
   }
 
   protected fecha(iso?: string | null): string {
@@ -238,13 +311,30 @@ export class BandejaPage {
     this.creando.set(true);
     this.errorAlCrear.set(null);
     try {
-      const informe = await this.api.create({ numeroInforme: numero });
+      // Sin red —o si la petición muere en el intento— el informe nace en el
+      // dispositivo con un id local y sube cuando vuelva la señal (E4.3).
+      const informe = await this.offline.crear(numero, () =>
+        this.api.create({ numeroInforme: numero }),
+      );
       await this.router.navigate(['/informes', informe._id]);
     } catch (e: unknown) {
-      const detalle = (e as { error?: { detail?: string } }).error?.detail;
-      this.errorAlCrear.set(detalle ?? 'No se pudo crear el informe.');
+      this.errorAlCrear.set(this.mensaje(e));
     } finally {
       this.creando.set(false);
     }
+  }
+
+  /**
+   * Qué decirle al usuario.
+   *
+   * El `detail` del servidor es lo primero: es el que sabe que ese número ya
+   * existe. Si el error nació aquí —no hay plantilla guardada para crear sin
+   * red— su mensaje ya está escrito para leerse.
+   */
+  private mensaje(error: unknown): string {
+    const detalle = (error as { error?: { detail?: string } }).error?.detail;
+    if (detalle) return detalle;
+    if (error instanceof HttpErrorResponse) return 'No se pudo crear el informe.';
+    return (error as Error).message || 'No se pudo crear el informe.';
   }
 }

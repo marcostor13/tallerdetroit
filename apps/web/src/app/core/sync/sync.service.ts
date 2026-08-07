@@ -5,6 +5,7 @@ import {
   agotoLosIntentos,
   aplicarRespuesta,
   avisoDeAlmacenamiento,
+  esIdLocal,
   esperaDeReintento,
   idLocal,
   operacionesPendientes,
@@ -16,7 +17,7 @@ import {
   type TipoDeOperacion,
 } from '@dps/shared';
 import { environment } from '../../../environments/environment';
-import { baseLocal } from './sync.db';
+import { BASE_LOCAL } from './sync.db';
 import { ConnectionService } from '../connection/connection.service';
 
 /** Cuántas operaciones van en cada envío. */
@@ -37,6 +38,7 @@ const TAMANO_DE_LOTE = 25;
 export class SyncService {
   private readonly http = inject(HttpClient);
   private readonly conexion = inject(ConnectionService);
+  private readonly base = inject(BASE_LOCAL);
 
   private readonly cola = signal<readonly OperacionOffline[]>([]);
   private readonly sincronizando = signal(false);
@@ -46,6 +48,9 @@ export class SyncService {
 
   /** Temporizador del próximo reintento, para no encadenar varios. */
   private reintento: ReturnType<typeof setTimeout> | null = null;
+
+  /** Quién quiere enterarse de que un id local pasó a ser definitivo. */
+  private readonly oyentes: ((local: string, definitivo: string) => void)[] = [];
 
   constructor() {
     void this.cargar();
@@ -84,7 +89,7 @@ export class SyncService {
       intentos: 0,
     };
 
-    await baseLocal.operaciones.put(operacion);
+    await this.base.operaciones.put(operacion);
     this.cola.update((actual) => [...actual, operacion]);
     this.refrescarChip();
 
@@ -124,7 +129,9 @@ export class SyncService {
         }),
       );
 
+      const reasignados = this.reasignaciones(lote, resultados);
       await this.asentar(aplicarRespuesta([...this.cola()], resultados));
+      for (const [local, definitivo] of reasignados) this.avisarReasignacion(local, definitivo);
 
       // Si queda algo, se sigue de inmediato: el resto del lote no tiene por qué
       // esperar al siguiente reintento.
@@ -148,11 +155,23 @@ export class SyncService {
     return this.cola().filter((o) => o.informeId === informeId && o.estado !== 'confirmada');
   }
 
+  /**
+   * Avisa cuando un informe local pasa a tener su id del servidor.
+   *
+   * Lo escuchan dos sitios: el almacén local, para renombrar la copia del
+   * dispositivo, y el editor, para cambiar la URL si el técnico lo tiene
+   * abierto. Sin lo segundo, la pantalla se quedaría mirando un informe que ya
+   * no existe con ese nombre y al recargar daría un «no está en el dispositivo».
+   */
+  alReasignarId(oyente: (local: string, definitivo: string) => void): void {
+    this.oyentes.push(oyente);
+  }
+
   // ---------------------------------------------------------------- privado
 
   private async cargar(): Promise<void> {
     try {
-      const guardadas = await baseLocal.operaciones.toArray();
+      const guardadas = await this.base.operaciones.toArray();
       this.cola.set(guardadas);
       this.refrescarChip();
       if (this.conexion.online() && guardadas.length) void this.sincronizar();
@@ -168,13 +187,46 @@ export class SyncService {
     const confirmadas = actualizada.filter((o) => o.estado === 'confirmada');
     const quedan = purgarConfirmadas(actualizada);
 
-    await baseLocal.transaction('rw', baseLocal.operaciones, async () => {
-      await baseLocal.operaciones.bulkDelete(confirmadas.map((o) => o.clientOpId));
-      await baseLocal.operaciones.bulkPut([...quedan]);
+    await this.base.transaction('rw', this.base.operaciones, async () => {
+      await this.base.operaciones.bulkDelete(confirmadas.map((o) => o.clientOpId));
+      await this.base.operaciones.bulkPut([...quedan]);
     });
 
     this.cola.set(quedan);
     this.refrescarChip();
+  }
+
+  /**
+   * Qué ids locales acaba de resolver el servidor en este lote.
+   *
+   * Se calcula antes de asentar la respuesta, porque asentar ya sustituye los
+   * ids en la cola y después ninguna operación recordaría cuál era el local.
+   */
+  private reasignaciones(
+    lote: readonly OperacionOffline[],
+    resultados: readonly ResultadoDeOperacion[],
+  ): Map<string, string> {
+    const reasignados = new Map<string, string>();
+
+    for (const resultado of resultados) {
+      if (!resultado.informeId) continue;
+      const original = lote.find((o) => o.clientOpId === resultado.clientOpId);
+      if (!original || !esIdLocal(original.informeId)) continue;
+      reasignados.set(original.informeId, resultado.informeId);
+    }
+
+    return reasignados;
+  }
+
+  private avisarReasignacion(local: string, definitivo: string): void {
+    for (const oyente of this.oyentes) {
+      try {
+        oyente(local, definitivo);
+      } catch {
+        // Un oyente que falle no puede parar la sincronización: lo que importa
+        // es que el trabajo ya está en el servidor.
+      }
+    }
   }
 
   private programarReintento(): void {

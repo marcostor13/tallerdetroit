@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReportsService, TemplatesService, type Informe } from '../../core/api/reports.service';
 import { InformeStore } from './informe.store';
+import { ConnectionService } from '../../core/connection/connection.service';
 import { InformesOfflineService } from '../../core/sync/informes-offline.service';
 
 /**
@@ -268,11 +269,7 @@ describe('InformeStore sin conexión', () => {
 
   let store: InformeStore;
   let api: Record<string, ReturnType<typeof vi.fn>>;
-  let offline: {
-    ejecutar: ReturnType<typeof vi.fn>;
-    guardarLocal: ReturnType<typeof vi.fn>;
-    leerLocal: ReturnType<typeof vi.fn>;
-  };
+  let offline: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(async () => {
     vi.useFakeTimers();
@@ -290,6 +287,8 @@ describe('InformeStore sin conexión', () => {
       ejecutar: vi.fn().mockResolvedValue(null),
       guardarLocal: vi.fn().mockResolvedValue(undefined),
       leerLocal: vi.fn().mockResolvedValue(null),
+      guardarPlantilla: vi.fn().mockResolvedValue(undefined),
+      ultimaPlantilla: vi.fn().mockResolvedValue(null),
     };
 
     TestBed.configureTestingModule({
@@ -380,5 +379,72 @@ describe('InformeStore sin conexión', () => {
   it('cada cambio deja copia en el dispositivo', async () => {
     await store.editarBloque('b1', { titulo: 'DESPUÉS' });
     expect(offline.guardarLocal).toHaveBeenCalled();
+  });
+
+  /**
+   * Añadir un bloque sin red (E4.3).
+   *
+   * El identificador lo pone el cliente. Si lo pusiera el servidor, el bloque
+   * que el técnico acaba de añadir en el socavón no tendría nombre al que
+   * referirse: las tres ediciones y las cinco fotos que hace a continuación
+   * quedarían apuntando a un id inexistente y se perderían al sincronizar.
+   */
+  it('un bloque añadido sin red nace con su id, y con él viajan las ediciones', async () => {
+    store.plantilla.set({
+      codigo: 'SER-FOR-002',
+      version: 'v01',
+      nombre: 'x',
+      estado: 'publicada',
+      secciones: [
+        {
+          clave: 'trabajos',
+          numeral: 'IV',
+          titulo: 'Trabajos realizados',
+          orden: 4,
+          paso: 3,
+          bloques: [
+            { clave: 'trabajos', tipo: 'work_task', titulo: 'TRABAJO REALIZADO', orden: 1 },
+          ],
+        },
+      ],
+    });
+
+    await store.agregarBloque('trabajos', { titulo: 'NUEVO TRABAJO' });
+
+    const [tipo, informeId, datos, bloqueId] = (
+      offline['ejecutar'] as ReturnType<typeof vi.fn>
+    ).mock.calls.at(-1) as [string, string, Record<string, unknown>, string];
+
+    expect(tipo).toBe('agregar-bloque');
+    expect(informeId).toBe('r1');
+    expect(bloqueId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(datos['id']).toBe(bloqueId);
+
+    // Y se ve en pantalla sin esperar respuesta, con el tipo que dice la
+    // plantilla: el bloque tiene que pintarse igual antes y después de subir.
+    const nuevo = store.bloquesOrdenados().at(-1);
+    expect(nuevo?.id).toBe(bloqueId);
+    expect(nuevo?.tipo).toBe('work_task');
+    expect(nuevo?.titulo).toBe('NUEVO TRABAJO');
+  });
+
+  it('reordenar no se encola: aplicado tarde movería otro bloque', async () => {
+    // La operación va por posiciones. Si se aplicara sobre un informe donde
+    // entretanto se añadieron o quitaron bloques, movería uno distinto del que
+    // el técnico arrastró, y eso no se deshace.
+    TestBed.inject(ConnectionService).online.set(false);
+    api['reorder'] = vi.fn();
+    store.informe.set(
+      informe({
+        bloques: [
+          { id: 'b1', clave: 'trabajos', tipo: 'work_task', orden: 1, titulo: 'UNO' },
+          { id: 'b2', clave: 'trabajos', tipo: 'work_task', orden: 2, titulo: 'DOS' },
+        ],
+      } as Partial<Informe>),
+    );
+
+    expect(await store.moverBloque(0, 1)).toBe(0);
+    expect(api['reorder']).toHaveBeenCalledTimes(0);
+    expect(store.error()).toMatch(/necesita conexión/);
   });
 });

@@ -254,6 +254,15 @@ export class ReportsService {
       );
     }
 
+    // El dispositivo puede traer el id del bloque: es el que generó sin red y
+    // con el que ya vienen etiquetadas las ediciones y las fotos que lo siguen
+    // en la cola. Si ese bloque ya está, la operación es una repetición del
+    // mismo envío y no se añade otro (E4.4).
+    const idPropuesto = this.idDeBloquePropuesto(datos);
+    if (idPropuesto && doc.bloques.some((b) => b.id === idPropuesto)) {
+      return this.conFigurasNumeradas(doc.toObject());
+    }
+
     const yaHay = doc.bloques.filter((b) => b.clave === clave).length;
     if (yaHay > 0 && !isRepeatable(definicion.tipo as BlockType)) {
       throw new ConflictException(
@@ -263,7 +272,7 @@ export class ReportsService {
 
     const bloque = {
       ...datos,
-      id: randomUUID(),
+      id: idPropuesto ?? randomUUID(),
       clave,
       tipo: definicion.tipo,
       orden: doc.bloques.length + 1,
@@ -1072,6 +1081,23 @@ export class ReportsService {
       return Object.keys(bloque.datos).length > 0;
     }
     return Boolean(bloque.datos);
+  }
+
+  /**
+   * El id de bloque que propone el dispositivo, si es aceptable.
+   *
+   * Solo se admite un UUID. Sin ese filtro, un cliente podría fijar el id a
+   * cualquier cosa —una cadena con `$`, el id de otro bloque de otro informe—
+   * y el resto del sistema referencia bloques por ese campo. Cualquier otra
+   * forma se ignora en silencio y el servidor genera el suyo: rechazar la
+   * operación dejaría al técnico con un pendiente que no puede resolver.
+   */
+  private idDeBloquePropuesto(datos: Record<string, unknown>): string | null {
+    const propuesto = datos['id'];
+    if (typeof propuesto !== 'string') return null;
+
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuid.test(propuesto) ? propuesto : null;
   }
 
   private exigirEditable(doc: ReportDocument): void {

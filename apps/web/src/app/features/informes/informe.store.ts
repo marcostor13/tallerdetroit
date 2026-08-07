@@ -6,7 +6,7 @@ import type {
   ReportStatus,
   TemplateVersionDefinition,
 } from '@dps/shared';
-import { resolveTemplate, transitionsFrom } from '@dps/shared';
+import { esIdLocal, resolveBlocks, resolveTemplate, transitionsFrom } from '@dps/shared';
 import {
   ReportsService,
   TemplatesService,
@@ -80,10 +80,18 @@ export class InformeStore {
     // Un informe emitido se pinta con su copia congelada: si se usara la
     // versión vigente, un documento ya firmado cambiaría de forma al publicar
     // Calidad una versión nueva (§11.1).
-    this.plantilla.set(
+    const plantilla =
       informe.templateSnapshot ??
-        (await this.plantillasApi.version(informe.templateCodigo, informe.templateVersion)),
-    );
+      (esIdLocal(informe._id)
+        ? await this.offline.ultimaPlantilla()
+        : await this.plantillasApi.version(informe.templateCodigo, informe.templateVersion));
+
+    if (!plantilla) throw new Error('No hay ninguna plantilla guardada en este dispositivo.');
+    this.plantilla.set(plantilla);
+
+    // Se guarda para poder crear un informe sin red: para cuando el técnico
+    // baja a la mina, la última vigente ya está en el dispositivo.
+    void this.offline.guardarPlantilla(plantilla);
 
     await this.revalidar();
     this.arrancarAutoguardado();
@@ -97,6 +105,14 @@ export class InformeStore {
    * nada que enseñar, y fingir un informe vacío sería peor.
    */
   private async traer(id: string): Promise<Informe> {
+    // Un informe con id local no existe en el servidor todavía: pedírselo sería
+    // un 404 seguro y un rodeo por la red que no hace falta.
+    if (esIdLocal(id)) {
+      const local = await this.offline.leerLocal(id);
+      if (!local) throw new Error('Ese informe ya no está en el dispositivo.');
+      return local;
+    }
+
     if (this.conexion.online()) {
       try {
         return await this.api.findById(id);
@@ -182,11 +198,29 @@ export class InformeStore {
 
   // ------------------------------------------------------------------ bloques
 
+  /**
+   * Añade un bloque.
+   *
+   * El identificador lo genera el cliente, no el servidor. Sin eso, un bloque
+   * creado sin red no tendría nombre al que referirse: las ediciones y las
+   * fotos que el técnico haga a continuación quedarían apuntando a un id que el
+   * servidor todavía no ha inventado, y al sincronizar se perderían. El backend
+   * respeta el id que llega y descarta la repetición.
+   */
   async agregarBloque(clave: string, datos: Record<string, unknown> = {}): Promise<void> {
     const id = this.informe()?._id;
     if (!id) return;
     await this.guardar();
-    this.informe.set(await this.api.addBlock(id, { clave, ...datos }));
+
+    const bloque = { id: crypto.randomUUID(), clave, ...datos };
+    const respuesta = await this.offline.ejecutar('agregar-bloque', id, bloque, bloque.id, () =>
+      this.api.addBlock(id, bloque),
+    );
+
+    if (respuesta) this.informe.set(respuesta);
+    else this.agregarEnLocal(bloque);
+
+    void this.offline.guardarLocal(this.informe() as Informe);
     await this.revalidar();
   }
 
@@ -208,7 +242,15 @@ export class InformeStore {
   async quitarBloque(bloqueId: string): Promise<void> {
     const id = this.informe()?._id;
     if (!id) return;
-    this.informe.set(await this.api.removeBlock(id, bloqueId));
+
+    const respuesta = await this.offline.ejecutar('quitar-bloque', id, {}, bloqueId, () =>
+      this.api.removeBlock(id, bloqueId),
+    );
+
+    if (respuesta) this.informe.set(respuesta);
+    else this.quitarEnLocal(bloqueId);
+
+    void this.offline.guardarLocal(this.informe() as Informe);
     await this.revalidar();
   }
 
@@ -223,6 +265,14 @@ export class InformeStore {
     const id = this.informe()?._id;
     const bloques = this.bloquesOrdenados();
     if (!id || hasta < 0 || hasta >= bloques.length || desde === hasta) return desde;
+
+    // Reordenar no se encola. La operación va por posiciones, y al aplicarla más
+    // tarde sobre un informe donde entretanto se añadieron o quitaron bloques
+    // movería otro distinto del que el técnico arrastró.
+    if (esIdLocal(id) || !this.conexion.online()) {
+      this.error.set('Reordenar los bloques necesita conexión. El resto de la edición no.');
+      return desde;
+    }
 
     this.informe.set(await this.api.reorder(id, desde, hasta));
     return hasta;
@@ -365,6 +415,15 @@ export class InformeStore {
   async revalidar(): Promise<void> {
     const id = this.informe()?._id;
     if (!id) return;
+
+    // Un informe que solo existe en el dispositivo no se puede validar contra el
+    // servidor: preguntarle es un 404 seguro. Y tampoco haría falta, porque
+    // emitir exige conexión de todas formas.
+    if (esIdLocal(id) || !this.conexion.online()) {
+      this.validacion.set(null);
+      return;
+    }
+
     try {
       this.validacion.set(await this.api.validate(id));
     } catch {
@@ -447,6 +506,47 @@ export class InformeStore {
     actual[tramos[tramos.length - 1] as string] = valor;
 
     this.informe.set(copia as unknown as Informe);
+  }
+
+  /**
+   * Añade el bloque a la copia local cuando la operación quedó encolada.
+   *
+   * El tipo y el título salen de la plantilla, que es de donde los saca también
+   * el servidor: así el bloque se pinta igual antes y después de sincronizar.
+   */
+  private agregarEnLocal(bloque: Record<string, unknown>): void {
+    const informe = this.informe();
+    const plantilla = this.plantilla();
+    if (!informe || !plantilla) return;
+
+    const definicion = resolveBlocks(plantilla, this.contexto(informe)).find(
+      (b) => b.clave === bloque['clave'],
+    );
+    if (!definicion) return;
+
+    this.informe.set({
+      ...informe,
+      bloques: [
+        ...informe.bloques,
+        {
+          tipo: definicion.tipo,
+          titulo: definicion.titulo,
+          ...bloque,
+          orden: informe.bloques.length + 1,
+          visible: true,
+        } as unknown as BloqueInforme,
+      ],
+    });
+  }
+
+  private quitarEnLocal(bloqueId: string): void {
+    const informe = this.informe();
+    if (!informe) return;
+
+    this.informe.set({
+      ...informe,
+      bloques: informe.bloques.filter((b) => b.id !== bloqueId),
+    });
   }
 
   /**

@@ -1,3 +1,4 @@
+import { InjectionToken } from '@angular/core';
 import Dexie, { type Table } from 'dexie';
 import type { OperacionOffline } from '@dps/shared';
 
@@ -9,6 +10,22 @@ export interface InformeLocal {
   /** El documento completo, tal como lo devolvería la API. */
   datos: Record<string, unknown>;
   actualizadoEn: string;
+}
+
+/**
+ * La plantilla vigente, guardada para poder crear un informe sin red.
+ *
+ * Sin ella el editor no sabe qué secciones pintar, así que un informe creado en
+ * el socavón sería una pantalla en blanco. Se guarda la que trae cada informe
+ * que se abre con conexión: para cuando el técnico baja a la mina, ya está.
+ */
+export interface PlantillaLocal {
+  /** `SER-FOR-002:v01`. */
+  clave: string;
+  codigo: string;
+  version: string;
+  definicion: Record<string, unknown>;
+  guardadaEn: string;
 }
 
 /** Una foto capturada sin red, todavía sin subir a S3. */
@@ -37,6 +54,7 @@ export class BaseLocal extends Dexie {
   informes!: Table<InformeLocal, string>;
   fotos!: Table<FotoLocal, string>;
   operaciones!: Table<OperacionOffline, string>;
+  plantillas!: Table<PlantillaLocal, string>;
 
   constructor() {
     super('dps-informes');
@@ -47,6 +65,13 @@ export class BaseLocal extends Dexie {
       // Se indexa por estado e informe: la cola se consulta por «qué queda
       // pendiente» y por «qué falta de este informe», nunca por clave suelta.
       operaciones: 'clientOpId, estado, informeId, capturadaEn',
+    });
+
+    // La versión 2 añade las plantillas. Dexie migra solo y conserva lo que ya
+    // hubiera: un técnico con informes sin sincronizar no puede perderlos por
+    // actualizar la app.
+    this.version(2).stores({
+      plantillas: 'clave, codigo, guardadaEn',
     });
   }
 }
@@ -59,3 +84,17 @@ export class BaseLocal extends Dexie {
  * congela al arrancar sin decir por qué.
  */
 export const baseLocal = new BaseLocal();
+
+/**
+ * La base local, por inyección.
+ *
+ * Importar el singleton directamente ataba cada servicio a IndexedDB, y en las
+ * pruebas —que corren en jsdom, donde IndexedDB no existe— las operaciones se
+ * quedaban colgadas o fallaban en silencio: el código de sin-conexión pasaba
+ * los tests sin ejecutarse. Con un token se puede poner una base en memoria y
+ * comprobar lo que de verdad hace.
+ */
+export const BASE_LOCAL = new InjectionToken<BaseLocal>('dps.baseLocal', {
+  providedIn: 'root',
+  factory: () => baseLocal,
+});
